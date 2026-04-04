@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from doc2md.converters import ConversionError
-from doc2md.converters.office import MarkItDownConverter, OfficeConverter, PandocOfficeConverter
+from doc2md.converters.office import (
+    MarkItDownConverter,
+    OfficeConverter,
+    PandocOfficeConverter,
+)
 
 
 @pytest.mark.unit
@@ -59,15 +62,17 @@ def test_office_converter_raises_when_all_unavailable(tmp_path):
     with (
         patch.object(MarkItDownConverter, "is_available", return_value=False),
         patch.object(PandocOfficeConverter, "is_available", return_value=False),
+        pytest.raises(ConversionError),
     ):
-        with pytest.raises(ConversionError):
-            OfficeConverter().convert(path, tmp_path)
+        OfficeConverter().convert(path, tmp_path)
 
 
 @pytest.mark.unit
 def test_pandoc_rejects_unsupported_format(tmp_path):
     path = tmp_path / "data.xlsx"
     path.touch()
-    with patch.object(PandocOfficeConverter, "is_available", return_value=True):
-        with pytest.raises(ConversionError, match="does not support"):
-            PandocOfficeConverter().convert(path, tmp_path)
+    with (
+        patch.object(PandocOfficeConverter, "is_available", return_value=True),
+        pytest.raises(ConversionError, match="does not support"),
+    ):
+        PandocOfficeConverter().convert(path, tmp_path)

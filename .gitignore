@@ -78,3 +78,6 @@ output/
 
 # developer settings
 private*
+
+# Claude Code local memory / session data
+.claude/

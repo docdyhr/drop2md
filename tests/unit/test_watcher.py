@@ -6,13 +6,12 @@ import queue
 import threading
 import time
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from watchdog.events import FileCreatedEvent, FileMovedEvent
 
 from doc2md.watcher import _DebounceHandler, _process_file, _worker
-
 
 # ─── _DebounceHandler ────────────────────────────────────────────────────────
 

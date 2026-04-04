@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -199,7 +198,6 @@ def test_marker_converter_convert_no_images(tmp_path):
 @pytest.mark.unit
 def test_marker_converter_saves_pil_images(tmp_path):
     """MarkerPdfConverter saves PIL Image objects (not bytes) via .save()."""
-    from unittest.mock import call
 
     path = tmp_path / "test.pdf"
     path.write_bytes(b"fake pdf")
@@ -248,7 +246,7 @@ def test_marker_converter_saves_bytes_images(tmp_path):
         "marker.models": mock_models_mod,
         "marker.output": mock_output_mod,
     }):
-        result = MarkerPdfConverter().convert(path, tmp_path)
+        MarkerPdfConverter().convert(path, tmp_path)
 
     saved = tmp_path / "images" / "test_chart.png"
     assert saved.exists()

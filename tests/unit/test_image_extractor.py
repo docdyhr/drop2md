@@ -10,7 +10,6 @@ import pytest
 
 from doc2md.utils.image_extractor import extract_pdf_images, inject_image_references
 
-
 # ─── inject_image_references ─────────────────────────────────────────────────
 
 @pytest.mark.unit

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -13,7 +12,6 @@ from doc2md.enhance_providers import (
     OpenAICompatProvider,
     make_provider,
 )
-
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -119,9 +117,9 @@ def test_openai_provider_sends_image(tmp_path):
 @pytest.mark.unit
 def test_openai_provider_import_error():
     provider = OpenAICompatProvider("gpt-4o-mini", "https://api.openai.com/v1", "", timeout=5)
-    with patch("builtins.__import__", side_effect=ImportError("No module named 'openai'")):
-        with pytest.raises(ImportError, match="openai package"):
-            provider.generate("Hello")
+    with patch("builtins.__import__", side_effect=ImportError("No module named 'openai'")), \
+         pytest.raises(ImportError, match="openai package"):
+        provider.generate("Hello")
 
 
 # ─── ClaudeProvider ──────────────────────────────────────────────────────────
@@ -170,9 +168,9 @@ def test_claude_provider_sends_image(tmp_path):
 @pytest.mark.unit
 def test_claude_provider_import_error():
     provider = ClaudeProvider("claude-haiku-4-5-20251001", "", timeout=5)
-    with patch("builtins.__import__", side_effect=ImportError("No module named 'anthropic'")):
-        with pytest.raises(ImportError, match="anthropic package"):
-            provider.generate("Hello")
+    with patch("builtins.__import__", side_effect=ImportError("No module named 'anthropic'")), \
+         pytest.raises(ImportError, match="anthropic package"):
+        provider.generate("Hello")
 
 
 # ─── make_provider factory ───────────────────────────────────────────────────
