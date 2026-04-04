@@ -79,8 +79,9 @@ use_marker  = true
 marker_device = "mps"   # Apple Silicon
 
 [ollama]
-enabled = false          # set true to enable AI enhancement
-model   = "qwen3.5:latest"
+enabled  = false          # set true to enable AI enhancement
+provider = "ollama"       # "ollama" | "claude" | "openai" | "hf"
+model    = "qwen3.5:latest"
 ```
 
 See [`config.toml.example`](config.toml.example) for all options.
@@ -144,17 +145,34 @@ pages: 12
 | XLSX | MarkItDown | Multiple sheets as tables |
 | HTML | html2text / Pandoc | Links preserved |
 | EPUB | Pandoc | Chapter structure |
-| PNG/JPG | pytesseract + Ollama | OCR + optional AI description |
+| PNG/JPG | pytesseract + AI caption | OCR + optional AI description |
 
-## Optional Ollama Enhancement
+## Optional AI Enhancement
 
-When `[ollama] enabled = true` and Ollama is running locally:
+When `[ollama] enabled = true`, doc2md runs an optional post-processing pass:
 
 - **Image captions**: Embedded images get AI-generated alt-text
 - **Table validation**: Broken GFM tables are auto-corrected
 
-Tested with `qwen3.5:latest` (vision-capable, 9.7B parameters).
-Falls back gracefully if Ollama is offline.
+Four providers are supported. Set `provider` in your `config.toml`:
+
+```toml
+[ollama]
+enabled  = true
+provider = "ollama"   # "ollama" | "claude" | "openai" | "hf"
+model    = "qwen3.5:latest"
+```
+
+| Provider | Extra install | API key env var | Notes |
+|---|---|---|---|
+| `ollama` | — (default) | — | Free, local, requires Ollama running |
+| `claude` | `pip install doc2md[claude]` | `ANTHROPIC_API_KEY` | Claude Haiku by default |
+| `openai` | `pip install doc2md[openai]` | `OPENAI_API_KEY` | GPT-4o-mini by default |
+| `hf` | `pip install doc2md[openai]` | `HF_TOKEN` | HuggingFace Inference Router |
+
+API keys are resolved in order: `api_key` field in config → `DOC2MD_ENHANCE_API_KEY` env var → provider-native env var.
+
+All providers fall back gracefully — a missing key or offline service never blocks conversion.
 
 ## Development
 
