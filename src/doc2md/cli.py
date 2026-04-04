@@ -199,3 +199,105 @@ def status() -> None:
         check=False,
     )
     typer.echo(result.stdout or "Service not running.")
+
+
+@app.command(name="install-mcp")
+def install_mcp(
+    config_path: Annotated[
+        Path | None,
+        typer.Option("--config", "-c", help="Path to config.toml"),
+    ] = None,
+    claude_config: Annotated[
+        Path | None,
+        typer.Option("--claude-config", help="Path to Claude Desktop config.json (auto-detected if omitted)"),
+    ] = None,
+) -> None:
+    """Register doc2md as an MCP server in Claude Desktop.
+
+    Adds a 'doc2md' entry to claude_desktop_config.json and prints a reminder
+    to restart Claude Desktop for the change to take effect.
+    """
+    import json
+
+    # Auto-detect Claude Desktop config
+    if claude_config is None:
+        candidates = [
+            Path("~/Library/Application Support/Claude/claude_desktop_config.json").expanduser(),
+        ]
+        for c in candidates:
+            if c.exists():
+                claude_config = c
+                break
+
+    if claude_config is None or not claude_config.exists():
+        typer.echo(
+            "Error: Claude Desktop config not found. "
+            "Pass --claude-config PATH to specify it.",
+            err=True,
+        )
+        raise typer.Exit(1)
+
+    python_path = sys.executable
+    server_args: list[str] = ["-m", "doc2md.mcp_server"]
+    if config_path:
+        server_args += ["--config", str(config_path)]
+
+    entry: dict = {
+        "command": python_path,
+        "args": server_args,
+    }
+
+    data = json.loads(claude_config.read_text(encoding="utf-8"))
+    data.setdefault("mcpServers", {})
+
+    if "doc2md" in data["mcpServers"]:
+        typer.echo("Note: 'doc2md' entry already exists — updating it.")
+
+    data["mcpServers"]["doc2md"] = entry
+
+    # Write atomically
+    tmp = claude_config.with_suffix(".tmp")
+    tmp.write_text(json.dumps(data, indent=4), encoding="utf-8")
+    tmp.rename(claude_config)
+
+    typer.echo("MCP server registered in Claude Desktop config.")
+    typer.echo(f"  Config: {claude_config}")
+    typer.echo(f"  Python: {python_path}")
+    typer.echo("")
+    typer.echo("IMPORTANT: Restart Claude Desktop for the change to take effect.")
+    typer.echo("  macOS: quit Claude Desktop from the menu bar and reopen it.")
+
+
+@app.command(name="uninstall-mcp")
+def uninstall_mcp(
+    claude_config: Annotated[
+        Path | None,
+        typer.Option("--claude-config", help="Path to Claude Desktop config.json (auto-detected if omitted)"),
+    ] = None,
+) -> None:
+    """Remove doc2md from Claude Desktop MCP servers."""
+    import json
+
+    if claude_config is None:
+        candidate = Path("~/Library/Application Support/Claude/claude_desktop_config.json").expanduser()
+        if candidate.exists():
+            claude_config = candidate
+
+    if claude_config is None or not claude_config.exists():
+        typer.echo("Error: Claude Desktop config not found.", err=True)
+        raise typer.Exit(1)
+
+    data = json.loads(claude_config.read_text(encoding="utf-8"))
+    servers = data.get("mcpServers", {})
+
+    if "doc2md" not in servers:
+        typer.echo("doc2md is not registered in Claude Desktop.")
+        return
+
+    del servers["doc2md"]
+    tmp = claude_config.with_suffix(".tmp")
+    tmp.write_text(json.dumps(data, indent=4), encoding="utf-8")
+    tmp.rename(claude_config)
+
+    typer.echo("doc2md removed from Claude Desktop MCP servers.")
+    typer.echo("Restart Claude Desktop for the change to take effect.")

@@ -12,7 +12,7 @@ dependencies = [
     "python-magic>=0.4.27",
     "httpx>=0.27.0",
     "pdfplumber>=0.11.0",
-    "tomli>=2.0.0; python_version < '3.11'",
+    "mcp[cli]>=1.6.0",
 ]
 
 [[project.authors]]
@@ -81,6 +81,7 @@ all = [
 
 [project.scripts]
 doc2md = "doc2md.cli:app"
+doc2md-mcp = "doc2md.mcp_server:main"
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]
@@ -116,6 +117,7 @@ module = [
     "watchdog", "watchdog.*",
     "typer", "typer.*",
     "html2text",
+    "mcp", "mcp.*",
 ]
 ignore_missing_imports = true
 follow_imports = "silent"
