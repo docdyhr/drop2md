@@ -1,0 +1,50 @@
+# doc2md configuration — copy to config.toml and edit
+# config.toml is gitignored; this file is the committed template.
+
+[paths]
+# Folder to watch for new documents
+watch_dir = "~/Documents/drop-to-md"
+# Output directory for converted markdown files
+output_dir = "~/Documents/markdown-output"
+
+[pdf]
+# Enable Marker (GPLv3, requires marker-pdf pip extra, Apple MPS / CUDA / CPU)
+use_marker = true
+# Enable Docling (Apache 2.0, requires docling pip extra, CPU-capable)
+use_docling = true
+# Device for Marker inference: "mps" (Apple Silicon), "cuda" (NVIDIA), "cpu"
+marker_device = "mps"
+
+[office]
+# Use MarkItDown for DOCX/PPTX/XLSX (falls back to pandoc if unavailable)
+use_markitdown = true
+
+[ocr]
+# Use pytesseract for image files (PNG/JPG)
+enabled = true
+# Tesseract language codes (e.g. "eng", "deu", "eng+deu")
+language = "eng"
+
+[ollama]
+# Enable Ollama for optional AI enhancement (image captions, table validation)
+enabled = false
+base_url = "http://localhost:11434"
+# Vision-capable model (qwen3.5, minicpm-v, llava, etc.)
+model = "qwen3.5:latest"
+timeout_seconds = 30
+
+[output]
+# Add YAML frontmatter block to each output file
+add_frontmatter = true
+# Subdirectory name for extracted images (relative to each output .md file)
+image_subdir = "images"
+# Keep <!-- Page N --> markers in output
+preserve_page_markers = false
+# Overwrite existing .md files (false = skip if exists)
+overwrite = true
+
+[logging]
+# Log level: DEBUG, INFO, WARNING, ERROR
+level = "INFO"
+# Log file location (empty = stderr only)
+file = "~/Library/Logs/doc2md/doc2md.log"

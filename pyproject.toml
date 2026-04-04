@@ -1,0 +1,146 @@
+[project]
+name = "doc2md"
+version = "0.1.0"
+description = "macOS document-to-markdown converter with folder watching and LLM integration"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+    "watchdog>=4.0.0",
+    "typer>=0.12.0",
+    "html2text>=2024.2.26",
+    "python-magic>=0.4.27",
+    "httpx>=0.27.0",
+    "pdfplumber>=0.11.0",
+    "tomli>=2.0.0; python_version < '3.11'",
+]
+
+[[project.authors]]
+name = "Thomas Juul Dyhr"
+email = "docdyhr@me.com"
+
+[project.urls]
+Homepage = "https://github.com/docdyhr/doc2md"
+Repository = "https://github.com/docdyhr/doc2md"
+Issues = "https://github.com/docdyhr/doc2md/issues"
+
+[project.optional-dependencies]
+# Large ML models — pulls PyTorch (~2GB), install separately
+pdf-ml = [
+    "marker-pdf>=1.6.0",
+    "docling>=2.0.0",
+]
+# Lightweight PDF alternative (no PyTorch)
+pdf-light = [
+    "pymupdf4llm>=0.0.17",
+]
+# Office document support
+office = [
+    "markitdown[all]>=0.1.0",
+]
+# OCR support
+ocr = [
+    "pytesseract>=0.3.13",
+    "Pillow>=10.0.0",
+]
+# Development tools
+dev = [
+    "ruff==0.11.2",
+    "mypy>=1.11.0",
+    "pre-commit>=3.0.0",
+    "bandit[toml]>=1.7.5",
+    "pip-audit>=2.7.3",
+    "tomli>=2.0.0; python_version < '3.11'",
+]
+# Testing
+test = [
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
+    "pytest-mock>=3.14.0",
+    "pytest-timeout>=2.3.1",
+    "tomli>=2.0.0; python_version < '3.11'",
+]
+# Everything
+all = [
+    "marker-pdf>=1.6.0",
+    "docling>=2.0.0",
+    "pymupdf4llm>=0.0.17",
+    "markitdown[all]>=0.1.0",
+    "pytesseract>=0.3.13",
+    "Pillow>=10.0.0",
+    "ruff==0.11.2",
+    "mypy>=1.11.0",
+    "pre-commit>=3.0.0",
+    "bandit[toml]>=1.7.5",
+    "pip-audit>=2.7.3",
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
+    "pytest-mock>=3.14.0",
+    "pytest-timeout>=2.3.1",
+]
+
+[project.scripts]
+doc2md = "doc2md.cli:app"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["doc2md*"]
+exclude = ["tests*"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = [
+    "pdfplumber", "pdfplumber.*",
+    "magic",
+    "pytesseract",
+    "PIL", "PIL.*",
+    "marker", "marker.*",
+    "docling", "docling.*",
+    "markitdown", "markitdown.*",
+    "pymupdf4llm",
+    "watchdog", "watchdog.*",
+    "typer", "typer.*",
+    "html2text",
+]
+ignore_missing_imports = true
+follow_imports = "silent"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "C4", "SIM", "UP"]
+ignore = ["E203", "E501", "E402", "SIM105", "SIM102", "SIM103", "SIM212", "UP035"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*" = ["S101"]
+"**/conftest.py" = ["F401"]
+"scripts/*" = ["SIM", "S"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["doc2md"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B101", "B404", "B603", "B607", "B311"]
+severity = "medium"
