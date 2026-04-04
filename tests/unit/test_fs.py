@@ -52,8 +52,10 @@ def test_processing_lock_prevents_double_processing(tmp_path):
     path.touch()
     lock_path = path.with_suffix(".lock")
     lock_path.touch()  # Simulate existing lock
-    with ProcessingLock(path, timeout=0.2) as locked:
-        assert locked is False
-    # External lock should still be there
-    assert lock_path.exists()
-    lock_path.unlink()
+    try:
+        with ProcessingLock(path, timeout=0.2) as locked:
+            assert locked is False
+        # External lock should still be there — we don't own it
+        assert lock_path.exists()
+    finally:
+        lock_path.unlink(missing_ok=True)
