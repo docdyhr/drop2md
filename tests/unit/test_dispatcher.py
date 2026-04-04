@@ -7,12 +7,12 @@ from unittest.mock import patch
 
 import pytest
 
-from doc2md.converters.epub import EpubConverter
-from doc2md.converters.html import HtmlConverter
-from doc2md.converters.image import ImageConverter
-from doc2md.converters.office import OfficeConverter
-from doc2md.converters.pdf import TieredPdfConverter
-from doc2md.dispatcher import get_converter
+from drop2md.converters.epub import EpubConverter
+from drop2md.converters.html import HtmlConverter
+from drop2md.converters.image import ImageConverter
+from drop2md.converters.office import OfficeConverter
+from drop2md.converters.pdf import TieredPdfConverter
+from drop2md.dispatcher import get_converter
 
 
 @pytest.mark.unit
@@ -38,7 +38,7 @@ def test_extension_routing(filename: str, expected: type, tmp_path: Path):
     path.touch()
 
     # Disable MIME detection to test extension fallback
-    with patch("doc2md.dispatcher._detect_mime", return_value=None):
+    with patch("drop2md.dispatcher._detect_mime", return_value=None):
         result = get_converter(path)
 
     assert result is expected, f"Expected {expected.name} for {filename}, got {result}"
@@ -62,7 +62,7 @@ def test_ignore_tmp_files(tmp_path: Path):
 def test_unknown_extension_returns_none(tmp_path: Path):
     path = tmp_path / "data.xyz"
     path.touch()
-    with patch("doc2md.dispatcher._detect_mime", return_value=None):
+    with patch("drop2md.dispatcher._detect_mime", return_value=None):
         assert get_converter(path) is None
 
 
@@ -71,6 +71,6 @@ def test_mime_type_overrides_extension(tmp_path: Path):
     """A file named .txt that is actually a PDF by MIME should route to PDF converter."""
     path = tmp_path / "document.txt"
     path.touch()
-    with patch("doc2md.dispatcher._detect_mime", return_value="application/pdf"):
+    with patch("drop2md.dispatcher._detect_mime", return_value="application/pdf"):
         result = get_converter(path)
     assert result is TieredPdfConverter

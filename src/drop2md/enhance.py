@@ -1,4 +1,4 @@
-"""AI enhancement pipeline for doc2md.
+"""AI enhancement pipeline for drop2md.
 
 Provides image captioning and GFM table validation via any configured AI provider.
 Uses make_provider() to route to Ollama, Claude, OpenAI, or HuggingFace.
@@ -12,9 +12,9 @@ import logging
 import re
 from pathlib import Path
 
-from doc2md.config import Config
-from doc2md.converters import ConverterResult
-from doc2md.enhance_providers import make_provider
+from drop2md.config import Config
+from drop2md.converters import ConverterResult
+from drop2md.enhance_providers import make_provider
 
 log = logging.getLogger(__name__)
 

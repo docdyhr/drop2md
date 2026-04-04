@@ -6,8 +6,8 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-from doc2md.converters import ConverterResult
-from doc2md.utils.gfm import (
+from drop2md.converters import ConverterResult
+from drop2md.utils.gfm import (
     ensure_trailing_newline,
     fix_table_alignment,
     normalize_headings,

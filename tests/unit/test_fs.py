@@ -2,7 +2,7 @@
 
 import pytest
 
-from doc2md.utils.fs import ProcessingLock, atomic_write
+from drop2md.utils.fs import ProcessingLock, atomic_write
 
 
 @pytest.mark.unit

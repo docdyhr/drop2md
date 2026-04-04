@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from doc2md.converters.image import ImageConverter
+from drop2md.converters.image import ImageConverter
 
 
 @pytest.mark.unit
@@ -20,8 +20,8 @@ def test_image_converter_extracts_ocr_text(sample_png, tmp_path):
     """Real OCR on sample.png should find known text."""
     result = ImageConverter().convert(sample_png, tmp_path)
     assert result.converter_used == "image-ocr"
-    # sample.png contains "doc2md Image OCR Test" — tesseract should find it
-    assert "doc2md" in result.markdown
+    # sample.png contains "drop2md Image OCR Test" — tesseract should find it
+    assert "drop2md" in result.markdown
 
 
 @pytest.mark.unit

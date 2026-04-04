@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from doc2md.config import ClaudeConfig, Config, OpenAIConfig, load_config
+from drop2md.config import ClaudeConfig, Config, OpenAIConfig, load_config
 
 
 @pytest.mark.unit
@@ -41,14 +41,14 @@ def test_load_config_expands_tilde(tmp_path):
 
 @pytest.mark.unit
 def test_env_override_watch_dir(tmp_path, monkeypatch):
-    monkeypatch.setenv("DOC2MD_WATCH_DIR", "/tmp/env_watch")
+    monkeypatch.setenv("DROP2MD_WATCH_DIR", "/tmp/env_watch")
     cfg = load_config(tmp_path / "missing.toml")
     assert cfg.paths.watch_dir == Path("/tmp/env_watch")
 
 
 @pytest.mark.unit
 def test_env_override_ollama(monkeypatch, tmp_path):
-    monkeypatch.setenv("DOC2MD_OLLAMA_ENABLED", "true")
+    monkeypatch.setenv("DROP2MD_OLLAMA_ENABLED", "true")
     cfg = load_config(tmp_path / "missing.toml")
     assert cfg.ollama.enabled is True
 
@@ -63,8 +63,8 @@ def test_ollama_provider_defaults_to_ollama(tmp_path):
 
 @pytest.mark.unit
 def test_env_override_enhance_provider(monkeypatch, tmp_path):
-    """DOC2MD_ENHANCE_PROVIDER env var sets cfg.ollama.provider."""
-    monkeypatch.setenv("DOC2MD_ENHANCE_PROVIDER", "claude")
+    """DROP2MD_ENHANCE_PROVIDER env var sets cfg.ollama.provider."""
+    monkeypatch.setenv("DROP2MD_ENHANCE_PROVIDER", "claude")
     cfg = load_config(tmp_path / "missing.toml")
     assert cfg.ollama.provider == "claude"
 

@@ -2,7 +2,7 @@
 
 import pytest
 
-from doc2md.converters.legacy_pdf import (
+from drop2md.converters.legacy_pdf import (
     LegacyPdfConverter,
     _clean_text,
     _is_heading,

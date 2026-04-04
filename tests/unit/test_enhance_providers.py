@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from doc2md.enhance_providers import (
+from drop2md.enhance_providers import (
     ClaudeProvider,
     OllamaProvider,
     OpenAICompatProvider,
@@ -177,28 +177,28 @@ def test_claude_provider_import_error():
 
 @pytest.mark.unit
 def test_make_provider_returns_ollama():
-    from doc2md.enhance_providers import OllamaProvider
+    from drop2md.enhance_providers import OllamaProvider
     provider = make_provider(_cfg(provider="ollama"))
     assert isinstance(provider, OllamaProvider)
 
 
 @pytest.mark.unit
 def test_make_provider_returns_claude():
-    from doc2md.enhance_providers import ClaudeProvider
+    from drop2md.enhance_providers import ClaudeProvider
     provider = make_provider(_cfg(provider="claude"))
     assert isinstance(provider, ClaudeProvider)
 
 
 @pytest.mark.unit
 def test_make_provider_returns_openai():
-    from doc2md.enhance_providers import OpenAICompatProvider
+    from drop2md.enhance_providers import OpenAICompatProvider
     provider = make_provider(_cfg(provider="openai"))
     assert isinstance(provider, OpenAICompatProvider)
 
 
 @pytest.mark.unit
 def test_make_provider_returns_openai_for_hf():
-    from doc2md.enhance_providers import OpenAICompatProvider
+    from drop2md.enhance_providers import OpenAICompatProvider
     provider = make_provider(_cfg(provider="hf"))
     assert isinstance(provider, OpenAICompatProvider)
 

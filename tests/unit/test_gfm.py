@@ -2,8 +2,8 @@
 
 import pytest
 
-from doc2md.utils.fs import safe_filename
-from doc2md.utils.gfm import (
+from drop2md.utils.fs import safe_filename
+from drop2md.utils.gfm import (
     ensure_trailing_newline,
     fix_table_alignment,
     normalize_headings,

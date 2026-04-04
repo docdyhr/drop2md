@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from doc2md.converters import BaseConverter, ConverterResult
+from drop2md.converters import BaseConverter, ConverterResult
 
 
 class LegacyPdfConverter(BaseConverter):

@@ -1,4 +1,4 @@
-"""Logging setup for doc2md."""
+"""Logging setup for drop2md."""
 
 from __future__ import annotations
 

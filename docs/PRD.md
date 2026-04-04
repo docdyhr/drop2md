@@ -1,4 +1,4 @@
-# Product Requirements Document: doc2md
+# Product Requirements Document: drop2md
 
 **Version:** 1.0
 **Date:** 2026-04-04

@@ -1,4 +1,4 @@
-"""AI provider abstraction for doc2md enhancement pipeline.
+"""AI provider abstraction for drop2md enhancement pipeline.
 
 Supports Ollama (local), OpenAI-compatible APIs (OpenAI, HuggingFace), and Anthropic Claude.
 All providers share the same AIProvider protocol.
@@ -55,7 +55,7 @@ class OllamaProvider:
 class OpenAICompatProvider:
     """OpenAI-compatible chat completions API (covers OpenAI, HuggingFace Inference Router).
 
-    Requires ``openai`` package (``pip install doc2md[openai]``).
+    Requires ``openai`` package (``pip install drop2md[openai]``).
     """
 
     def __init__(self, model: str, base_url: str, api_key: str, timeout: int) -> None:
@@ -70,7 +70,7 @@ class OpenAICompatProvider:
         except ImportError as exc:
             raise ImportError(
                 "openai package is required for OpenAI/HuggingFace providers. "
-                "Install it with: pip install doc2md[openai]"
+                "Install it with: pip install drop2md[openai]"
             ) from exc
 
         client = openai.OpenAI(
@@ -106,7 +106,7 @@ class OpenAICompatProvider:
 class ClaudeProvider:
     """Anthropic Claude API provider with native base64 image vision.
 
-    Requires ``anthropic`` package (``pip install doc2md[claude]``).
+    Requires ``anthropic`` package (``pip install drop2md[claude]``).
     """
 
     def __init__(self, model: str, api_key: str, timeout: int) -> None:
@@ -120,7 +120,7 @@ class ClaudeProvider:
         except ImportError as exc:
             raise ImportError(
                 "anthropic package is required for the Claude provider. "
-                "Install it with: pip install doc2md[claude]"
+                "Install it with: pip install drop2md[claude]"
             ) from exc
 
         client = anthropic.Anthropic(

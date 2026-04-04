@@ -1,10 +1,10 @@
-# doc2md
+# drop2md
 
-[![CI](https://github.com/docdyhr/doc2md/actions/workflows/ci.yml/badge.svg)](https://github.com/docdyhr/doc2md/actions/workflows/ci.yml)
+[![CI](https://github.com/docdyhr/drop2md/actions/workflows/ci.yml/badge.svg)](https://github.com/docdyhr/drop2md/actions/workflows/ci.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**doc2md** is a macOS document-to-markdown converter that watches a drop folder
+**drop2md** is a macOS document-to-markdown converter that watches a drop folder
 and automatically converts documents to clean GFM markdown — optimized for
 Claude Desktop, Claude Code, Cowork, and any LLM-based workflow.
 
@@ -36,7 +36,7 @@ frontmatter in seconds.
 # Install system dependencies
 brew install pandoc tesseract
 
-# Install doc2md (core + office support)
+# Install drop2md (core + office support)
 pip install -e ".[office]"
 
 # Configure
@@ -44,10 +44,10 @@ cp config.toml.example config.toml
 # Edit config.toml: set watch_dir and output_dir
 
 # Start watching (foreground)
-doc2md watch
+drop2md watch
 
 # Or install as macOS background service
-doc2md install-service
+drop2md install-service
 ```
 
 ### Install Full ML Support (Best PDF Quality)
@@ -60,9 +60,9 @@ pip install -e ".[pdf-ml,office,ocr]"
 ### One-Shot Conversion
 
 ```bash
-doc2md convert report.pdf
-doc2md convert presentation.pptx --output ~/Desktop/
-doc2md convert *.docx --output ~/Documents/markdown/
+drop2md convert report.pdf
+drop2md convert presentation.pptx --output ~/Desktop/
+drop2md convert *.docx --output ~/Documents/markdown/
 ```
 
 ## Configuration
@@ -90,16 +90,16 @@ See [`config.toml.example`](config.toml.example) for all options.
 
 ```bash
 # Install and start background service
-doc2md install-service
+drop2md install-service
 
 # Check status
-doc2md status
+drop2md status
 
 # Remove service
-doc2md uninstall-service
+drop2md uninstall-service
 
 # Logs
-tail -f ~/Library/Logs/doc2md/doc2md.log
+tail -f ~/Library/Logs/drop2md/drop2md.log
 ```
 
 ## Claude Desktop Integration
@@ -149,7 +149,7 @@ pages: 12
 
 ## Optional AI Enhancement
 
-When `[ollama] enabled = true`, doc2md runs an optional post-processing pass:
+When `[ollama] enabled = true`, drop2md runs an optional post-processing pass:
 
 - **Image captions**: Embedded images get AI-generated alt-text
 - **Table validation**: Broken GFM tables are auto-corrected
@@ -166,11 +166,11 @@ model    = "qwen3.5:latest"
 | Provider | Extra install | API key env var | Notes |
 |---|---|---|---|
 | `ollama` | — (default) | — | Free, local, requires Ollama running |
-| `claude` | `pip install doc2md[claude]` | `ANTHROPIC_API_KEY` | Claude Haiku by default |
-| `openai` | `pip install doc2md[openai]` | `OPENAI_API_KEY` | GPT-4o-mini by default |
-| `hf` | `pip install doc2md[openai]` | `HF_TOKEN` | HuggingFace Inference Router |
+| `claude` | `pip install drop2md[claude]` | `ANTHROPIC_API_KEY` | Claude Haiku by default |
+| `openai` | `pip install drop2md[openai]` | `OPENAI_API_KEY` | GPT-4o-mini by default |
+| `hf` | `pip install drop2md[openai]` | `HF_TOKEN` | HuggingFace Inference Router |
 
-API keys are resolved in order: `api_key` field in config → `DOC2MD_ENHANCE_API_KEY` env var → provider-native env var.
+API keys are resolved in order: `api_key` field in config → `DROP2MD_ENHANCE_API_KEY` env var → provider-native env var.
 
 All providers fall back gracefully — a missing key or offline service never blocks conversion.
 

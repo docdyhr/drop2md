@@ -1,4 +1,4 @@
-"""Shared pytest fixtures for doc2md tests."""
+"""Shared pytest fixtures for drop2md tests."""
 
 from __future__ import annotations
 

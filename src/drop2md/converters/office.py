@@ -1,6 +1,6 @@
-"""HTML to Markdown converter.
+"""Office document converter: DOCX, PPTX, XLSX.
 
-Primary: html2text
+Primary: MarkItDown (microsoft/markitdown, MIT)
 Fallback: pandoc subprocess
 """
 
@@ -10,47 +10,40 @@ import logging
 import subprocess
 from pathlib import Path
 
-from doc2md.converters import BaseConverter, ConversionError, ConverterResult
+from drop2md.converters import BaseConverter, ConversionError, ConverterResult
 
 log = logging.getLogger(__name__)
 
 
-class Html2TextConverter(BaseConverter):
-    """html2text converter."""
+class MarkItDownConverter(BaseConverter):
+    """MarkItDown converter for Office formats (DOCX, PPTX, XLSX)."""
 
-    name = "html2text"
+    name = "markitdown"
 
     @classmethod
     def is_available(cls) -> bool:
         try:
-            import html2text  # noqa: F401
+            import markitdown  # noqa: F401
 
             return True
         except ImportError:
             return False
 
     def convert(self, path: Path, output_dir: Path) -> ConverterResult:
-        import html2text
+        from markitdown import MarkItDown
 
-        h = html2text.HTML2Text()
-        h.ignore_links = False
-        h.ignore_images = False
-        h.body_width = 0  # no line wrapping
-        h.unicode_snob = True
-        h.protect_links = True
-
-        html_content = path.read_text(encoding="utf-8", errors="replace")
-        markdown = h.handle(html_content)
+        md = MarkItDown()
+        result = md.convert(str(path))
         return ConverterResult(
-            markdown=markdown,
+            markdown=result.text_content,
             converter_used=self.name,
         )
 
 
-class PandocHtmlConverter(BaseConverter):
-    """Pandoc subprocess fallback for HTML."""
+class PandocOfficeConverter(BaseConverter):
+    """Pandoc subprocess fallback for DOCX files."""
 
-    name = "pandoc-html"
+    name = "pandoc"
 
     @classmethod
     def is_available(cls) -> bool:
@@ -61,8 +54,12 @@ class PandocHtmlConverter(BaseConverter):
         ).returncode == 0
 
     def convert(self, path: Path, output_dir: Path) -> ConverterResult:
+        suffix = path.suffix.lower()
+        if suffix not in {".docx", ".odt", ".rtf"}:
+            raise ConversionError(f"Pandoc fallback does not support {suffix}")
+
         result = subprocess.run(
-            ["pandoc", "-f", "html", "-t", "gfm", str(path)],
+            ["pandoc", "-f", "docx", "-t", "gfm", str(path)],
             capture_output=True,
             text=True,
             check=False,
@@ -75,13 +72,13 @@ class PandocHtmlConverter(BaseConverter):
         )
 
 
-class HtmlConverter(BaseConverter):
-    """Routes HTML through html2text with pandoc fallback."""
+class OfficeConverter(BaseConverter):
+    """Routes DOCX/PPTX/XLSX through MarkItDown with Pandoc fallback."""
 
-    name = "html"
+    name = "office"
 
     def convert(self, path: Path, output_dir: Path) -> ConverterResult:
-        for ConverterClass in [Html2TextConverter, PandocHtmlConverter]:
+        for ConverterClass in [MarkItDownConverter, PandocOfficeConverter]:
             if not ConverterClass.is_available():
                 continue
             try:
@@ -91,4 +88,4 @@ class HtmlConverter(BaseConverter):
             except Exception as exc:
                 log.warning("%s failed for %s: %s", ConverterClass.name, path.name, exc)
 
-        raise ConversionError(f"No HTML converter available for {path}")
+        raise ConversionError(f"No office converter available for {path}")

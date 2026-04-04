@@ -1,4 +1,4 @@
-"""Unit tests for the doc2md MCP server tools."""
+"""Unit tests for the drop2md MCP server tools."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import pytest
 @pytest.fixture
 def out_dir(tmp_path, monkeypatch):
     """Redirect the global _cfg output directory to tmp_path for isolation."""
-    from doc2md import mcp_server
+    from drop2md import mcp_server
     monkeypatch.setattr(mcp_server._cfg.paths, "output_dir", tmp_path)
     return tmp_path
 
@@ -18,7 +18,7 @@ def out_dir(tmp_path, monkeypatch):
 @pytest.mark.unit
 def test_convert_document_missing_file(tmp_path):
     """convert_document returns an error string for a missing file."""
-    from doc2md.mcp_server import convert_document
+    from drop2md.mcp_server import convert_document
 
     result = convert_document(str(tmp_path / "nonexistent.pdf"))
     assert result.startswith("Error")
@@ -28,7 +28,7 @@ def test_convert_document_missing_file(tmp_path):
 @pytest.mark.unit
 def test_convert_document_html(tmp_path):
     """convert_document converts a real HTML file and returns markdown."""
-    from doc2md.mcp_server import convert_document
+    from drop2md.mcp_server import convert_document
 
     html = tmp_path / "test.html"
     html.write_text("<html><body><h1>Hello</h1><p>World</p></body></html>", encoding="utf-8")
@@ -41,7 +41,7 @@ def test_convert_document_html(tmp_path):
 @pytest.mark.unit
 def test_convert_document_with_frontmatter(tmp_path):
     """convert_document adds YAML frontmatter when requested."""
-    from doc2md.mcp_server import convert_document
+    from drop2md.mcp_server import convert_document
 
     html = tmp_path / "doc.html"
     html.write_text("<html><body><p>Text</p></body></html>", encoding="utf-8")
@@ -54,7 +54,7 @@ def test_convert_document_with_frontmatter(tmp_path):
 @pytest.mark.unit
 def test_convert_document_writes_output_file(tmp_path):
     """convert_document saves the .md file to the output directory."""
-    from doc2md.mcp_server import convert_document
+    from drop2md.mcp_server import convert_document
 
     html = tmp_path / "sample.html"
     html.write_text("<html><body><h2>Title</h2></body></html>", encoding="utf-8")
@@ -69,7 +69,7 @@ def test_convert_document_writes_output_file(tmp_path):
 @pytest.mark.unit
 def test_list_converted_empty_dir(out_dir):
     """list_converted returns a helpful message when no files exist."""
-    from doc2md.mcp_server import list_converted
+    from drop2md.mcp_server import list_converted
 
     result = list_converted(limit=10)
     assert "No converted files" in result
@@ -78,7 +78,7 @@ def test_list_converted_empty_dir(out_dir):
 @pytest.mark.unit
 def test_list_converted_shows_files(out_dir):
     """list_converted returns a table of markdown files."""
-    from doc2md.mcp_server import list_converted
+    from drop2md.mcp_server import list_converted
 
     (out_dir / "report.md").write_text("# Report", encoding="utf-8")
     (out_dir / "notes.md").write_text("# Notes", encoding="utf-8")
@@ -93,7 +93,7 @@ def test_list_converted_shows_files(out_dir):
 @pytest.mark.unit
 def test_get_output_file_returns_content(out_dir):
     """get_output_file returns the markdown content of a file."""
-    from doc2md.mcp_server import get_output_file
+    from drop2md.mcp_server import get_output_file
 
     (out_dir / "report.md").write_text("# Hello World\n", encoding="utf-8")
 
@@ -104,7 +104,7 @@ def test_get_output_file_returns_content(out_dir):
 @pytest.mark.unit
 def test_get_output_file_missing(out_dir):
     """get_output_file returns an error message for missing files."""
-    from doc2md.mcp_server import get_output_file
+    from drop2md.mcp_server import get_output_file
 
     result = get_output_file("missing.md")
     assert result == "File not found: missing.md"
@@ -113,7 +113,7 @@ def test_get_output_file_missing(out_dir):
 @pytest.mark.unit
 def test_get_output_file_rejects_non_markdown(out_dir):
     """get_output_file rejects non-.md files."""
-    from doc2md.mcp_server import get_output_file
+    from drop2md.mcp_server import get_output_file
 
     (out_dir / "data.csv").write_text("a,b,c", encoding="utf-8")
     result = get_output_file(str(out_dir / "data.csv"))
@@ -125,7 +125,7 @@ def test_get_output_file_rejects_non_markdown(out_dir):
 @pytest.mark.unit
 def test_watch_status_returns_config():
     """watch_status includes key config values."""
-    from doc2md.mcp_server import watch_status
+    from drop2md.mcp_server import watch_status
 
     result = watch_status()
     assert "Watch dir" in result
@@ -137,7 +137,7 @@ def test_watch_status_returns_config():
 @pytest.mark.unit
 def test_output_resource_returns_content(out_dir):
     """output_resource serves file content as a resource."""
-    from doc2md.mcp_server import output_resource
+    from drop2md.mcp_server import output_resource
 
     (out_dir / "test.md").write_text("# Resource Test\n", encoding="utf-8")
 
@@ -148,7 +148,7 @@ def test_output_resource_returns_content(out_dir):
 @pytest.mark.unit
 def test_output_resource_missing(out_dir):
     """output_resource returns a not-found message for missing files."""
-    from doc2md.mcp_server import output_resource
+    from drop2md.mcp_server import output_resource
 
     result = output_resource("ghost.md")
     assert "Not found" in result

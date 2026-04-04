@@ -1,12 +1,12 @@
-"""Unit tests for the doc2md CLI."""
+"""Unit tests for the drop2md CLI."""
 
 from __future__ import annotations
 
 import pytest
 from typer.testing import CliRunner
 
-from doc2md import __version__
-from doc2md.cli import app
+from drop2md import __version__
+from drop2md.cli import app
 
 runner = CliRunner()
 

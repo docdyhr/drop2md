@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from doc2md.converters import ConversionError
-from doc2md.converters.office import (
+from drop2md.converters import ConversionError
+from drop2md.converters.office import (
     MarkItDownConverter,
     OfficeConverter,
     PandocOfficeConverter,

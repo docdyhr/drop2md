@@ -1,6 +1,6 @@
 # Testing Guide
 
-Complete reference for testing doc2md — automated test suite, manual CLI verification,
+Complete reference for testing drop2md — automated test suite, manual CLI verification,
 MCP server interactive testing, watcher end-to-end, and AI provider validation.
 
 ---
@@ -31,7 +31,7 @@ pytest -k "test_convert"
 pytest -v
 
 # See coverage gaps for a specific module
-pytest --cov=doc2md.mcp_server --cov-report=term-missing -m unit
+pytest --cov=drop2md.mcp_server --cov-report=term-missing -m unit
 ```
 
 ### Coverage threshold
@@ -47,29 +47,29 @@ Coverage XML is written to `coverage.xml` after every run.
 
 ```bash
 # HTML
-doc2md convert tests/fixtures/sample.pdf
-doc2md convert tests/fixtures/sample.docx
+drop2md convert tests/fixtures/sample.pdf
+drop2md convert tests/fixtures/sample.docx
 
 # Specify output directory
-doc2md convert tests/fixtures/sample.pdf --output /tmp/test-out/
+drop2md convert tests/fixtures/sample.pdf --output /tmp/test-out/
 
 # Suppress frontmatter
-doc2md convert tests/fixtures/sample.pdf --no-frontmatter
+drop2md convert tests/fixtures/sample.pdf --no-frontmatter
 
 # Multiple files
-doc2md convert tests/fixtures/sample.pdf tests/fixtures/sample.docx --output /tmp/test-out/
+drop2md convert tests/fixtures/sample.pdf tests/fixtures/sample.docx --output /tmp/test-out/
 
 # Use a specific config
-doc2md convert tests/fixtures/sample.pdf --config config.toml
+drop2md convert tests/fixtures/sample.pdf --config config.toml
 ```
 
 ### Version and help
 
 ```bash
-doc2md --version
-doc2md --help
-doc2md convert --help
-doc2md watch --help
+drop2md --version
+drop2md --help
+drop2md convert --help
+drop2md watch --help
 ```
 
 ### Expected output
@@ -102,7 +102,7 @@ pages: 1
 
 ```bash
 # Start the watcher — shows file events in real time
-doc2md watch --config config.toml
+drop2md watch --config config.toml
 
 # In a second terminal, drop a file into the watch dir:
 cp tests/fixtures/sample.pdf ~/Documents/drop-to-md/
@@ -115,19 +115,19 @@ cp tests/fixtures/sample.pdf ~/Documents/drop-to-md/
 ### Disable AI enhancement for faster watcher tests
 
 ```bash
-DOC2MD_OLLAMA_ENABLED=false doc2md watch --config config.toml
+DROP2MD_OLLAMA_ENABLED=false drop2md watch --config config.toml
 ```
 
 ### launchd service status
 
 ```bash
-doc2md status
+drop2md status
 
 # Show what launchctl knows about the service
-launchctl list com.thomasdyhr.doc2md
+launchctl list com.thomasdyhr.drop2md
 
 # Tail the service log
-tail -f ~/Library/Logs/doc2md/doc2md.log
+tail -f ~/Library/Logs/drop2md/drop2md.log
 ```
 
 ---
@@ -146,7 +146,7 @@ from a browser without opening Claude Desktop.
 source .venv/bin/activate
 
 # Start the inspector — opens http://localhost:5173 in your browser
-mcp dev python -m doc2md.mcp_server
+mcp dev python -m drop2md.mcp_server
 ```
 
 In the browser UI:
@@ -196,15 +196,15 @@ The server speaks JSON-RPC 2.0 over stdin/stdout. You can pipe messages directly
 ```bash
 # List all available tools
 echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' \
-  | python -m doc2md.mcp_server 2>/dev/null
+  | python -m drop2md.mcp_server 2>/dev/null
 
 # Call convert_document
 echo '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"convert_document","arguments":{"path":"/tmp/nonexistent.pdf"}}}' \
-  | python -m doc2md.mcp_server 2>/dev/null
+  | python -m drop2md.mcp_server 2>/dev/null
 
 # Call watch_status
 echo '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"watch_status","arguments":{}}}' \
-  | python -m doc2md.mcp_server 2>/dev/null
+  | python -m drop2md.mcp_server 2>/dev/null
 ```
 
 ### 4d. Smoke-test the entry point
@@ -213,10 +213,10 @@ Before registering in Claude Desktop, verify the server starts cleanly:
 
 ```bash
 # Should start silently (waiting for input on stdin — Ctrl-C to exit)
-doc2md-mcp
+drop2md-mcp
 
 # Or via the module
-python -m doc2md.mcp_server
+python -m drop2md.mcp_server
 ```
 
 Any import error or config problem will appear immediately.
@@ -233,11 +233,11 @@ List all recently converted files
 
 Show me the contents of report.md
 
-What is doc2md currently watching?
+What is drop2md currently watching?
 ```
 
 Claude Desktop logs: `~/Library/Logs/Claude/`
-MCP calls are logged to: `~/Library/Logs/doc2md/doc2md.log` (if `[logging] file` is set)
+MCP calls are logged to: `~/Library/Logs/drop2md/drop2md.log` (if `[logging] file` is set)
 
 ---
 
@@ -250,20 +250,20 @@ MCP calls are logged to: `~/Library/Logs/doc2md/doc2md.log` (if `[logging] file`
 curl -s http://localhost:11434/api/tags | python -m json.tool | grep name
 
 # Convert with Ollama enabled
-DOC2MD_OLLAMA_ENABLED=true \
-  doc2md convert tests/fixtures/sample.pdf --config config.toml
+DROP2MD_OLLAMA_ENABLED=true \
+  drop2md convert tests/fixtures/sample.pdf --config config.toml
 ```
 
 ### Claude (Anthropic)
 
 ```bash
-# Requires: pip install doc2md[claude]
+# Requires: pip install drop2md[claude]
 pip install -e ".[claude]"
 
-DOC2MD_ENHANCE_PROVIDER=claude \
-DOC2MD_OLLAMA_ENABLED=true \
+DROP2MD_ENHANCE_PROVIDER=claude \
+DROP2MD_OLLAMA_ENABLED=true \
 ANTHROPIC_API_KEY=sk-ant-... \
-  doc2md convert tests/fixtures/sample.pdf
+  drop2md convert tests/fixtures/sample.pdf
 ```
 
 ### OpenAI
@@ -271,20 +271,20 @@ ANTHROPIC_API_KEY=sk-ant-... \
 ```bash
 pip install -e ".[openai]"
 
-DOC2MD_ENHANCE_PROVIDER=openai \
-DOC2MD_OLLAMA_ENABLED=true \
+DROP2MD_ENHANCE_PROVIDER=openai \
+DROP2MD_OLLAMA_ENABLED=true \
 OPENAI_API_KEY=sk-... \
-  doc2md convert tests/fixtures/sample.pdf
+  drop2md convert tests/fixtures/sample.pdf
 ```
 
 ### HuggingFace Inference Router
 
 ```bash
 # Set base_url in [openai] section of config.toml, then:
-DOC2MD_ENHANCE_PROVIDER=hf \
-DOC2MD_OLLAMA_ENABLED=true \
+DROP2MD_ENHANCE_PROVIDER=hf \
+DROP2MD_OLLAMA_ENABLED=true \
 HF_TOKEN=hf_... \
-  doc2md convert tests/fixtures/sample.pdf
+  drop2md convert tests/fixtures/sample.pdf
 ```
 
 ### Unit tests for enhancement providers (all mocked)
@@ -298,7 +298,7 @@ pytest tests/unit/test_enhance.py -v
 
 For each provider, keys are resolved in this order:
 1. `api_key` field in `[ollama]` section of `config.toml`
-2. `DOC2MD_ENHANCE_API_KEY` environment variable
+2. `DROP2MD_ENHANCE_API_KEY` environment variable
 3. Provider native env var: `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `HF_TOKEN`
 
 ---
@@ -310,7 +310,7 @@ For each provider, keys are resolved in this order:
 ```bash
 # Force the legacy pdfplumber tier (fastest, always available)
 python -c "
-from doc2md.converters.legacy_pdf import LegacyPdfConverter
+from drop2md.converters.legacy_pdf import LegacyPdfConverter
 from pathlib import Path
 r = LegacyPdfConverter().convert(Path('tests/fixtures/sample.pdf'), Path('/tmp'))
 print(r.markdown[:500])
@@ -318,7 +318,7 @@ print(r.markdown[:500])
 
 # Test whichever tier is active via the full dispatch
 python -c "
-from doc2md.dispatcher import dispatch
+from drop2md.dispatcher import dispatch
 r = dispatch(Path('tests/fixtures/sample.pdf').resolve(), Path('/tmp'))
 print(f'Converter: {r.converter_used}')
 print(r.markdown[:500])
@@ -328,17 +328,17 @@ print(r.markdown[:500])
 ### Office (DOCX)
 
 ```bash
-doc2md convert tests/fixtures/sample.docx --output /tmp/test-out/ --no-frontmatter
+drop2md convert tests/fixtures/sample.docx --output /tmp/test-out/ --no-frontmatter
 cat /tmp/test-out/sample.md
 ```
 
 ### Image OCR
 
 ```bash
-# Requires: pip install doc2md[ocr]
-doc2md convert tests/fixtures/sample.png --output /tmp/test-out/
+# Requires: pip install drop2md[ocr]
+drop2md convert tests/fixtures/sample.png --output /tmp/test-out/
 cat /tmp/test-out/sample.md
-# Should include OCR text: "doc2md Image OCR Test"
+# Should include OCR text: "drop2md Image OCR Test"
 ```
 
 ---
@@ -362,12 +362,12 @@ bandit -r src/
 pip-audit
 
 # 5. CLI smoke test
-doc2md --version
-doc2md convert tests/fixtures/sample.pdf --output /tmp/smoke-test/
+drop2md --version
+drop2md convert tests/fixtures/sample.pdf --output /tmp/smoke-test/
 cat /tmp/smoke-test/sample.md | head -20
 
 # 6. MCP server starts cleanly
-timeout 3 python -m doc2md.mcp_server; echo "Exit: $?"
+timeout 3 python -m drop2md.mcp_server; echo "Exit: $?"
 
 # 7. MCP tools pass
 pytest tests/unit/test_mcp_server.py -v

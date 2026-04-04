@@ -15,11 +15,11 @@ from pathlib import Path
 from watchdog.events import FileCreatedEvent, FileMovedEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
-from doc2md.config import Config
-from doc2md.converters import ConversionError
-from doc2md.dispatcher import dispatch
-from doc2md.postprocess import postprocess
-from doc2md.utils.fs import ProcessingLock, atomic_write, safe_filename
+from drop2md.config import Config
+from drop2md.converters import ConversionError
+from drop2md.dispatcher import dispatch
+from drop2md.postprocess import postprocess
+from drop2md.utils.fs import ProcessingLock, atomic_write, safe_filename
 
 log = logging.getLogger(__name__)
 
@@ -92,7 +92,7 @@ def _process_file(path: Path, config: Config) -> None:
             # Optional Ollama enhancement
             if config.ollama.enabled:
                 try:
-                    from doc2md.enhance import enhance
+                    from drop2md.enhance import enhance
 
                     result = enhance(result, config)
                 except Exception as exc:

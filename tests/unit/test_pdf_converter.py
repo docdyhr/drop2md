@@ -7,8 +7,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from doc2md.converters import ConversionError, ConverterResult
-from doc2md.converters.pdf import (
+from drop2md.converters import ConversionError, ConverterResult
+from drop2md.converters.pdf import (
     DoclingPdfConverter,
     LegacyPdfConverter,
     MarkerPdfConverter,

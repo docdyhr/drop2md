@@ -1,8 +1,8 @@
-# CLAUDE.md — doc2md Developer Guide
+# CLAUDE.md — drop2md Developer Guide
 
 ## Project Overview
 
-`doc2md` is a macOS document-to-markdown converter with folder watching.
+`drop2md` is a macOS document-to-markdown converter with folder watching.
 It converts PDF, DOCX, PPTX, XLSX, HTML, EPUB, and image files to clean GFM markdown,
 optimized for use with Claude Desktop, Claude Code, and other LLM tools.
 
@@ -36,17 +36,17 @@ cp config.toml.example config.toml
 
 ```bash
 # One-shot conversion
-doc2md convert path/to/file.pdf
-doc2md convert path/to/file.pdf --output ~/Desktop/output/
+drop2md convert path/to/file.pdf
+drop2md convert path/to/file.pdf --output ~/Desktop/output/
 
 # Start watcher (foreground)
-doc2md watch
-doc2md watch --config path/to/config.toml
+drop2md watch
+drop2md watch --config path/to/config.toml
 
 # Install as macOS background service (launchd)
-doc2md install-service
-doc2md uninstall-service
-doc2md status
+drop2md install-service
+drop2md uninstall-service
+drop2md status
 
 # Run tests
 pytest
@@ -67,7 +67,7 @@ pip-audit
 ## Package Structure
 
 ```
-src/doc2md/
+src/drop2md/
 ├── __init__.py         # version, public API
 ├── cli.py              # typer CLI entry point
 ├── config.py           # TOML config loader
@@ -92,7 +92,7 @@ src/doc2md/
 
 ## Adding a New Converter
 
-1. Create `src/doc2md/converters/myformat.py`
+1. Create `src/drop2md/converters/myformat.py`
 2. Subclass `BaseConverter` from `converters/__init__.py`
 3. Implement `convert(path, config) -> ConverterResult` and `is_available() -> bool`
 4. Register in `dispatcher.py` MIME_MAP
@@ -102,11 +102,11 @@ src/doc2md/
 
 | Variable | Default | Description |
 |---|---|---|
-| `DOC2MD_CONFIG` | `./config.toml` | Path to config file |
-| `DOC2MD_WATCH_DIR` | from config | Override watch directory |
-| `DOC2MD_OUTPUT_DIR` | from config | Override output directory |
-| `DOC2MD_OLLAMA_ENABLED` | `false` | Enable Ollama enhancement |
-| `DOC2MD_LOG_LEVEL` | `INFO` | Log verbosity |
+| `DROP2MD_CONFIG` | `./config.toml` | Path to config file |
+| `DROP2MD_WATCH_DIR` | from config | Override watch directory |
+| `DROP2MD_OUTPUT_DIR` | from config | Override output directory |
+| `DROP2MD_OLLAMA_ENABLED` | `false` | Enable Ollama enhancement |
+| `DROP2MD_LOG_LEVEL` | `INFO` | Log verbosity |
 
 ## Dependency Extras
 

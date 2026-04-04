@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from doc2md.converters import ConverterResult
-from doc2md.enhance import describe_image, enhance, validate_table
+from drop2md.converters import ConverterResult
+from drop2md.enhance import describe_image, enhance, validate_table
 
 
 def _cfg(enabled: bool = True, timeout: int = 5, provider: str = "ollama") -> MagicMock:

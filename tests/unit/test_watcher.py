@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from watchdog.events import FileCreatedEvent, FileMovedEvent
 
-from doc2md.watcher import _DebounceHandler, _process_file, _worker
+from drop2md.watcher import _DebounceHandler, _process_file, _worker
 
 # ─── _DebounceHandler ────────────────────────────────────────────────────────
 
@@ -138,7 +138,7 @@ def test_process_file_skips_when_overwrite_false(tmp_path):
     cfg.paths.output_dir = tmp_path
     cfg.output.overwrite = False
 
-    with patch("doc2md.watcher.dispatch") as mock_dispatch:
+    with patch("drop2md.watcher.dispatch") as mock_dispatch:
         _process_file(html, cfg)
     mock_dispatch.assert_not_called()
 
@@ -146,7 +146,7 @@ def test_process_file_skips_when_overwrite_false(tmp_path):
 @pytest.mark.unit
 def test_process_file_handles_conversion_error(tmp_path):
     """ConversionError during processing is caught and logged, not raised."""
-    from doc2md.converters import ConversionError
+    from drop2md.converters import ConversionError
 
     html = tmp_path / "bad.html"
     html.write_text("<p>hi</p>")
@@ -158,7 +158,7 @@ def test_process_file_handles_conversion_error(tmp_path):
     cfg.output.preserve_page_markers = False
     cfg.ollama.enabled = False
 
-    with patch("doc2md.watcher.dispatch", side_effect=ConversionError("boom")):
+    with patch("drop2md.watcher.dispatch", side_effect=ConversionError("boom")):
         _process_file(html, cfg)  # Must not raise
 
 
@@ -182,7 +182,7 @@ def test_worker_processes_queued_files(tmp_path):
     cfg = MagicMock()
 
     t = threading.Thread(target=_worker, args=[q, cfg, stop], daemon=True)
-    with patch("doc2md.watcher._process_file", side_effect=fake_process):
+    with patch("drop2md.watcher._process_file", side_effect=fake_process):
         t.start()
         q.join()
         stop.set()

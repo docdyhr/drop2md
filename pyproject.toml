@@ -1,5 +1,5 @@
 [project]
-name = "doc2md"
+name = "drop2md"
 version = "0.1.0"
 description = "macOS document-to-markdown converter with folder watching and LLM integration"
 readme = "README.md"
@@ -20,9 +20,9 @@ name = "Thomas Juul Dyhr"
 email = "docdyhr@me.com"
 
 [project.urls]
-Homepage = "https://github.com/docdyhr/doc2md"
-Repository = "https://github.com/docdyhr/doc2md"
-Issues = "https://github.com/docdyhr/doc2md/issues"
+Homepage = "https://github.com/docdyhr/drop2md"
+Repository = "https://github.com/docdyhr/drop2md"
+Issues = "https://github.com/docdyhr/drop2md/issues"
 
 [project.optional-dependencies]
 # Large ML models — pulls PyTorch (~2GB), install separately
@@ -85,8 +85,8 @@ all = [
 ]
 
 [project.scripts]
-doc2md = "doc2md.cli:app"
-doc2md-mcp = "doc2md.mcp_server:main"
+drop2md = "drop2md.cli:app"
+drop2md-mcp = "drop2md.mcp_server:main"
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]
@@ -94,7 +94,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["doc2md*"]
+include = ["drop2md*"]
 exclude = ["tests*"]
 
 [tool.mypy]
@@ -144,7 +144,7 @@ ignore = ["E203", "E501", "E402", "SIM105", "SIM102", "SIM103", "SIM212", "UP035
 "scripts/*" = ["SIM", "S"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["doc2md"]
+known-first-party = ["drop2md"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

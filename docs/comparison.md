@@ -1,7 +1,7 @@
-# doc2md — Ecosystem Comparison
+# drop2md — Ecosystem Comparison
 
 A survey of open-source document-to-markdown tools: how they differ, where each excels,
-and where this project (docdyhr/doc2md) fits in the landscape.
+and where this project (docdyhr/drop2md) fits in the landscape.
 
 *Last updated: April 2026. Star counts are approximate at time of writing.*
 
@@ -34,7 +34,7 @@ via a tiered fallback strategy.
 | **DS4SD/docling** | ~54k | 12+ | ML layout model + table detection | Optional | No | No | Yes | No | Apache 2.0 |
 | **datalab-to/marker** | ~33k | 8 | Surya ML + OCR fallback | Yes (GPU/MPS) | No | No | No | Optional LLM | GPL v3 |
 | **robert-mcdermott/doc2md** | ~28 | 6 (images + PDF) | Vision LLM per page | No | No | No | No | Core feature (vision) | Apache 2.0 |
-| **docdyhr/doc2md** (this) | — | 11+ | Marker → Docling → PyMuPDF4LLM → pdfplumber | Optional (MPS) | Yes | Yes | Yes | Ollama / Claude / OpenAI / HF | MIT |
+| **docdyhr/drop2md** (this) | — | 11+ | Marker → Docling → PyMuPDF4LLM → pdfplumber | Optional (MPS) | Yes | Yes | Yes | Ollama / Claude / OpenAI / HF | MIT |
 
 ---
 
@@ -136,9 +136,9 @@ unreliable; users who already run Ollama locally and want a minimal tool.
 
 ---
 
-### docdyhr/doc2md (this project)
+### docdyhr/drop2md (this project)
 
-[github.com/docdyhr/doc2md](https://github.com/docdyhr/doc2md) — v0.1.0, MIT
+[github.com/docdyhr/drop2md](https://github.com/docdyhr/drop2md) — v0.1.0, MIT
 
 A macOS-first document automation system built around Claude Desktop integration.
 Rather than picking a single conversion strategy, it runs a tiered waterfall
@@ -148,7 +148,7 @@ conversion in a folder watcher, runs as a `launchd` service, and exposes all
 functionality as MCP tools consumable directly inside Claude Desktop.
 
 **Strengths:** `launchd` background service with native FSEvents watching (unique in
-this space); first-class Claude Desktop MCP integration (`install-mcp`, `doc2md-mcp`);
+this space); first-class Claude Desktop MCP integration (`install-mcp`, `drop2md-mcp`);
 multi-provider AI enhancement (Ollama, Claude, OpenAI, HuggingFace) with non-blocking
 fallback; tiered PDF strategy adapts to installed deps; Apple Silicon MPS support;
 GFM post-processing (table validation, heading normalisation, YAML frontmatter);
@@ -166,7 +166,7 @@ matters as much as conversion quality.
 
 ## Feature Matrix
 
-| Feature | MarkItDown | Docling | Marker | robert-mcdermott | docdyhr/doc2md |
+| Feature | MarkItDown | Docling | Marker | robert-mcdermott | docdyhr/drop2md |
 |---|---|---|---|---|---|
 | **Input: PDF** | Text + optional OCR | ML layout + table | ML + Surya OCR | Vision LLM per page | Tiered (4 converters) |
 | **Input: DOCX/PPTX/XLSX** | ✓ | ✓ | ✓ | ✗ | ✓ (MarkItDown + Pandoc) |
@@ -218,7 +218,7 @@ If the PDF has no text layer, this tool's vision-LLM-per-page approach is the ri
 fit. Pairs naturally with a local Ollama instance for fully offline operation.
 
 **5. macOS automation, Claude Desktop integration, LLM-driven workflows**
-→ **docdyhr/doc2md (this project)**
+→ **docdyhr/drop2md (this project)**
 Drop a file in a folder; it appears as clean markdown in Claude Desktop without any
 manual steps. The MCP tools let Claude convert, list, and read documents directly.
 The tiered PDF strategy means you get the best quality your installed stack allows,
@@ -228,7 +228,7 @@ always with a fallback to pdfplumber.
 
 ## Positioning Summary
 
-docdyhr/doc2md is not trying to be the most accurate PDF converter or the most portable
+docdyhr/drop2md is not trying to be the most accurate PDF converter or the most portable
 utility. Its core proposition is **zero-friction document delivery to Claude Desktop on
 macOS**.
 

@@ -1,6 +1,6 @@
-"""TOML configuration loader for doc2md.
+"""TOML configuration loader for drop2md.
 
-Reads config.toml (or a path from DOC2MD_CONFIG env var) and returns a
+Reads config.toml (or a path from DROP2MD_CONFIG env var) and returns a
 frozen Config dataclass. All path values are expanded via Path.expanduser().
 """
 
@@ -99,12 +99,12 @@ def _expand_paths(cfg: Config) -> None:
 
 
 def load_config(path: Path | None = None) -> Config:
-    """Load config from *path* (defaults to DOC2MD_CONFIG env var or config.toml).
+    """Load config from *path* (defaults to DROP2MD_CONFIG env var or config.toml).
 
     Missing file → returns default Config.
     """
     if path is None:
-        env_path = os.environ.get("DOC2MD_CONFIG")
+        env_path = os.environ.get("DROP2MD_CONFIG")
         path = Path(env_path) if env_path else DEFAULT_CONFIG_PATH
 
     if not path.exists():
@@ -136,15 +136,15 @@ def load_config(path: Path | None = None) -> Config:
 
 
 def _apply_env_overrides(cfg: Config) -> None:
-    if val := os.environ.get("DOC2MD_WATCH_DIR"):
+    if val := os.environ.get("DROP2MD_WATCH_DIR"):
         cfg.paths.watch_dir = Path(val).expanduser()
-    if val := os.environ.get("DOC2MD_OUTPUT_DIR"):
+    if val := os.environ.get("DROP2MD_OUTPUT_DIR"):
         cfg.paths.output_dir = Path(val).expanduser()
-    if val := os.environ.get("DOC2MD_OLLAMA_ENABLED"):
+    if val := os.environ.get("DROP2MD_OLLAMA_ENABLED"):
         cfg.ollama.enabled = val.lower() in {"1", "true", "yes"}
-    if val := os.environ.get("DOC2MD_ENHANCE_PROVIDER"):
+    if val := os.environ.get("DROP2MD_ENHANCE_PROVIDER"):
         cfg.ollama.provider = val
-    if val := os.environ.get("DOC2MD_ENHANCE_API_KEY"):
+    if val := os.environ.get("DROP2MD_ENHANCE_API_KEY"):
         cfg.ollama.api_key = val
-    if val := os.environ.get("DOC2MD_LOG_LEVEL"):
+    if val := os.environ.get("DROP2MD_LOG_LEVEL"):
         cfg.logging.level = val.upper()

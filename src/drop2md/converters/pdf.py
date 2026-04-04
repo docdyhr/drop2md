@@ -9,8 +9,8 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from doc2md.converters import BaseConverter, ConversionError, ConverterResult
-from doc2md.converters.legacy_pdf import LegacyPdfConverter
+from drop2md.converters import BaseConverter, ConversionError, ConverterResult
+from drop2md.converters.legacy_pdf import LegacyPdfConverter
 
 log = logging.getLogger(__name__)
 

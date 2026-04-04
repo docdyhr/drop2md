@@ -6,7 +6,7 @@ import logging
 import subprocess
 from pathlib import Path
 
-from doc2md.converters import BaseConverter, ConversionError, ConverterResult
+from drop2md.converters import BaseConverter, ConversionError, ConverterResult
 
 log = logging.getLogger(__name__)
 

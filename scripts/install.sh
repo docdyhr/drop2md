@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# install.sh — Bootstrap doc2md on macOS
+# install.sh — Bootstrap drop2md on macOS
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
-echo "=== doc2md installer ==="
+echo "=== drop2md installer ==="
 echo "Project: $PROJECT_DIR"
 
 # Check Python
@@ -42,7 +42,7 @@ fi
 # shellcheck source=/dev/null
 source "$VENV_DIR/bin/activate"
 echo ""
-echo "Installing doc2md (core + office + dev + test)..."
+echo "Installing drop2md (core + office + dev + test)..."
 pip install --quiet --upgrade pip
 pip install --quiet -e "$PROJECT_DIR[dev,test,office,ocr]"
 
@@ -59,8 +59,8 @@ echo "=== Installation complete ==="
 echo ""
 echo "Next steps:"
 echo "  1. Edit config.toml (watch_dir and output_dir)"
-echo "  2. Run: doc2md watch              # foreground"
-echo "  3. Run: doc2md install-service    # background service"
+echo "  2. Run: drop2md watch              # foreground"
+echo "  3. Run: drop2md install-service    # background service"
 echo ""
 echo "To install ML-based PDF support (large download):"
 echo "  pip install -e '$PROJECT_DIR[pdf-ml]'"

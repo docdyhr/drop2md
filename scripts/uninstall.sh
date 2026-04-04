@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# uninstall.sh — Remove doc2md launchd service
+# uninstall.sh — Remove drop2md launchd service
 set -euo pipefail
 
-PLIST="$HOME/Library/LaunchAgents/com.thomasdyhr.doc2md.plist"
+PLIST="$HOME/Library/LaunchAgents/com.thomasdyhr.drop2md.plist"
 
 if [[ -f "$PLIST" ]]; then
   echo "Unloading launchd service..."

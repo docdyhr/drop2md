@@ -9,12 +9,12 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from doc2md.converters import BaseConverter, ConversionError, ConverterResult
-from doc2md.converters.epub import EpubConverter
-from doc2md.converters.html import HtmlConverter
-from doc2md.converters.image import ImageConverter
-from doc2md.converters.office import OfficeConverter
-from doc2md.converters.pdf import TieredPdfConverter
+from drop2md.converters import BaseConverter, ConversionError, ConverterResult
+from drop2md.converters.epub import EpubConverter
+from drop2md.converters.html import HtmlConverter
+from drop2md.converters.image import ImageConverter
+from drop2md.converters.office import OfficeConverter
+from drop2md.converters.pdf import TieredPdfConverter
 
 log = logging.getLogger(__name__)
 

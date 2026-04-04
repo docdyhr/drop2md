@@ -1,4 +1,4 @@
-"""doc2md MCP Server — exposes document conversion to Claude Desktop.
+"""drop2md MCP Server — exposes document conversion to Claude Desktop.
 
 Tools:
   convert_document  — convert a file to GFM markdown (returns text)
@@ -6,11 +6,11 @@ Tools:
   get_output_file   — read a specific converted markdown file
 
 Resources:
-  doc2md://output/{filename}  — serve a converted file as a resource
+  drop2md://output/{filename}  — serve a converted file as a resource
 
 Run standalone:
-  python -m doc2md.mcp_server       # stdio (for Claude Desktop)
-  doc2md-mcp                        # via installed entry point
+  python -m drop2md.mcp_server       # stdio (for Claude Desktop)
+  drop2md-mcp                        # via installed entry point
 """
 
 from __future__ import annotations
@@ -20,11 +20,11 @@ from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
 
-from doc2md.config import load_config
-from doc2md.converters import ConversionError
-from doc2md.dispatcher import dispatch
-from doc2md.postprocess import postprocess
-from doc2md.utils.fs import atomic_write, safe_filename
+from drop2md.config import load_config
+from drop2md.converters import ConversionError
+from drop2md.dispatcher import dispatch
+from drop2md.postprocess import postprocess
+from drop2md.utils.fs import atomic_write, safe_filename
 
 log = logging.getLogger(__name__)
 
@@ -32,9 +32,9 @@ log = logging.getLogger(__name__)
 _cfg = load_config()
 
 mcp = FastMCP(
-    "doc2md",
+    "drop2md",
     instructions=(
-        "doc2md converts documents (PDF, DOCX, PPTX, XLSX, HTML, EPUB, images) "
+        "drop2md converts documents (PDF, DOCX, PPTX, XLSX, HTML, EPUB, images) "
         "to GFM markdown. Use convert_document to convert a file and get the "
         "markdown text back. Use list_converted to see previously converted files. "
         "Use get_output_file to read a specific converted file by name."
@@ -77,7 +77,7 @@ def convert_document(
 
         if _cfg.ollama.enabled:
             try:
-                from doc2md.enhance import enhance
+                from drop2md.enhance import enhance
                 result = enhance(result, _cfg)
             except Exception as exc:
                 log.warning("Ollama enhancement failed: %s", exc)
@@ -163,7 +163,7 @@ def get_output_file(filename: str) -> str:
 
 @mcp.tool()
 def watch_status() -> str:
-    """Show the current doc2md configuration and watcher status.
+    """Show the current drop2md configuration and watcher status.
 
     Returns:
         Configuration summary showing watch dir, output dir, and enabled features.
@@ -171,7 +171,7 @@ def watch_status() -> str:
     import subprocess
 
     lines = [
-        "## doc2md Configuration\n",
+        "## drop2md Configuration\n",
         f"- **Watch dir:** `{_cfg.paths.watch_dir}`",
         f"- **Output dir:** `{_cfg.paths.output_dir}`",
         f"- **PDF converters:** Marker={'enabled' if _cfg.pdf.use_marker else 'disabled'}, "
@@ -183,15 +183,15 @@ def watch_status() -> str:
         "## Service Status\n",
     ]
 
-    plist = Path("~/Library/LaunchAgents/com.thomasdyhr.doc2md.plist").expanduser()
+    plist = Path("~/Library/LaunchAgents/com.thomasdyhr.drop2md.plist").expanduser()
     if plist.exists():
         result = subprocess.run(
-            ["launchctl", "list", "com.thomasdyhr.doc2md"],
+            ["launchctl", "list", "com.thomasdyhr.drop2md"],
             capture_output=True, text=True, check=False,
         )
         lines.append(f"launchd service installed. `launchctl` output:\n```\n{result.stdout.strip()}\n```")
     else:
-        lines.append("launchd service **not installed**. Run `doc2md install-service` to enable.")
+        lines.append("launchd service **not installed**. Run `drop2md install-service` to enable.")
 
     return "\n".join(lines)
 
@@ -199,11 +199,11 @@ def watch_status() -> str:
 # ─── Resources ────────────────────────────────────────────────────────────────
 
 
-@mcp.resource("doc2md://output/{filename}")
+@mcp.resource("drop2md://output/{filename}")
 def output_resource(filename: str) -> str:
     """Serve a converted markdown file as an MCP resource.
 
-    URI: doc2md://output/{filename}  (e.g. doc2md://output/report.md)
+    URI: drop2md://output/{filename}  (e.g. drop2md://output/report.md)
     """
     path = _cfg.paths.output_dir / filename
     if not path.exists():
@@ -211,9 +211,9 @@ def output_resource(filename: str) -> str:
     return path.read_text(encoding="utf-8")
 
 
-@mcp.resource("doc2md://config")
+@mcp.resource("drop2md://config")
 def config_resource() -> str:
-    """Return the current doc2md configuration as markdown."""
+    """Return the current drop2md configuration as markdown."""
     return watch_status()
 
 

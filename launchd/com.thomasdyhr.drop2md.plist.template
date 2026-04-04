@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>com.thomasdyhr.doc2md</string>
+	<string>com.thomasdyhr.drop2md</string>
 
 	<key>ProgramArguments</key>
 	<array>
 		<string>__PYTHON_PATH__</string>
 		<string>-m</string>
-		<string>doc2md.cli</string>
+		<string>drop2md.cli</string>
 		<string>watch</string>
 		<string>--config</string>
 		<string>__CONFIG_PATH__</string>
@@ -17,7 +17,7 @@
 
 	<key>EnvironmentVariables</key>
 	<dict>
-		<key>DOC2MD_WATCH_DIR</key>
+		<key>DROP2MD_WATCH_DIR</key>
 		<string>__WATCH_DIR__</string>
 	</dict>
 
@@ -37,10 +37,10 @@
 	</array>
 
 	<key>StandardOutPath</key>
-	<string>__LOG_DIR__/doc2md.log</string>
+	<string>__LOG_DIR__/drop2md.log</string>
 
 	<key>StandardErrorPath</key>
-	<string>__LOG_DIR__/doc2md.log</string>
+	<string>__LOG_DIR__/drop2md.log</string>
 
 	<key>WorkingDirectory</key>
 	<string>__LOG_DIR__</string>

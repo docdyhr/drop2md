@@ -1,6 +1,6 @@
-# doc2md MCP Server — Claude Desktop Integration
+# drop2md MCP Server — Claude Desktop Integration
 
-The `doc2md` MCP server exposes document conversion as tools and resources
+The `drop2md` MCP server exposes document conversion as tools and resources
 directly inside Claude Desktop. Once registered, you can ask Claude to convert
 a file by name without switching to the terminal.
 
@@ -13,13 +13,13 @@ a file by name without switching to the terminal.
 pip install -e ".[office,ocr]"
 
 # Register in Claude Desktop (auto-detects config location)
-doc2md install-mcp
+drop2md install-mcp
 
 # Restart Claude Desktop
 # macOS: quit from the menu bar icon and reopen
 ```
 
-After restarting, `doc2md` appears in Claude Desktop's MCP server list.
+After restarting, `drop2md` appears in Claude Desktop's MCP server list.
 
 ---
 
@@ -32,9 +32,9 @@ If `install-mcp` cannot find your Claude Desktop config, add the entry manually:
 ```json
 {
   "mcpServers": {
-    "doc2md": {
+    "drop2md": {
       "command": "/path/to/.venv/bin/python",
-      "args": ["-m", "doc2md.mcp_server"]
+      "args": ["-m", "drop2md.mcp_server"]
     }
   }
 }
@@ -102,7 +102,7 @@ Read the contents of a specific converted file.
 Show the current configuration and launchd service status.
 
 **Example prompt:**
-> "What is doc2md watching?"
+> "What is drop2md watching?"
 
 ---
 
@@ -112,8 +112,8 @@ Resources can be read directly in Claude's context:
 
 | URI | Description |
 |---|---|
-| `doc2md://output/{filename}` | Read a converted markdown file |
-| `doc2md://config` | Show current configuration |
+| `drop2md://output/{filename}` | Read a converted markdown file |
+| `drop2md://config` | Show current configuration |
 
 ---
 
@@ -148,7 +148,7 @@ Claude: [calls list_converted]
 ## Uninstall
 
 ```bash
-doc2md uninstall-mcp
+drop2md uninstall-mcp
 # Then restart Claude Desktop
 ```
 
@@ -164,11 +164,11 @@ Quick summary:
 pytest tests/unit/test_mcp_server.py -v
 
 # 2. Interactive web inspector — calls tools from a browser UI
-mcp dev python -m doc2md.mcp_server
+mcp dev python -m drop2md.mcp_server
 # Opens http://localhost:5173
 
 # 3. Smoke test the entry point (Ctrl-C to exit)
-doc2md-mcp
+drop2md-mcp
 ```
 
 ---
@@ -178,15 +178,15 @@ doc2md-mcp
 **Server not appearing in Claude Desktop**
 - Check Claude Desktop logs: `~/Library/Logs/Claude/`
 - Verify the Python path in the config is correct and the venv is activated
-- Run `doc2md-mcp` directly in terminal to check for import errors
+- Run `drop2md-mcp` directly in terminal to check for import errors
 
 **"Module not found" errors**
-- The `command` in the config must point to the Python inside the venv where `doc2md` is installed
+- The `command` in the config must point to the Python inside the venv where `drop2md` is installed
 - Run `which python` inside the venv to get the correct path
 
 **Conversion fails**
-- Run `doc2md convert /path/to/file.pdf` in terminal to see the full error
-- Check `~/Library/Logs/doc2md/doc2md.log` for details
+- Run `drop2md convert /path/to/file.pdf` in terminal to see the full error
+- Check `~/Library/Logs/drop2md/drop2md.log` for details
 
 **Images not found**
 - Images are saved to `{output_dir}/images/` with relative paths in the markdown
