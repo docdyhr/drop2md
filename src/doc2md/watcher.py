@@ -92,7 +92,7 @@ def _process_file(path: Path, config: Config) -> None:
             # Optional Ollama enhancement
             if config.ollama.enabled:
                 try:
-                    from doc2md.ollama_enhance import enhance
+                    from doc2md.enhance import enhance
 
                     result = enhance(result, config)
                 except Exception as exc:

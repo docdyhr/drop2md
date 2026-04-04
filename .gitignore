@@ -75,3 +75,6 @@ output/
 
 # direnv
 .direnv/
+
+# developer settings
+private*

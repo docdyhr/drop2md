@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Multi-provider AI enhancement: Claude (Anthropic), OpenAI/ChatGPT, and HuggingFace Inference Router as alternatives to Ollama for image captioning and table validation
+- `enhance_providers.py` with `AIProvider` Protocol, `OllamaProvider`, `OpenAICompatProvider`, `ClaudeProvider`, and `make_provider()` factory
+- `enhance.py` as the new enhancement entry point (replaces direct use of `ollama_enhance.py`)
+- `ollama_enhance.py` reduced to a backward-compatible re-export shim (no breaking changes)
+- `[openai]` and `[claude]` config sections with per-provider model and timeout settings
+- `provider` and `api_key` fields in `[ollama]` config section
+- `DOC2MD_ENHANCE_PROVIDER` and `DOC2MD_ENHANCE_API_KEY` environment variable overrides
+- Optional `[claude]` (anthropic>=0.40.0) and `[openai]` (openai>=1.50.0) pip extras
+
+### Changed
+- Enhancement pipeline now routes through `make_provider()` based on `ollama.provider` config field (default: `"ollama"`, backward compatible)
+
 - Initial project scaffold with `src/doc2md` package layout
 - `ConverterResult` dataclass and `BaseConverter` ABC
 - Tiered PDF converter: Marker → Docling → PyMuPDF4LLM → pdfplumber fallback

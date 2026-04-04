@@ -77,7 +77,7 @@ def convert_document(
 
         if _cfg.ollama.enabled:
             try:
-                from doc2md.ollama_enhance import enhance
+                from doc2md.enhance import enhance
                 result = enhance(result, _cfg)
             except Exception as exc:
                 log.warning("Ollama enhancement failed: %s", exc)

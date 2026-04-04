@@ -26,12 +26,27 @@ enabled = true
 language = "eng"
 
 [ollama]
-# Enable Ollama for optional AI enhancement (image captions, table validation)
+# Enable AI enhancement (image captions, table validation)
 enabled = false
+# Provider: "ollama" (local, free), "claude", "openai", "hf" (HuggingFace)
+provider = "ollama"
+# API key — blank means the SDK reads the env var (ANTHROPIC_API_KEY / OPENAI_API_KEY / HF_TOKEN)
+api_key = ""
 base_url = "http://localhost:11434"
 # Vision-capable model (qwen3.5, minicpm-v, llava, etc.)
 model = "qwen3.5:latest"
 timeout_seconds = 60
+
+# OpenAI / HuggingFace settings — used when provider = "openai" or "hf"
+# [openai]
+# model = "gpt-4o-mini"
+# base_url = "https://api.openai.com/v1"   # set to HF router URL for provider = "hf"
+# timeout_seconds = 30
+
+# Claude settings — used when provider = "claude"
+# [claude]
+# model = "claude-haiku-4-5-20251001"
+# timeout_seconds = 30
 
 [output]
 # Add YAML frontmatter block to each output file

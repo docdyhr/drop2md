@@ -43,6 +43,9 @@ ocr = [
     "pytesseract>=0.3.13",
     "Pillow>=10.0.0",
 ]
+# Cloud AI providers for enhancement (optional alternatives to Ollama)
+claude = ["anthropic>=0.40.0"]
+openai = ["openai>=1.50.0"]
 # Development tools
 dev = [
     "ruff==0.11.2",
@@ -68,6 +71,8 @@ all = [
     "markitdown[all]>=0.1.0",
     "pytesseract>=0.3.13",
     "Pillow>=10.0.0",
+    "anthropic>=0.40.0",
+    "openai>=1.50.0",
     "ruff==0.11.2",
     "mypy>=1.11.0",
     "pre-commit>=3.0.0",
@@ -118,6 +123,8 @@ module = [
     "typer", "typer.*",
     "html2text",
     "mcp", "mcp.*",
+    "anthropic", "anthropic.*",
+    "openai", "openai.*",
 ]
 ignore_missing_imports = true
 follow_imports = "silent"

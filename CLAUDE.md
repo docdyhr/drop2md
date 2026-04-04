@@ -24,6 +24,14 @@ cp config.toml.example config.toml
 # Edit config.toml to set watch_dir and output_dir
 ```
 
+## Docs
+
+| File | Contents |
+|---|---|
+| `docs/testing.md` | Full testing reference — pytest, CLI, MCP inspector, watcher, AI providers |
+| `docs/mcp_integration.md` | Claude Desktop setup and MCP tool reference |
+| `docs/PRD.md` | Product requirements |
+
 ## Common Commands
 
 ```bash

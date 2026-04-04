@@ -154,6 +154,25 @@ doc2md uninstall-mcp
 
 ---
 
+## Testing the MCP Server
+
+See [testing.md](testing.md#4-mcp-server-testing) for the full testing reference.
+Quick summary:
+
+```bash
+# 1. Run the unit tests (no Claude Desktop needed)
+pytest tests/unit/test_mcp_server.py -v
+
+# 2. Interactive web inspector — calls tools from a browser UI
+mcp dev python -m doc2md.mcp_server
+# Opens http://localhost:5173
+
+# 3. Smoke test the entry point (Ctrl-C to exit)
+doc2md-mcp
+```
+
+---
+
 ## Troubleshooting
 
 **Server not appearing in Claude Desktop**

@@ -74,7 +74,7 @@ def convert(
 
             if cfg.ollama.enabled:
                 try:
-                    from doc2md.ollama_enhance import enhance
+                    from doc2md.enhance import enhance
                     result = enhance(result, cfg)
                 except Exception as exc:
                     typer.echo(f" [Ollama skipped: {exc}]", nl=False)

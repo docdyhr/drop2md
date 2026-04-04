@@ -44,6 +44,21 @@ class OllamaConfig:
     base_url: str = "http://localhost:11434"
     model: str = "qwen3.5:latest"
     timeout_seconds: int = 60
+    provider: str = "ollama"   # "ollama" | "claude" | "openai" | "hf"
+    api_key: str = ""          # blank → SDK reads env var (ANTHROPIC_API_KEY etc.)
+
+
+@dataclass
+class OpenAIConfig:
+    model: str = "gpt-4o-mini"
+    base_url: str = "https://api.openai.com/v1"  # override for HF router
+    timeout_seconds: int = 30
+
+
+@dataclass
+class ClaudeConfig:
+    model: str = "claude-haiku-4-5-20251001"
+    timeout_seconds: int = 30
 
 
 @dataclass
@@ -67,6 +82,8 @@ class Config:
     office: OfficeConfig = field(default_factory=OfficeConfig)
     ocr: OcrConfig = field(default_factory=OcrConfig)
     ollama: OllamaConfig = field(default_factory=OllamaConfig)
+    openai: OpenAIConfig = field(default_factory=OpenAIConfig)
+    claude: ClaudeConfig = field(default_factory=ClaudeConfig)
     output: OutputConfig = field(default_factory=OutputConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
 
@@ -108,6 +125,8 @@ def load_config(path: Path | None = None) -> Config:
         office=OfficeConfig(**data.get("office", {})),
         ocr=OcrConfig(**data.get("ocr", {})),
         ollama=OllamaConfig(**data.get("ollama", {})),
+        openai=OpenAIConfig(**data.get("openai", {})),
+        claude=ClaudeConfig(**data.get("claude", {})),
         output=OutputConfig(**data.get("output", {})),
         logging=LoggingConfig(**data.get("logging", {})),
     )
@@ -123,5 +142,9 @@ def _apply_env_overrides(cfg: Config) -> None:
         cfg.paths.output_dir = Path(val).expanduser()
     if val := os.environ.get("DOC2MD_OLLAMA_ENABLED"):
         cfg.ollama.enabled = val.lower() in {"1", "true", "yes"}
+    if val := os.environ.get("DOC2MD_ENHANCE_PROVIDER"):
+        cfg.ollama.provider = val
+    if val := os.environ.get("DOC2MD_ENHANCE_API_KEY"):
+        cfg.ollama.api_key = val
     if val := os.environ.get("DOC2MD_LOG_LEVEL"):
         cfg.logging.level = val.upper()
