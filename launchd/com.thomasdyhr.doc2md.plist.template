@@ -45,6 +45,11 @@
 	<key>WorkingDirectory</key>
 	<string>__LOG_DIR__</string>
 
+	<key>WatchPaths</key>
+	<array>
+		<string>__WATCH_DIR__</string>
+	</array>
+
 	<key>ThrottleInterval</key>
 	<integer>10</integer>
 </dict>
