@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from doc2md.converters import BaseConverter, ConversionError, ConverterResult
+from doc2md.converters import BaseConverter, ConverterResult
 
 log = logging.getLogger(__name__)
 

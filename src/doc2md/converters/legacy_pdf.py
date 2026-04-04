@@ -57,20 +57,15 @@ class LegacyPdfConverter(BaseConverter):
                 if not text:
                     continue
 
-                lines = text.splitlines()
-                in_list = False
-
-                for line in lines:
+                for line in text.splitlines():
                     stripped = line.strip()
                     if not stripped:
-                        in_list = False
                         md_parts.append("")
                         continue
 
                     if re.match(r"^[•·▪▸\-\*]\s+", stripped):
                         bullet_text = re.sub(r"^[•·▪▸\-\*]\s+", "", stripped)
                         md_parts.append(f"- {bullet_text}")
-                        in_list = True
                         continue
 
                     if re.match(r"^\d+[\.\)]\s+", stripped):
@@ -78,7 +73,6 @@ class LegacyPdfConverter(BaseConverter):
                         m = re.match(r"^(\d+)", stripped)
                         num = m.group(1) if m else "1"
                         md_parts.append(f"{num}. {num_text}")
-                        in_list = True
                         continue
 
                     is_head, level = _is_heading(stripped, avg_size)

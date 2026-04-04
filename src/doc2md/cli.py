@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 
@@ -26,7 +26,7 @@ def _version_callback(value: bool) -> None:
 @app.callback()
 def main(
     version: Annotated[
-        Optional[bool],
+        bool | None,
         typer.Option("--version", "-V", callback=_version_callback, is_eager=True),
     ] = None,
 ) -> None:
@@ -37,11 +37,11 @@ def main(
 def convert(
     files: Annotated[list[Path], typer.Argument(help="File(s) to convert")],
     output: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option("--output", "-o", help="Output directory (default: same as input)"),
     ] = None,
     config_path: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option("--config", "-c", help="Path to config.toml"),
     ] = None,
     frontmatter: Annotated[bool, typer.Option(help="Add YAML frontmatter")] = True,
@@ -90,7 +90,7 @@ def convert(
 @app.command()
 def watch(
     config_path: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option("--config", "-c", help="Path to config.toml"),
     ] = None,
 ) -> None:
@@ -107,13 +107,12 @@ def watch(
 @app.command(name="install-service")
 def install_service(
     config_path: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option("--config", "-c", help="Path to config.toml"),
     ] = None,
 ) -> None:
     """Install doc2md as a macOS launchd background service."""
     import subprocess
-    import shutil
 
     from doc2md.config import load_config
 
@@ -157,7 +156,7 @@ def install_service(
     if result.returncode != 0:
         typer.echo(f"Warning: launchctl load returned {result.returncode}: {result.stderr}")
     else:
-        typer.echo(f"Service installed and started.")
+        typer.echo("Service installed and started.")
         typer.echo(f"  Plist:  {plist_dest}")
         typer.echo(f"  Watch:  {cfg.paths.watch_dir}")
         typer.echo(f"  Output: {cfg.paths.output_dir}")

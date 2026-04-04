@@ -17,7 +17,7 @@ from watchdog.observers import Observer
 
 from doc2md.config import Config
 from doc2md.converters import ConversionError
-from doc2md.dispatcher import dispatch, get_converter
+from doc2md.dispatcher import dispatch
 from doc2md.postprocess import postprocess
 from doc2md.utils.fs import ProcessingLock, atomic_write, safe_filename
 

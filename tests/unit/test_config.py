@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from doc2md.config import Config, PathsConfig, load_config
+from doc2md.config import Config, load_config
 
 
 @pytest.mark.unit

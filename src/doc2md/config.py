@@ -7,15 +7,9 @@ frozen Config dataclass. All path values are expanded via Path.expanduser().
 from __future__ import annotations
 
 import os
-import sys
+import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
-
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib  # type: ignore[no-reattr]
-
 
 DEFAULT_CONFIG_PATH = Path("config.toml")
 
