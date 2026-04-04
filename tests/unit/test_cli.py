@@ -33,7 +33,7 @@ def test_help():
 def test_convert_missing_file(tmp_path):
     result = runner.invoke(app, ["convert", str(tmp_path / "ghost.pdf")])
     assert result.exit_code == 1
-    assert "not found" in result.output.lower() or "Error" in result.output
+    assert "not found" in result.output.lower()
 
 
 @pytest.mark.unit
@@ -47,7 +47,7 @@ def test_convert_html_file(tmp_path, sample_html):
     md_files = list(out.glob("*.md"))
     assert len(md_files) == 1
     content = md_files[0].read_text()
-    assert len(content) > 0
+    assert "Hello" in content
 
 
 @pytest.mark.unit

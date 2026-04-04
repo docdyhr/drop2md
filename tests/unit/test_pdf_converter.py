@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -98,3 +99,157 @@ def test_real_pdf_reaches_legacy(sample_pdf, tmp_path):
         result = TieredPdfConverter().convert(sample_pdf, tmp_path)
     assert result.markdown
     assert result.converter_used == "pdfplumber"
+
+
+# ─── is_available() with mocked imports ──────────────────────────────────────
+
+@pytest.mark.unit
+def test_marker_is_available_when_installed():
+    """MarkerPdfConverter.is_available() returns True when marker is importable."""
+    with patch.dict(sys.modules, {"marker": MagicMock()}):
+        assert MarkerPdfConverter.is_available() is True
+
+
+@pytest.mark.unit
+def test_docling_is_available_when_installed():
+    """DoclingPdfConverter.is_available() returns True when docling is importable."""
+    with patch.dict(sys.modules, {"docling": MagicMock()}):
+        assert DoclingPdfConverter.is_available() is True
+
+
+@pytest.mark.unit
+def test_pymupdf_is_available_when_installed():
+    """PyMuPdfConverter.is_available() returns True when pymupdf4llm is importable."""
+    with patch.dict(sys.modules, {"pymupdf4llm": MagicMock()}):
+        assert PyMuPdfConverter.is_available() is True
+
+
+# ─── convert() via mocked lazy imports ───────────────────────────────────────
+
+@pytest.mark.unit
+def test_pymupdf_converter_convert(tmp_path):
+    """PyMuPdfConverter.convert() returns markdown from pymupdf4llm.to_markdown()."""
+    path = tmp_path / "test.pdf"
+    path.write_bytes(b"fake pdf")
+
+    mock_lib = MagicMock()
+    mock_lib.to_markdown.return_value = "# From PyMuPDF"
+
+    with patch.dict(sys.modules, {"pymupdf4llm": mock_lib}):
+        result = PyMuPdfConverter().convert(path, tmp_path)
+
+    assert result.markdown == "# From PyMuPDF"
+    assert result.converter_used == "pymupdf4llm"
+    mock_lib.to_markdown.assert_called_once_with(str(path))
+
+
+@pytest.mark.unit
+def test_docling_converter_convert(tmp_path):
+    """DoclingPdfConverter.convert() returns markdown and page count."""
+    path = tmp_path / "test.pdf"
+    path.write_bytes(b"fake pdf")
+
+    mock_doc_result = MagicMock()
+    mock_doc_result.document.export_to_markdown.return_value = "# From Docling"
+    mock_doc_result.document.num_pages.return_value = 5
+
+    mock_converter_instance = MagicMock()
+    mock_converter_instance.convert.return_value = mock_doc_result
+
+    mock_docling_mod = MagicMock()
+    mock_docling_mod.DocumentConverter.return_value = mock_converter_instance
+
+    with patch.dict(sys.modules, {
+        "docling": MagicMock(),
+        "docling.document_converter": mock_docling_mod,
+    }):
+        result = DoclingPdfConverter().convert(path, tmp_path)
+
+    assert result.markdown == "# From Docling"
+    assert result.metadata == {"pages": 5}
+    assert result.converter_used == "docling"
+
+
+@pytest.mark.unit
+def test_marker_converter_convert_no_images(tmp_path):
+    """MarkerPdfConverter.convert() with no images returns plain markdown."""
+    path = tmp_path / "test.pdf"
+    path.write_bytes(b"fake pdf")
+
+    mock_pdf_mod = MagicMock()
+    mock_models_mod = MagicMock()
+    mock_models_mod.create_model_dict.return_value = {}
+    mock_output_mod = MagicMock()
+    mock_output_mod.text_from_rendered.return_value = ("# From Marker", None, {})
+
+    with patch.dict(sys.modules, {
+        "marker": MagicMock(),
+        "marker.converters": MagicMock(),
+        "marker.converters.pdf": mock_pdf_mod,
+        "marker.models": mock_models_mod,
+        "marker.output": mock_output_mod,
+    }):
+        result = MarkerPdfConverter().convert(path, tmp_path)
+
+    assert result.markdown == "# From Marker"
+    assert result.converter_used == "marker"
+    assert result.images == []
+
+
+@pytest.mark.unit
+def test_marker_converter_saves_pil_images(tmp_path):
+    """MarkerPdfConverter saves PIL Image objects (not bytes) via .save()."""
+    from unittest.mock import call
+
+    path = tmp_path / "test.pdf"
+    path.write_bytes(b"fake pdf")
+
+    mock_pil_img = MagicMock()  # simulates a PIL Image
+
+    mock_pdf_mod = MagicMock()
+    mock_models_mod = MagicMock()
+    mock_models_mod.create_model_dict.return_value = {}
+    mock_output_mod = MagicMock()
+    mock_output_mod.text_from_rendered.return_value = (
+        "# With Image", None, {"figure.png": mock_pil_img}
+    )
+
+    with patch.dict(sys.modules, {
+        "marker": MagicMock(),
+        "marker.converters": MagicMock(),
+        "marker.converters.pdf": mock_pdf_mod,
+        "marker.models": mock_models_mod,
+        "marker.output": mock_output_mod,
+    }):
+        result = MarkerPdfConverter().convert(path, tmp_path)
+
+    mock_pil_img.save.assert_called_once()
+    assert len(result.images) == 1
+
+
+@pytest.mark.unit
+def test_marker_converter_saves_bytes_images(tmp_path):
+    """MarkerPdfConverter writes raw bytes images directly."""
+    path = tmp_path / "test.pdf"
+    path.write_bytes(b"fake pdf")
+
+    mock_pdf_mod = MagicMock()
+    mock_models_mod = MagicMock()
+    mock_models_mod.create_model_dict.return_value = {}
+    mock_output_mod = MagicMock()
+    mock_output_mod.text_from_rendered.return_value = (
+        "# With Bytes Image", None, {"chart.png": b"\x89PNG\r\n\x1a\n"}
+    )
+
+    with patch.dict(sys.modules, {
+        "marker": MagicMock(),
+        "marker.converters": MagicMock(),
+        "marker.converters.pdf": mock_pdf_mod,
+        "marker.models": mock_models_mod,
+        "marker.output": mock_output_mod,
+    }):
+        result = MarkerPdfConverter().convert(path, tmp_path)
+
+    saved = tmp_path / "images" / "test_chart.png"
+    assert saved.exists()
+    assert saved.read_bytes() == b"\x89PNG\r\n\x1a\n"

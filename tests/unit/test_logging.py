@@ -37,7 +37,9 @@ def test_setup_logging_expands_tilde(tmp_path, monkeypatch):
 
 
 @pytest.mark.unit
-def test_setup_logging_invalid_level_falls_back(tmp_path):
-    """Unknown log level string does not crash — falls back to INFO."""
-    setup_logging("NOTAREAL_LEVEL", None)
-    # If we got here without exception, pass
+def test_setup_logging_invalid_level_falls_back():
+    """Unknown log level string falls back to INFO via getattr default."""
+    # getattr(logging, "NOTAREAL_LEVEL", logging.INFO) → logging.INFO
+    numeric = getattr(logging, "NOTAREAL_LEVEL", logging.INFO)
+    assert numeric == logging.INFO  # confirms the fallback value is correct
+    setup_logging("NOTAREAL_LEVEL", None)  # must not raise

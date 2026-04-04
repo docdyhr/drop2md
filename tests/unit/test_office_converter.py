@@ -22,7 +22,7 @@ def test_markitdown_converts_docx(sample_docx, tmp_path):
     assert result.markdown
     assert result.converter_used == "markitdown"
     # Should contain headings and table content from fixture
-    assert "Annual Technical Report" in result.markdown or "Q1" in result.markdown
+    assert "Annual Technical Report" in result.markdown
 
 
 @pytest.mark.unit

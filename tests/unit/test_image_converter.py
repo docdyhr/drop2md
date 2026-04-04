@@ -22,7 +22,7 @@ def test_image_converter_extracts_ocr_text(sample_png, tmp_path):
     result = ImageConverter().convert(sample_png, tmp_path)
     assert result.converter_used == "image-ocr"
     # sample.png contains "doc2md Image OCR Test" — tesseract should find it
-    assert "doc2md" in result.markdown or "OCR" in result.markdown
+    assert "doc2md" in result.markdown
 
 
 @pytest.mark.unit
