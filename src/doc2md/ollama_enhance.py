@@ -25,6 +25,7 @@ def _generate(prompt: str, config: Config, image_path: Path | None = None) -> st
         "model": config.ollama.model,
         "prompt": prompt,
         "stream": False,
+        "options": {"think": False},
     }
     if image_path and image_path.exists():
         img_b64 = base64.b64encode(image_path.read_bytes()).decode()
@@ -46,6 +47,7 @@ def describe_image(image_path: Path, config: Config) -> str:
     """
     try:
         prompt = (
+            "/no_think "
             "Describe this image from a document in one concise sentence "
             "suitable for use as Markdown alt-text. Be specific and factual."
         )
@@ -62,6 +64,7 @@ def validate_table(table_md: str, config: Config) -> str:
     """
     try:
         prompt = (
+            "/no_think "
             "Fix this GitHub Flavored Markdown table so it is valid GFM. "
             "Return ONLY the corrected table, no explanation:\n\n"
             f"{table_md}"

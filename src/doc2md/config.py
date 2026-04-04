@@ -43,7 +43,7 @@ class OllamaConfig:
     enabled: bool = False
     base_url: str = "http://localhost:11434"
     model: str = "qwen3.5:latest"
-    timeout_seconds: int = 30
+    timeout_seconds: int = 60
 
 
 @dataclass

@@ -28,25 +28,25 @@ def _is_separator(line: str) -> bool:
 
 
 def fix_table_alignment(markdown: str) -> str:
-    """Ensure GFM tables have a separator row after the header row."""
+    """Ensure GFM tables have a separator row after the header row.
+
+    Only inserts a separator after the first row of a table block (the header).
+    Data rows are never split by separators.
+    """
     lines = markdown.splitlines()
     result = []
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-        # Only act on data rows (not separator rows)
-        if "|" in line and not _is_separator(line):
-            next_line = lines[i + 1] if i + 1 < len(lines) else ""
-            # If next line is a pipe row but NOT a separator, insert one
-            if "|" in next_line and not _is_separator(next_line):
-                cols = max(line.count("|") - 1, 1)
-                sep = "| " + " | ".join(["---"] * cols) + " |"
-                result.append(line)
-                result.append(sep)
-                i += 1
-                continue
+    for i, line in enumerate(lines):
         result.append(line)
-        i += 1
+        # Only act on data rows (not separator rows)
+        if "|" not in line or _is_separator(line):
+            continue
+        next_line = lines[i + 1] if i + 1 < len(lines) else ""
+        # Only insert a separator when the next line is a pipe row without one,
+        # AND the previous input line was not a pipe row (i.e. this is the header).
+        prev_line = lines[i - 1] if i > 0 else ""
+        if ("|" in next_line and not _is_separator(next_line) and "|" not in prev_line):
+            cols = max(line.count("|") - 1, 1)
+            result.append("| " + " | ".join(["---"] * cols) + " |")
     return "\n".join(result)
 
 

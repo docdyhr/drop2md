@@ -71,6 +71,14 @@ def convert(
         try:
             typer.echo(f"Converting {file_path.name} ...", nl=False)
             result = dispatch(file_path, out_dir)
+
+            if cfg.ollama.enabled:
+                try:
+                    from doc2md.ollama_enhance import enhance
+                    result = enhance(result, cfg)
+                except Exception as exc:
+                    typer.echo(f" [Ollama skipped: {exc}]", nl=False)
+
             md = postprocess(
                 result,
                 source=file_path,

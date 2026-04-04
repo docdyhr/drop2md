@@ -31,7 +31,7 @@ enabled = false
 base_url = "http://localhost:11434"
 # Vision-capable model (qwen3.5, minicpm-v, llava, etc.)
 model = "qwen3.5:latest"
-timeout_seconds = 30
+timeout_seconds = 60
 
 [output]
 # Add YAML frontmatter block to each output file
