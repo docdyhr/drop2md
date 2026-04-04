@@ -45,7 +45,11 @@ class MarkerPdfConverter(BaseConverter):
             img_dir.mkdir(parents=True, exist_ok=True)
             for img_name, img_data in images.items():
                 dest = img_dir / f"{path.stem}_{img_name}"
-                dest.write_bytes(img_data)
+                if isinstance(img_data, bytes):
+                    dest.write_bytes(img_data)
+                else:
+                    # Newer Marker returns PIL Image objects
+                    img_data.save(str(dest))
                 saved_images.append(dest)
 
         return ConverterResult(
@@ -78,7 +82,7 @@ class DoclingPdfConverter(BaseConverter):
         return ConverterResult(
             markdown=markdown,
             converter_used=self.name,
-            metadata={"pages": getattr(result.document, "num_pages", 0)},
+            metadata={"pages": result.document.num_pages()},
         )
 
 
