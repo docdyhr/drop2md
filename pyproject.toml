@@ -13,6 +13,7 @@ dependencies = [
     "httpx>=0.27.0",
     "pdfplumber>=0.11.0",
     "mcp[cli]>=1.6.0",
+    "psutil>=6.0.0",
 ]
 
 [[project.authors]]
@@ -36,7 +37,7 @@ pdf-light = [
 ]
 # Office document support
 office = [
-    "markitdown[all]>=0.1.0",
+    "markitdown[docx]>=0.1.0",
 ]
 # OCR support
 ocr = [
@@ -68,7 +69,7 @@ all = [
     "marker-pdf>=1.6.0",
     "docling>=2.0.0",
     "pymupdf4llm>=0.0.17",
-    "markitdown[all]>=0.1.0",
+    "markitdown[docx]>=0.1.0",
     "pytesseract>=0.3.13",
     "Pillow>=10.0.0",
     "anthropic>=0.40.0",
@@ -125,6 +126,7 @@ module = [
     "mcp", "mcp.*",
     "anthropic", "anthropic.*",
     "openai", "openai.*",
+    "psutil",
 ]
 ignore_missing_imports = true
 follow_imports = "silent"

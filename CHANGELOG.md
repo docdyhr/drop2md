@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `drop2md status` now shows a **Process Resources** table: PID, role (watcher/mcp-server/converter), status, CPU%, RSS, memory%, file descriptors, and uptime for all running drop2md processes
+- `drop2md status --watch` (`-w`) for live-refreshing display (like `top`) using `rich.Live`
+- `drop2md status --interval` (`-n`) to control refresh rate in seconds (default: 2.0)
+- `psutil>=6.0.0` added to core dependencies for cross-platform process introspection
+- `src/drop2md/utils/process_monitor.py` — isolated module with `ProcessInfo` dataclass and `sample_processes()` (two-poll CPU sampling, role inference from cmdline, graceful handling of vanished processes)
+- 16 new unit tests covering the status command and process monitor module
+
+### Fixed
+- PID parsing in `_get_launchd_pid()` now uses `re.search(r'"PID"\s*=\s*(\d+)', ...)` — the previous `.strip('"PID" = ')` was character-set stripping, not substring removal
+
 ## [0.1.0] — 2026-04-04
 
 ### Added

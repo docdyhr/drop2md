@@ -36,7 +36,7 @@ pytest --cov=drop2md.mcp_server --cov-report=term-missing -m unit
 
 ### Coverage threshold
 
-`pytest.ini` enforces `--cov-fail-under=60`. The suite currently runs at ~73%.
+`pytest.ini` enforces `--cov-fail-under=75`. The suite currently runs at ~79%.
 Coverage XML is written to `coverage.xml` after every run.
 
 ---
@@ -74,11 +74,14 @@ drop2md watch --help
 
 ### Expected output
 
-A successful conversion prints:
+A successful conversion prints the output path and the converter tier used:
 
 ```
-Converting sample.pdf ... → /path/to/output/sample.md
+Converting sample.pdf ... → /path/to/output/sample.md  [marker]
 ```
+
+Common converter values: `marker`, `docling`, `pymupdf4llm`, `pdfplumber`,
+`markitdown`, `pandoc`, `pytesseract`.
 
 The `.md` file contains YAML frontmatter followed by GFM content:
 
@@ -86,8 +89,8 @@ The `.md` file contains YAML frontmatter followed by GFM content:
 ---
 source: "sample.pdf"
 converted: "2026-04-04T14:23:01"
-converter: "pdfplumber"
-pages: 1
+converter: "marker"
+pages: 3
 ---
 
 # Annual Technical Report
@@ -104,12 +107,13 @@ pages: 1
 # Start the watcher — shows file events in real time
 drop2md watch --config config.toml
 
-# In a second terminal, drop a file into the watch dir:
+# The watcher automatically processes files already present at startup.
+# Drop additional files at any time:
 cp tests/fixtures/sample.pdf ~/Documents/drop-to-md/
 
 # You should see within ~2 seconds:
-# [INFO] Processing sample.pdf
-# [INFO] Wrote /Users/thomas/Documents/markdown-output/sample.md
+# [INFO] Converting: sample.pdf
+# [INFO] Output: /Users/thomas/Documents/markdown-output/sample.md
 ```
 
 ### Disable AI enhancement for faster watcher tests
@@ -118,16 +122,50 @@ cp tests/fixtures/sample.pdf ~/Documents/drop-to-md/
 DROP2MD_OLLAMA_ENABLED=false drop2md watch --config config.toml
 ```
 
-### launchd service status
+### Check service health
 
 ```bash
-drop2md status
+# Snapshot: service state, config, recent conversions, Ollama, process resources
+drop2md status --config config.toml
 
-# Show what launchctl knows about the service
-launchctl list com.thomasdyhr.drop2md
+# Live monitor — refreshes every 2 seconds (Ctrl-C to quit)
+drop2md status --watch
+drop2md status --watch --interval 1
+```
 
-# Tail the service log
+Expected snapshot output:
+```
+Service:  running  (PID 16243)
+Config:   /Users/thomas/Programming/drop2md/config.toml
+Watch:    /Users/thomas/Documents/drop-to-md
+Output:   /Users/thomas/Documents/markdown-output
+Log:      /Users/thomas/Library/Logs/drop2md/drop2md.log
+
+Recent conversions:
+  Masters_of_Perception.md                      2026-04-05 13:41
+  Chinese_Soaring_Crane_Qigong.md               2026-04-05 13:31
+
+Ollama:   running  (qwen3-vl:8b ✓)
+
+Process Resources
+  PID    Role         Status     CPU%    RSS      Mem%   FDs   Uptime
+  9552   watcher      running    2.1%    535 MB   1.5%   23    2h 14m
+  6857   mcp-server   running    0.0%    48 MB    0.1%   18    1h 09m
+
+  2 drop2md processes
+```
+
+### Low-level service inspection
+
+```bash
+# Raw launchctl state
+launchctl print gui/$(id -u)/com.thomasdyhr.drop2md
+
+# Tail the service log live
 tail -f ~/Library/Logs/drop2md/drop2md.log
+
+# Restart the service (e.g. after a config change)
+launchctl kickstart -k gui/$(id -u)/com.thomasdyhr.drop2md
 ```
 
 ---

@@ -92,8 +92,12 @@ See [`config.toml.example`](config.toml.example) for all options.
 # Install and start background service
 drop2md install-service
 
-# Check status
+# Snapshot: service state, config, recent conversions, process resources
 drop2md status
+
+# Live monitor — refreshes every 2 seconds (Ctrl-C to quit)
+drop2md status --watch
+drop2md status --watch --interval 5
 
 # Remove service
 drop2md uninstall-service
@@ -101,6 +105,8 @@ drop2md uninstall-service
 # Logs
 tail -f ~/Library/Logs/drop2md/drop2md.log
 ```
+
+The `status` command includes a **Process Resources** table showing CPU%, memory, file descriptors, and uptime for every running drop2md process (watcher, MCP server, active converters).
 
 ## Claude Desktop Integration
 
