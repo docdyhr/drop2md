@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from unittest.mock import patch
+import sys
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -12,12 +13,14 @@ from drop2md.converters.image import ImageConverter
 @pytest.mark.unit
 def test_image_converter_is_available():
     # pytesseract + Pillow are installed via [ocr] extra
+    pytest.importorskip("pytesseract")
     assert ImageConverter.is_available() is True
 
 
 @pytest.mark.unit
 def test_image_converter_extracts_ocr_text(sample_png, tmp_path):
     """Real OCR on sample.png should find known text."""
+    pytest.importorskip("pytesseract")
     result = ImageConverter().convert(sample_png, tmp_path)
     assert result.converter_used == "image-ocr"
     # sample.png contains "drop2md Image OCR Test" — tesseract should find it
@@ -53,11 +56,15 @@ def test_image_converter_result_lists_image_path(sample_png, tmp_path):
 def test_image_converter_ocr_failure_adds_warning(tmp_path):
     """If OCR fails, a warning is added and conversion still succeeds."""
     png = tmp_path / "test.png"
-    # Create minimal valid PNG (1×1 white pixel)
-    from PIL import Image
-    Image.new("RGB", (1, 1), "white").save(str(png))
+    png.write_bytes(b"\x89PNG\r\n\x1a\n")  # minimal PNG magic bytes
 
-    with patch("pytesseract.image_to_string", side_effect=RuntimeError("tesseract crashed")):
+    mock_pytess = MagicMock()
+    mock_pytess.image_to_string.side_effect = RuntimeError("tesseract crashed")
+    mock_pil_image_module = MagicMock()
+    mock_pil = MagicMock()
+    mock_pil.Image = mock_pil_image_module
+
+    with patch.dict(sys.modules, {"pytesseract": mock_pytess, "PIL": mock_pil, "PIL.Image": mock_pil_image_module}):
         result = ImageConverter().convert(png, tmp_path)
 
     assert any("OCR failed" in w for w in result.warnings)

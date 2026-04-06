@@ -58,11 +58,12 @@ class OpenAICompatProvider:
     Requires ``openai`` package (``pip install drop2md[openai]``).
     """
 
-    def __init__(self, model: str, base_url: str, api_key: str, timeout: int) -> None:
+    def __init__(self, model: str, base_url: str, api_key: str, timeout: int, reasoning_effort: str = "") -> None:
         self._model = model
         self._base_url = base_url
         self._api_key = api_key
         self._timeout = timeout
+        self._reasoning_effort = reasoning_effort
 
     def generate(self, prompt: str, image_path: Path | None = None) -> str:
         try:
@@ -96,10 +97,10 @@ class OpenAICompatProvider:
         else:
             messages.append({"role": "user", "content": prompt})
 
-        response = client.chat.completions.create(
-            model=self._model,
-            messages=messages,
-        )
+        kwargs: dict = {"model": self._model, "messages": messages}
+        if self._reasoning_effort:
+            kwargs["reasoning_effort"] = self._reasoning_effort
+        response = client.chat.completions.create(**kwargs)
         return (response.choices[0].message.content or "").strip()
 
 
@@ -180,8 +181,23 @@ def make_provider(config: object) -> AIProvider:
         )
 
     if provider_name == "openai":
-        # Fall back to OPENAI_API_KEY; passing None lets the SDK read it
-        resolved_key = api_key or os.environ.get("OPENAI_API_KEY", "")
+        # Fall back to OPENAI_API_KEY, then GEMINI_API_KEY (for Google endpoints)
+        resolved_key = (
+            api_key
+            or os.environ.get("OPENAI_API_KEY", "")
+            or os.environ.get("GEMINI_API_KEY", "")
+        )
+        return OpenAICompatProvider(
+            model=config.openai.model,  # type: ignore[union-attr]
+            base_url=config.openai.base_url,  # type: ignore[union-attr]
+            api_key=resolved_key,
+            timeout=config.openai.timeout_seconds,  # type: ignore[union-attr]
+            reasoning_effort=getattr(config.openai, "reasoning_effort", ""),  # type: ignore[union-attr]
+        )
+
+    if provider_name == "gemini":
+        # Dedicated Gemini provider — reads GEMINI_API_KEY automatically
+        resolved_key = api_key or os.environ.get("GEMINI_API_KEY", "")
         return OpenAICompatProvider(
             model=config.openai.model,  # type: ignore[union-attr]
             base_url=config.openai.base_url,  # type: ignore[union-attr]
@@ -201,7 +217,7 @@ def make_provider(config: object) -> AIProvider:
 
     raise ValueError(
         f"Unknown enhance provider: {provider_name!r}. "
-        "Valid values: 'ollama', 'claude', 'openai', 'hf'."
+        "Valid values: 'ollama', 'claude', 'openai', 'gemini', 'hf'."
     )
 
 

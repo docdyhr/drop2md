@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import queue
+import signal
 import threading
 import time
 from pathlib import Path
@@ -139,6 +140,16 @@ def run_watcher(config: Config) -> None:
     observer.schedule(handler, str(watch_dir), recursive=False)
     observer.start()
 
+    # Enqueue files already present at startup so they aren't silently skipped
+    for existing in sorted(watch_dir.iterdir()):
+        if (
+            existing.is_file()
+            and existing.suffix.lower() not in _SKIP_EXTENSIONS
+            and not existing.name.startswith(".")
+        ):
+            log.info("Queuing existing file: %s", existing.name)
+            file_queue.put(existing)
+
     worker_thread = threading.Thread(
         target=_worker,
         args=[file_queue, config, stop_event],
@@ -146,8 +157,20 @@ def run_watcher(config: Config) -> None:
     )
     worker_thread.start()
 
+    def _handle_signal(signum: int, frame: object) -> None:
+        log.info("Stopping watcher (signal %d)...", signum)
+        stop_event.set()
+
+    signal.signal(signal.SIGTERM, _handle_signal)
+
     try:
-        while observer.is_alive():
+        while not stop_event.is_set():
+            if not observer.is_alive():
+                log.warning("FSEvents observer died — restarting it")
+                observer.stop()
+                observer = Observer()
+                observer.schedule(handler, str(watch_dir), recursive=False)
+                observer.start()
             time.sleep(1)
     except KeyboardInterrupt:
         log.info("Stopping watcher...")

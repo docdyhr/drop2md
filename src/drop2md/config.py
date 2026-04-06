@@ -53,6 +53,7 @@ class OpenAIConfig:
     model: str = "gpt-4o-mini"
     base_url: str = "https://api.openai.com/v1"  # override for HF router
     timeout_seconds: int = 30
+    reasoning_effort: str = ""  # "low" | "medium" | "high" — only for reasoning models
 
 
 @dataclass

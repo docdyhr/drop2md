@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -83,8 +84,11 @@ def test_openai_provider_text_prompt():
     mock_response.choices[0].message.content = "Hello from OpenAI"
     mock_client.chat.completions.create.return_value = mock_response
 
+    mock_openai = MagicMock()
+    mock_openai.OpenAI.return_value = mock_client
+
     provider = OpenAICompatProvider("gpt-4o-mini", "https://api.openai.com/v1", "", timeout=5)
-    with patch("openai.OpenAI", return_value=mock_client):
+    with patch.dict(sys.modules, {"openai": mock_openai}):
         result = provider.generate("Say hello")
 
     assert result == "Hello from OpenAI"
@@ -101,8 +105,11 @@ def test_openai_provider_sends_image(tmp_path):
     mock_response.choices[0].message.content = "A chart"
     mock_client.chat.completions.create.return_value = mock_response
 
+    mock_openai = MagicMock()
+    mock_openai.OpenAI.return_value = mock_client
+
     provider = OpenAICompatProvider("gpt-4o-mini", "https://api.openai.com/v1", "", timeout=5)
-    with patch("openai.OpenAI", return_value=mock_client):
+    with patch.dict(sys.modules, {"openai": mock_openai}):
         result = provider.generate("Describe", image_path=img)
 
     assert result == "A chart"
@@ -133,8 +140,11 @@ def test_claude_provider_text_prompt():
     mock_message.content = [mock_block]
     mock_client.messages.create.return_value = mock_message
 
+    mock_anthropic = MagicMock()
+    mock_anthropic.Anthropic.return_value = mock_client
+
     provider = ClaudeProvider("claude-haiku-4-5-20251001", "", timeout=5)
-    with patch("anthropic.Anthropic", return_value=mock_client):
+    with patch.dict(sys.modules, {"anthropic": mock_anthropic}):
         result = provider.generate("Say hello")
 
     assert result == "Hello from Claude"
@@ -153,8 +163,11 @@ def test_claude_provider_sends_image(tmp_path):
     mock_message.content = [mock_block]
     mock_client.messages.create.return_value = mock_message
 
+    mock_anthropic = MagicMock()
+    mock_anthropic.Anthropic.return_value = mock_client
+
     provider = ClaudeProvider("claude-haiku-4-5-20251001", "", timeout=5)
-    with patch("anthropic.Anthropic", return_value=mock_client):
+    with patch.dict(sys.modules, {"anthropic": mock_anthropic}):
         result = provider.generate("Describe", image_path=img)
 
     assert result == "A chart"

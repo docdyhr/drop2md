@@ -1,4 +1,4 @@
-# doc2md configuration — copy to config.toml and edit
+# drop2md configuration — copy to config.toml and edit
 # config.toml is gitignored; this file is the committed template.
 
 [paths]
@@ -42,6 +42,31 @@ timeout_seconds = 60
 # model = "gpt-4o-mini"
 # base_url = "https://api.openai.com/v1"   # set to HF router URL for provider = "hf"
 # timeout_seconds = 30
+# reasoning_effort = ""                    # "low" | "medium" | "high" — reasoning models only
+
+# ── ChatGPT example (reasoning model) ────────────────────────────────────────
+# [ollama]
+# enabled = true
+# provider = "openai"
+# api_key = ""                             # or set OPENAI_API_KEY env var
+#
+# [openai]
+# model = "gpt-5.2"
+# base_url = "https://api.openai.com/v1"
+# timeout_seconds = 120
+# reasoning_effort = "medium"             # "low" | "medium" | "high"
+
+# ── Gemini example ────────────────────────────────────────────────────────────
+# [ollama]
+# enabled = true
+# provider = "openai"
+# api_key = ""                             # or set OPENAI_API_KEY to your Google AI Studio key
+#
+# [openai]
+# model = "gemini-3-pro-preview"
+# base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
+# timeout_seconds = 120
+# reasoning_effort = ""                   # Gemini does not use reasoning_effort
 
 # Claude settings — used when provider = "claude"
 # [claude]
@@ -62,4 +87,4 @@ overwrite = true
 # Log level: DEBUG, INFO, WARNING, ERROR
 level = "INFO"
 # Log file location (empty = stderr only)
-file = "~/Library/Logs/doc2md/doc2md.log"
+file = "~/Library/Logs/drop2md/drop2md.log"

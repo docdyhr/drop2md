@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -16,11 +17,13 @@ from drop2md.converters.office import (
 
 @pytest.mark.unit
 def test_markitdown_is_available():
+    pytest.importorskip("markitdown")
     assert MarkItDownConverter.is_available() is True
 
 
 @pytest.mark.unit
 def test_markitdown_converts_docx(sample_docx, tmp_path):
+    pytest.importorskip("markitdown")
     result = MarkItDownConverter().convert(sample_docx, tmp_path)
     assert result.markdown
     assert result.converter_used == "markitdown"
@@ -32,9 +35,13 @@ def test_markitdown_converts_docx(sample_docx, tmp_path):
 def test_office_converter_uses_markitdown_first(sample_docx, tmp_path):
     mock_result = MagicMock()
     mock_result.text_content = "# Hello"
+    mock_markitdown_instance = MagicMock()
+    mock_markitdown_instance.convert.return_value = mock_result
+    mock_markitdown_module = MagicMock()
+    mock_markitdown_module.MarkItDown.return_value = mock_markitdown_instance
     with (
+        patch.dict(sys.modules, {"markitdown": mock_markitdown_module}),
         patch.object(MarkItDownConverter, "is_available", return_value=True),
-        patch("markitdown.MarkItDown.convert", return_value=mock_result),
     ):
         result = OfficeConverter().convert(sample_docx, tmp_path)
     assert result.converter_used == "markitdown"
