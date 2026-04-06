@@ -7,16 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-04-06
+
 ### Added
 - `drop2md status` now shows a **Process Resources** table: PID, role (watcher/mcp-server/converter), status, CPU%, RSS, memory%, file descriptors, and uptime for all running drop2md processes
 - `drop2md status --watch` (`-w`) for live-refreshing display (like `top`) using `rich.Live`
 - `drop2md status --interval` (`-n`) to control refresh rate in seconds (default: 2.0)
 - `psutil>=6.0.0` added to core dependencies for cross-platform process introspection
 - `src/drop2md/utils/process_monitor.py` — isolated module with `ProcessInfo` dataclass and `sample_processes()` (two-poll CPU sampling, role inference from cmdline, graceful handling of vanished processes)
-- 16 new unit tests covering the status command and process monitor module
+- `reasoning_effort` support in `OpenAICompatProvider` for o-series and reasoning models (`low`/`medium`/`high`)
+- `reasoning_effort` field in `[openai]` config section
+- ChatGPT (gpt-5.2) and Gemini example blocks in `config.toml.example`
+- Watcher enqueues files already present at startup so they aren't skipped on first run
+- 16 new unit tests; total coverage 76.84%
 
 ### Fixed
+- Watcher registers `SIGTERM` handler for clean shutdown and auto-restarts the FSEvents observer if it dies unexpectedly
 - PID parsing in `_get_launchd_pid()` now uses `re.search(r'"PID"\s*=\s*(\d+)', ...)` — the previous `.strip('"PID" = ')` was character-set stripping, not substring removal
+- Residual `doc2md` → `drop2md` rename in `config.toml.example` and launchd plist template
 
 ## [0.1.0] — 2026-04-04
 
@@ -49,4 +57,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Enhancement pipeline routes through `make_provider()` based on `ollama.provider` config field (default: `"ollama"`, backward compatible)
 
+[Unreleased]: https://github.com/docdyhr/drop2md/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/docdyhr/drop2md/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/docdyhr/drop2md/releases/tag/v0.1.0
