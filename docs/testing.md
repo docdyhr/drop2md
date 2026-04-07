@@ -324,13 +324,28 @@ MCP calls are logged to: `~/Library/Logs/drop2md/drop2md.log` (if `[logging] fil
 
 ## 5. AI Enhancement Testing
 
-### Ollama (local)
+### Provider comparison
+
+| Provider | Privacy | Speed | Cost | Setup |
+|---|---|---|---|---|
+| Ollama (llava-llama3:8b) | Local | ~5s/img | Free | `ollama pull llava-llama3:8b` |
+| Claude (haiku-4-5) | Cloud | ~2s/img | ~$0.001/img | `ANTHROPIC_API_KEY` |
+| OpenAI (gpt-4o-mini) | Cloud | ~3s/img | ~$0.0001/img | `OPENAI_API_KEY` |
+| Gemini (gemini-2.5-flash) | Cloud | ~5s/img | Free tier | `GEMINI_API_KEY` |
+
+**Important:** The default Ollama model `llava-llama3:8b` is a vision model.
+Do not use text-only models (qwen3.5, llama3) — VEP will fail silently on images.
+
+### Ollama (local, privacy-first)
 
 ```bash
-# Check Ollama is running
+# Pull a vision model
+ollama pull llava-llama3:8b
+
+# Verify it is available
 curl -s http://localhost:11434/api/tags | python -m json.tool | grep name
 
-# Convert with Ollama enabled
+# Convert with VEP enabled (config.toml must have visual.enabled = true)
 DROP2MD_OLLAMA_ENABLED=true \
   drop2md convert tests/fixtures/sample.pdf --config config.toml
 ```
@@ -358,10 +373,21 @@ OPENAI_API_KEY=sk-... \
   drop2md convert tests/fixtures/sample.pdf
 ```
 
+### Gemini
+
+```bash
+DROP2MD_ENHANCE_PROVIDER=gemini \
+DROP2MD_OLLAMA_ENABLED=true \
+GEMINI_API_KEY=AIza... \
+  drop2md convert tests/fixtures/sample.pdf
+```
+
+Set `[openai] model = "gemini-2.5-flash"` and
+`base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"` in config.toml.
+
 ### HuggingFace Inference Router
 
 ```bash
-# Set base_url in [openai] section of config.toml, then:
 DROP2MD_ENHANCE_PROVIDER=hf \
 DROP2MD_OLLAMA_ENABLED=true \
 HF_TOKEN=hf_... \
@@ -372,15 +398,36 @@ HF_TOKEN=hf_... \
 
 ```bash
 pytest tests/unit/test_enhance_providers.py -v
-pytest tests/unit/test_enhance.py -v
+pytest tests/unit/test_vep.py -v          # VEP classifier + handler tests
 ```
+
+### VEP integration smoke tests (require real fixtures + live provider)
+
+```bash
+# All providers, all fixtures
+pytest tests/integration/test_vep_smoke.py -v -m vep
+
+# Per-provider
+pytest tests/integration/test_vep_smoke.py -v -m "vep and ollama"
+pytest tests/integration/test_vep_smoke.py -v -m "vep and openai"
+pytest tests/integration/test_vep_smoke.py -v -m "vep and gemini"
+
+# Fast classifier-only tests (one image per provider, ~30s each)
+pytest tests/integration/test_vep_smoke.py -k "classifier"
+
+# Extend timeout for Ollama (local model is slow)
+pytest tests/integration/test_vep_smoke.py -m "vep and ollama" --timeout=600
+```
+
+Smoke tests auto-skip if fixture files or API keys are absent — they never
+block CI.
 
 ### API key resolution order
 
 For each provider, keys are resolved in this order:
 1. `api_key` field in `[ollama]` section of `config.toml`
 2. `DROP2MD_ENHANCE_API_KEY` environment variable
-3. Provider native env var: `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `HF_TOKEN`
+3. Provider native env var: `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` / `HF_TOKEN`
 
 ---
 
@@ -452,4 +499,7 @@ timeout 3 python -m drop2md.mcp_server; echo "Exit: $?"
 
 # 7. MCP tools pass
 pytest tests/unit/test_mcp_server.py -v
+
+# 8. VEP unit tests
+pytest tests/unit/test_vep.py -v
 ```

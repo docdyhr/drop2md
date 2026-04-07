@@ -42,7 +42,7 @@ class OcrConfig:
 class OllamaConfig:
     enabled: bool = False
     base_url: str = "http://localhost:11434"
-    model: str = "qwen3.5:latest"
+    model: str = "llava-llama3:8b"
     timeout_seconds: int = 60
     provider: str = "ollama"   # "ollama" | "claude" | "openai" | "hf"
     api_key: str = ""          # blank → SDK reads env var (ANTHROPIC_API_KEY etc.)

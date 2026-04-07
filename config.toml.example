@@ -25,53 +25,143 @@ enabled = true
 # Tesseract language codes (e.g. "eng", "deu", "eng+deu")
 language = "eng"
 
+# ── AI Enhancement ────────────────────────────────────────────────────────────
+#
+# Four supported providers (set provider = one of these):
+#
+#   "ollama"  — local, private, free. Requires Ollama + a vision model.
+#               Recommended model: llava-llama3:8b  (ollama pull llava-llama3:8b)
+#               Fast alternatives: moondream:1.8b (tiny), minicpm-v:8b (quality)
+#               DO NOT use text-only models (qwen3.5, llama3, etc.) — VEP will
+#               silently fall back to empty alt-text for every image.
+#
+#   "claude"  — Best output quality. Requires ANTHROPIC_API_KEY.
+#               Recommended model: claude-haiku-4-5-20251001 (~$0.001/image)
+#               High quality: claude-sonnet-4-6  (slower, ~10x cost)
+#
+#   "openai"  — Best speed + cost. Requires OPENAI_API_KEY.
+#               Recommended model: gpt-4o-mini (~$0.0001/image, 2–5s/call)
+#
+#   "gemini"  — Free tier available. Requires GEMINI_API_KEY.
+#               Recommended model: gemini-2.5-flash
+#
+
 [ollama]
-# Enable AI enhancement (image captions, table validation)
+# Enable AI enhancement (image captions, table validation, VEP)
 enabled = false
-# Provider: "ollama" (local, free), "claude", "openai", "hf" (HuggingFace)
+# Provider: "ollama" | "claude" | "openai" | "gemini" | "hf"
 provider = "ollama"
-# API key — blank means the SDK reads the env var (ANTHROPIC_API_KEY / OPENAI_API_KEY / HF_TOKEN)
+# API key — blank means the SDK reads the env var automatically:
+#   claude  → ANTHROPIC_API_KEY
+#   openai  → OPENAI_API_KEY
+#   gemini  → GEMINI_API_KEY or GOOGLE_API_KEY
+#   hf      → HF_TOKEN
 api_key = ""
 base_url = "http://localhost:11434"
-# Vision-capable model (qwen3.5, minicpm-v, llava, etc.)
-model = "qwen3.5:latest"
+# Default vision model for local Ollama. Pull with: ollama pull llava-llama3:8b
+model = "llava-llama3:8b"
 timeout_seconds = 60
+# Set false to skip GFM table repair (useful with slow local models)
+validate_tables = true
 
-# OpenAI / HuggingFace settings — used when provider = "openai" or "hf"
+# OpenAI / HuggingFace / Gemini settings — used when provider = "openai" | "hf" | "gemini"
 # [openai]
 # model = "gpt-4o-mini"
-# base_url = "https://api.openai.com/v1"   # set to HF router URL for provider = "hf"
+# base_url = "https://api.openai.com/v1"   # override for HF router or Gemini
 # timeout_seconds = 30
-# reasoning_effort = ""                    # "low" | "medium" | "high" — reasoning models only
-
-# ── ChatGPT example (reasoning model) ────────────────────────────────────────
-# [ollama]
-# enabled = true
-# provider = "openai"
-# api_key = ""                             # or set OPENAI_API_KEY env var
-#
-# [openai]
-# model = "gpt-5.2"
-# base_url = "https://api.openai.com/v1"
-# timeout_seconds = 120
-# reasoning_effort = "medium"             # "low" | "medium" | "high"
-
-# ── Gemini example ────────────────────────────────────────────────────────────
-# [ollama]
-# enabled = true
-# provider = "openai"
-# api_key = ""                             # or set OPENAI_API_KEY to your Google AI Studio key
-#
-# [openai]
-# model = "gemini-3-pro-preview"
-# base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
-# timeout_seconds = 120
-# reasoning_effort = ""                   # Gemini does not use reasoning_effort
+# reasoning_effort = ""                    # "low" | "medium" | "high" — o-series only
 
 # Claude settings — used when provider = "claude"
 # [claude]
 # model = "claude-haiku-4-5-20251001"
 # timeout_seconds = 30
+
+# ── Visual Enhancement Pipeline (VEP) — v0.3 ─────────────────────────────────
+#
+# When enabled, extracted images are classified by type and enriched:
+#   chart        → prose paragraph describing axes, trend, key data points
+#   diagram      → Mermaid code block (opt-in) or structured prose
+#   formula      → $$...$$ LaTeX display-math block (opt-in)
+#   table-image  → GFM pipe table reconstructed from the image
+#   screenshot   → 2–3 sentence description of the visible UI
+#   photo        → one-sentence alt-text (same as legacy behaviour)
+#
+# Requires ollama.enabled = true and a vision-capable model.
+#
+# [visual]
+# enabled = false
+# classify = true             # classify images before handling (false = legacy captions)
+# chart_description = true    # describe charts as prose paragraphs
+# diagram_to_mermaid = false  # convert diagrams to Mermaid (not all renderers support it)
+# formula_to_latex = false    # convert formulas to LaTeX $$ blocks (opt-in)
+# table_image_to_gfm = true   # reconstruct table images as GFM pipe tables
+# screenshot_description = true  # describe UI screenshots
+
+# ── Provider examples ─────────────────────────────────────────────────────────
+
+# ── Ollama (local, privacy-first) ────────────────────────────────────────────
+# [ollama]
+# enabled = true
+# provider = "ollama"
+# model = "llava-llama3:8b"        # ollama pull llava-llama3:8b
+# timeout_seconds = 120
+# validate_tables = true
+#
+# [visual]
+# enabled = true
+
+# ── Claude (best quality) ────────────────────────────────────────────────────
+# [ollama]
+# enabled = true
+# provider = "claude"
+# api_key = ""                     # or set ANTHROPIC_API_KEY env var
+#
+# [claude]
+# model = "claude-haiku-4-5-20251001"
+# timeout_seconds = 30
+#
+# [visual]
+# enabled = true
+
+# ── OpenAI (best speed/cost) ─────────────────────────────────────────────────
+# [ollama]
+# enabled = true
+# provider = "openai"
+# api_key = ""                     # or set OPENAI_API_KEY env var
+#
+# [openai]
+# model = "gpt-4o-mini"
+# base_url = "https://api.openai.com/v1"
+# timeout_seconds = 30
+#
+# [visual]
+# enabled = true
+
+# ── Gemini (free tier available) ─────────────────────────────────────────────
+# [ollama]
+# enabled = true
+# provider = "gemini"
+# api_key = ""                     # or set GEMINI_API_KEY env var
+#
+# [openai]
+# model = "gemini-2.5-flash"
+# base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
+# timeout_seconds = 60
+#
+# [visual]
+# enabled = true
+
+# ── ChatGPT reasoning model example ──────────────────────────────────────────
+# [ollama]
+# enabled = true
+# provider = "openai"
+# api_key = ""
+#
+# [openai]
+# model = "o4-mini"
+# base_url = "https://api.openai.com/v1"
+# timeout_seconds = 120
+# reasoning_effort = "medium"      # "low" | "medium" | "high"
 
 [output]
 # Add YAML frontmatter block to each output file
