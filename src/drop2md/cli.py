@@ -72,8 +72,16 @@ def convert(
         out_path = out_dir / safe_filename(file_path.name)
 
         try:
+            import time
             typer.echo(f"Converting {file_path.name} ...", nl=False)
+            t0 = time.monotonic()
             result = dispatch(file_path, out_dir)
+            elapsed = time.monotonic() - t0
+
+            pages = result.metadata.get("pages")
+            progress = ""
+            if pages and pages > 10:
+                progress = f"  {pages}p"
 
             if cfg.ollama.enabled:
                 try:
@@ -89,7 +97,11 @@ def convert(
                 preserve_page_markers=cfg.output.preserve_page_markers,
             )
             atomic_write(out_path, md)
-            typer.echo(f" → {out_path}  [{result.converter_used}]")
+            typer.echo(f" → {out_path}  [{result.converter_used}{progress}  {elapsed:.1f}s]")
+
+            if result.warnings:
+                for w in result.warnings:
+                    typer.echo(f"  ⚠ {w}", err=True)
         except ConversionError as exc:
             typer.echo(f" FAILED: {exc}", err=True)
             errors += 1

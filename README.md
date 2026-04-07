@@ -19,7 +19,7 @@ frontmatter in seconds.
 - **Tiered PDF conversion**: Marker → Docling → PyMuPDF4LLM → pdfplumber fallback
 - **Table preservation**: GFM pipe tables, maintained reading order
 - **Image extraction**: Embedded images saved separately, referenced with relative paths
-- **YAML frontmatter**: source, date, converter used — great for LLM context
+- **YAML frontmatter**: source, date, converter, page count, quality score — great for LLM context
 - **macOS background service**: launchd integration, survives restarts
 - **Optional Ollama**: local LLM for image captions and table validation
 - **Apple Silicon**: Marker uses Apple MPS for fast inference on M-series Macs
@@ -142,6 +142,7 @@ source: "report.pdf"
 converted: "2026-04-04T14:23:01"
 converter: "marker"
 pages: 12
+quality: high
 ---
 
 # Report Title

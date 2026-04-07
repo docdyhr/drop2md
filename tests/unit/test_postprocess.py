@@ -89,3 +89,78 @@ def test_postprocess_ends_with_newline(tmp_path):
     source = tmp_path / "doc.pdf"
     md = postprocess(result, source, add_frontmatter=False)
     assert md.endswith("\n")
+
+
+# ─── Q-1: Quality scoring ─────────────────────────────────────────────────────
+
+@pytest.mark.unit
+def test_quality_high(tmp_path):
+    """Rich, structured, warning-free document scores high."""
+    from drop2md.postprocess import score_quality
+    md = "# Title\n\n## Section\n\n" + ("word " * 450)
+    result = ConverterResult(markdown=md, converter_used="marker")
+    assert score_quality(md, result) == "high"
+
+
+@pytest.mark.unit
+def test_quality_medium_few_words_with_headings(tmp_path):
+    """Moderate word count with at least one heading scores medium."""
+    from drop2md.postprocess import score_quality
+    md = "# Title\n\n" + ("word " * 150)
+    result = ConverterResult(markdown=md, converter_used="marker")
+    assert score_quality(md, result) == "medium"
+
+
+@pytest.mark.unit
+def test_quality_low_sparse(tmp_path):
+    """Very few words → low quality."""
+    from drop2md.postprocess import score_quality
+    md = "Just a few words."
+    result = ConverterResult(markdown=md, converter_used="pdfplumber")
+    assert score_quality(md, result) == "low"
+
+
+@pytest.mark.unit
+def test_quality_low_scanned_warning(tmp_path):
+    """Scanned PDF warning → always low quality regardless of word count."""
+    from drop2md.postprocess import score_quality
+    md = "# Doc\n\n" + ("word " * 500)
+    result = ConverterResult(
+        markdown=md,
+        converter_used="pdfplumber",
+        warnings=["Scanned PDF detected — text extraction may be incomplete."],
+    )
+    assert score_quality(md, result) == "low"
+
+
+@pytest.mark.unit
+def test_quality_low_many_warnings(tmp_path):
+    """Three or more warnings → always low quality."""
+    from drop2md.postprocess import score_quality
+    md = "# Doc\n\n## Section\n\n" + ("word " * 500)
+    result = ConverterResult(
+        markdown=md,
+        converter_used="marker",
+        warnings=["warn1", "warn2", "warn3"],
+    )
+    assert score_quality(md, result) == "low"
+
+
+@pytest.mark.unit
+def test_quality_written_to_frontmatter(tmp_path):
+    """postprocess() includes quality: field in YAML frontmatter."""
+    md = "# Title\n\n## Section\n\n" + ("word " * 450)
+    result = ConverterResult(markdown=md, converter_used="marker")
+    source = tmp_path / "doc.pdf"
+    out = postprocess(result, source, add_frontmatter=True)
+    assert "quality:" in out
+    assert "quality: high" in out or "quality: medium" in out or "quality: low" in out
+
+
+@pytest.mark.unit
+def test_quality_not_in_frontmatter_when_disabled(tmp_path):
+    """When add_frontmatter=False, quality is not computed or emitted."""
+    result = ConverterResult(markdown="# Doc\n\ntext", converter_used="test")
+    source = tmp_path / "doc.pdf"
+    out = postprocess(result, source, add_frontmatter=False)
+    assert "quality:" not in out

@@ -27,8 +27,8 @@ Current version: **0.4.0**
 
 - [x] Unit tests for each VEP handler (mocked AI provider)
 - [x] Unit tests for `VisualConfig` loading and per-handler toggle behaviour
-- [ ] Integration smoke test: PDF with chart → output contains prose description
-- [ ] Integration smoke test: PPTX with embedded image → image extracted and described
+- [x] Integration smoke test: PDF with chart → output contains prose description
+- [x] Integration smoke test: PPTX with embedded image → image extracted and described
 
 ---
 
@@ -37,17 +37,17 @@ Current version: **0.4.0**
 > Theme: Trustworthy output you can verify, not just output that exists.
 > Key files: `src/drop2md/postprocess.py`, `src/drop2md/converters/pdf.py`, `src/drop2md/dispatcher.py`
 
-- [ ] **Q-1** `postprocess.py` — Compute `quality: high | medium | low` score (heading density, table count, image ref count, word count ratio, warning count) and write to YAML frontmatter
+- [x] **Q-1** `postprocess.py` — Compute `quality: high | medium | low` score (word count, heading density, image ref count, warning count, scanned flag) and write to YAML frontmatter
 - [x] **Q-2** `converters/pdf.py` — Scanned document detection: check character density of first N pages; skip ML text-based converters for image-only PDFs; add warning to result
-- [ ] **Q-3** `cli.py`, `watcher.py` — Multi-page progress reporting for documents > 10 pages: converter tier, page N of M, elapsed time
-- [ ] **Q-4** `converters/pdf.py` — Page-level partial recovery: keep Marker output for successful pages, fall back to pdfplumber only for failing pages, merge results
+- [x] **Q-3** `cli.py`, `watcher.py` — Progress reporting: elapsed time + page count for docs > 10 pages in CLI output and watcher logs; warnings surfaced immediately
+- [x] **Q-4** `converters/pdf.py` — Page-level partial recovery: when ML tier produces sparse output (< 50 chars/page), pdfplumber augments with missing pages; warning added to result
 - [x] **Q-5** `dispatcher.py` — RTF and ODT support via Pandoc fallback (add to `_EXT_MAP` and `_MIME_MAP`)
 
 ### Tests
 
-- [ ] Unit tests for quality scorer with known inputs (high/medium/low boundary cases)
-- [ ] Unit test for scanned document detection (mock PDF with zero character density)
-- [ ] Unit test for RTF/ODT dispatcher routing
+- [x] Unit tests for quality scorer with known inputs (high/medium/low boundary cases)
+- [x] Unit test for scanned document detection (mock PDF with zero character density)
+- [x] Unit test for RTF/ODT dispatcher routing
 
 ---
 

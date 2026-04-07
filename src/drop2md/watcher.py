@@ -87,8 +87,26 @@ def _process_file(path: Path, config: Config) -> None:
             return
 
         try:
+            import time
+            t0 = time.monotonic()
             log.info("Converting: %s", path.name)
             result = dispatch(path, output_dir)
+            elapsed = time.monotonic() - t0
+
+            pages = result.metadata.get("pages")
+            if pages and pages > 10:
+                log.info(
+                    "Converted %s via %s (%d pages, %.1fs)",
+                    path.name, result.converter_used, pages, elapsed,
+                )
+            else:
+                log.info(
+                    "Converted %s via %s (%.1fs)",
+                    path.name, result.converter_used, elapsed,
+                )
+
+            for w in result.warnings or []:
+                log.warning("%s: %s", path.name, w)
 
             # Optional Ollama enhancement
             if config.ollama.enabled:

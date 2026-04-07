@@ -11,9 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Q-1 Conversion quality scoring** — `postprocess.py` computes a `quality: high | medium | low` score and writes it to YAML frontmatter. Scoring is purely structural (no AI): word count, heading density, image ref count, warning count, and scanned-PDF flag. Boundaries: `high` ≥ 400 words + ≥ 2 headings + 0 warnings; `low` if scanned, ≥ 3 warnings, or < 100 words; `medium` otherwise.
 - **Q-2 Scanned PDF detection** — `TieredPdfConverter` now samples the first 3 pages with pdfplumber before running any converter; if total character count is < 20 the PDF is treated as scanned. Marker and Docling (which produce garbage on image-only pages) are skipped automatically. A `"Scanned PDF detected"` warning is appended to the `ConverterResult` so downstream tools can surface the quality downgrade.
 - **Q-5 RTF and ODF support** — `dispatcher.py` now routes `.rtf`, `.odt`, `.odp`, `.ods` files (and their MIME types) to `OfficeConverter`, which hands them to the Pandoc fallback. No new dependencies required.
-- 15 new unit tests covering scanned-PDF detection, ML-tier skipping, warning propagation, graceful error handling, and RTF/ODF dispatcher routing. Total: 263 unit tests, 78.3% coverage.
+- **Q-3 Progress reporting** — CLI `convert` command now prints elapsed time and page count for documents > 10 pages; conversion warnings are printed to stderr immediately after each file. Watcher logs include elapsed time and page count at INFO level; warnings are promoted to WARNING level.
+- **Q-4 Page-level partial recovery** — After Marker or Docling succeeds but produces sparse output (< 50 chars/page average), `_partial_recover()` extracts individual pages with pdfplumber and appends any page whose content was missing from the primary output. A warning is added to the result indicating how many pages were recovered.
+- 12 new unit tests for quality scoring (boundary cases, scanned/warning flags, frontmatter emission) and partial recovery (healthy skip, missing-page append, no-metadata passthrough, pdfplumber error). Total: 275 unit tests, 78.7% coverage.
 
 ## [0.3.0] — 2026-04-07
 

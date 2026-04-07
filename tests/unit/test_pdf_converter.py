@@ -373,3 +373,98 @@ def test_is_scanned_pdf_graceful_on_error(tmp_path):
 
     with patch("pdfplumber.open", side_effect=Exception("corrupt")):
         assert _is_scanned_pdf(path) is False
+
+
+# ─── Q-4: Page-level partial recovery ────────────────────────────────────────
+
+@pytest.mark.unit
+def test_partial_recover_skips_healthy_output(tmp_path):
+    """_partial_recover returns original when avg chars/page is sufficient."""
+    from drop2md.converters.pdf import _partial_recover
+
+    md = "A " * 200  # 400 chars, 2 pages → 200/page > threshold
+    result = ConverterResult(
+        markdown=md, converter_used="marker", metadata={"pages": 2}
+    )
+    recovered = _partial_recover(result, tmp_path / "doc.pdf", tmp_path)
+    assert recovered is result  # unchanged
+
+
+@pytest.mark.unit
+def test_partial_recover_appends_missing_pages(tmp_path):
+    """_partial_recover appends pdfplumber text for pages missing from primary."""
+    from drop2md.converters.pdf import _partial_recover
+
+    path = tmp_path / "doc.pdf"
+    path.touch()
+
+    # Primary: 2 pages but only 10 chars total → very sparse
+    sparse_md = "hi"
+    result = ConverterResult(
+        markdown=sparse_md, converter_used="marker", metadata={"pages": 2}
+    )
+
+    # pdfplumber returns rich text for both pages
+    mock_page = MagicMock()
+    mock_page.extract_text.return_value = "A" * 100
+    mock_pdf = MagicMock()
+    mock_pdf.__enter__ = lambda s: s
+    mock_pdf.__exit__ = MagicMock(return_value=False)
+    mock_pdf.pages = [mock_page, mock_page]
+
+    with patch("pdfplumber.open", return_value=mock_pdf):
+        recovered = _partial_recover(result, path, tmp_path)
+
+    assert recovered is not result
+    assert "<!-- Page" in recovered.markdown
+    assert any("Partial recovery" in w for w in recovered.warnings)
+
+
+@pytest.mark.unit
+def test_partial_recover_no_pages_metadata_returns_original(tmp_path):
+    """_partial_recover returns original if no pages metadata is available."""
+    from drop2md.converters.pdf import _partial_recover
+
+    result = ConverterResult(markdown="some text", converter_used="marker")
+    recovered = _partial_recover(result, tmp_path / "doc.pdf", tmp_path)
+    assert recovered is result
+
+
+@pytest.mark.unit
+def test_partial_recover_graceful_on_pdfplumber_error(tmp_path):
+    """_partial_recover returns original if pdfplumber raises."""
+    from drop2md.converters.pdf import _partial_recover
+
+    path = tmp_path / "doc.pdf"
+    path.touch()
+    result = ConverterResult(
+        markdown="x", converter_used="marker", metadata={"pages": 5}
+    )
+
+    with patch("pdfplumber.open", side_effect=Exception("corrupt")):
+        recovered = _partial_recover(result, path, tmp_path)
+
+    assert recovered is result
+
+
+@pytest.mark.unit
+def test_tiered_converter_applies_partial_recovery_for_ml_tiers(tmp_path):
+    """TieredPdfConverter calls _partial_recover for Marker and Docling results."""
+    from drop2md.converters.pdf import _partial_recover
+
+    path = tmp_path / "test.pdf"
+    path.touch()
+
+    mock_result = ConverterResult(
+        markdown="sparse", converter_used="marker", metadata={"pages": 3}
+    )
+
+    with (
+        patch("drop2md.converters.pdf._is_scanned_pdf", return_value=False),
+        patch.object(MarkerPdfConverter, "is_available", return_value=True),
+        patch.object(MarkerPdfConverter, "convert", return_value=mock_result),
+        patch("drop2md.converters.pdf._partial_recover", return_value=mock_result) as mock_recover,
+    ):
+        TieredPdfConverter().convert(path, tmp_path)
+
+    mock_recover.assert_called_once()

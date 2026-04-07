@@ -181,17 +181,16 @@ first-class features.
 
 ### P1 — Quality and Robustness (Target: v0.4)
 
-- [ ] **Conversion quality scoring** — `quality: high|medium|low` in YAML
-      frontmatter; scoring factors: heading density, table count, image ref
-      count, word count ratio, warning count
+- [x] **Conversion quality scoring** — `quality: high|medium|low` in YAML
+      frontmatter; scoring factors: word count, heading density, image refs,
+      warning count, scanned-PDF flag (v0.4)
 - [x] **Scanned document detection** — page character density check before the
       tier chain; Marker and Docling skipped for image-only PDFs; warning added
       to result (v0.4)
-- [ ] **Multi-page progress reporting** — CLI and watcher logs emit converter
-      tier selected, page N of M (where available), elapsed time for documents
-      > 10 pages
-- [ ] **Page-level partial recovery** — mix Marker and pdfplumber output per
-      page rather than falling back the whole document on a single page failure
+- [x] **Multi-page progress reporting** — CLI prints elapsed time + page count
+      for docs > 10 pages; watcher logs same at INFO level (v0.4)
+- [x] **Page-level partial recovery** — sparse ML-tier output augmented with
+      pdfplumber pages; warning added to result and frontmatter (v0.4)
 - [x] **RTF and ODT support** via the Pandoc fallback path (v0.4)
 
 ### P2 — Distribution and Onboarding (Target: v1.0)

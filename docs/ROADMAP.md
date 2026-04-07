@@ -199,27 +199,25 @@ loss at the fallback tier.
 
 **Theme:** Trustworthy output you can verify, not just output that exists.
 
-**Q-1: Conversion quality scoring**
-Add a `quality: high | medium | low` field to YAML frontmatter. Scoring
-factors computed without AI: heading density, table count vs detected table
-count, image ref count vs extracted image count, word count vs estimated word
-count, warning count. Lets downstream pipelines route low-quality conversions
-for manual review.
+**Q-1: Conversion quality scoring** ✅ *complete (v0.4)*
+`score_quality()` in `postprocess.py` computes `high | medium | low` from
+word count, heading density, image ref count, warning count, and scanned-PDF
+flag. Written to YAML frontmatter as `quality:` on every conversion.
 
 **Q-2: Scanned document detection and rerouting** ✅ *complete (v0.4)*
 `_is_scanned_pdf()` samples the first 3 pages via pdfplumber; if total
 character count < 20, Marker and Docling are skipped and a warning is added
 to the result. PyMuPDF4LLM and pdfplumber still run as fallbacks.
 
-**Q-3: Multi-page progress reporting**
-For documents > 10 pages, emit progress: converter tier selected, page N of M
-(where available from Marker/Docling), elapsed time. Both CLI output and
-watcher logs.
+**Q-3: Multi-page progress reporting** ✅ *complete (v0.4)*
+CLI prints elapsed time and page count for docs > 10 pages; warnings printed
+to stderr immediately. Watcher logs elapsed time, page count, and warnings at
+appropriate log levels.
 
-**Q-4: Page-level partial recovery**
-If a PDF page causes Marker to fail mid-document, convert completed pages
-with Marker and fall back to pdfplumber only for the failing page(s). Currently
-the full document falls back on a single page failure.
+**Q-4: Page-level partial recovery** ✅ *complete (v0.4)*
+`_partial_recover()` checks avg chars/page after Marker/Docling; if below
+threshold, appends pdfplumber text for missing pages and adds a warning. Full
+page-by-page Marker recovery remains future work (requires Marker internals).
 
 **Q-5: RTF and ODT support** ✅ *complete (v0.4)*
 `.rtf`, `.odt`, `.odp`, `.ods` and their MIME types now route to

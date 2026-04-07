@@ -2,6 +2,11 @@
 
 Each tier is tried in order; if unavailable or it raises, the next is tried.
 LegacyPdfConverter (pdfplumber) is always the final fallback.
+
+Page-level partial recovery (Q-4): pdfplumber extracts text page-by-page.
+When a top tier produces an empty or very short result that looks like a
+partial failure, the pdfplumber pages for which the top-tier produced no
+content are appended to the output.
 """
 
 from __future__ import annotations
@@ -180,6 +185,9 @@ class TieredPdfConverter(BaseConverter):
                         "Scanned PDF detected — text extraction may be incomplete. "
                         "Enable OCR or a vision-LLM provider for best results."
                     ]
+                # Q-4: attempt page-level recovery for ML tiers that may miss pages
+                if ConverterClass in _TEXT_ONLY_TIERS:
+                    result = _partial_recover(result, path, output_dir)
                 log.info("Converted %s via %s", path.name, ConverterClass.name)
                 return result
             except Exception as exc:
@@ -191,3 +199,74 @@ class TieredPdfConverter(BaseConverter):
                 )
 
         raise ConversionError(f"All PDF conversion tiers exhausted for {path}")
+
+
+def _partial_recover(
+    primary: ConverterResult,
+    path: Path,
+    output_dir: Path,
+    min_chars_per_page: int = 50,
+) -> ConverterResult:
+    """Attempt page-level partial recovery using pdfplumber.
+
+    If *primary* produced very little text (fewer than *min_chars_per_page*
+    characters per page on average), extract individual pages with pdfplumber
+    and append any page that contributed text the primary tier missed.
+
+    Returns the original result if recovery is not needed or not possible.
+    """
+    pages_meta = primary.metadata.get("pages")
+    if not pages_meta:
+        return primary
+
+    primary_chars = len(primary.markdown.strip())
+    avg_chars = primary_chars / pages_meta if pages_meta else primary_chars
+
+    if avg_chars >= min_chars_per_page:
+        return primary  # primary output looks healthy — no recovery needed
+
+    log.info(
+        "Partial recovery: %s produced %.0f chars/page — augmenting with pdfplumber",
+        primary.converter_used, avg_chars,
+    )
+
+    try:
+        import pdfplumber
+
+        recovered_pages: list[str] = []
+        with pdfplumber.open(str(path)) as pdf:
+            for page_num, page in enumerate(pdf.pages, 1):
+                page_text = (page.extract_text() or "").strip()
+                if len(page_text) >= min_chars_per_page:
+                    recovered_pages.append(
+                        f"<!-- Page {page_num} -->\n\n{page_text}"
+                    )
+
+        if not recovered_pages:
+            return primary
+
+        # Only append pages whose content doesn't appear in the primary output
+        new_pages = [
+            p for p in recovered_pages
+            if p.split("\n\n", 1)[-1][:40] not in primary.markdown
+        ]
+        if not new_pages:
+            return primary
+
+        combined = primary.markdown.rstrip() + "\n\n" + "\n\n".join(new_pages) + "\n"
+        warning = (
+            f"Partial recovery: {primary.converter_used} produced sparse output "
+            f"({avg_chars:.0f} chars/page avg); {len(new_pages)} page(s) recovered via pdfplumber"
+        )
+        log.warning(warning)
+
+        return ConverterResult(
+            markdown=combined,
+            images=primary.images,
+            converter_used=primary.converter_used,
+            metadata=primary.metadata,
+            warnings=list(primary.warnings or []) + [warning],
+        )
+    except Exception as exc:
+        log.debug("Partial recovery failed: %s", exc)
+        return primary
