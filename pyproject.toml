@@ -1,6 +1,6 @@
 [project]
 name = "drop2md"
-version = "0.2.0"
+version = "0.5.0"
 description = "macOS document-to-markdown converter with folder watching and LLM integration"
 readme = "README.md"
 requires-python = ">=3.11"

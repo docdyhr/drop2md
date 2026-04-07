@@ -7,13 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-04-07
+
 ### Added
 
 - **Markdown polish — deterministic + AI-assisted text correction** — two-tier post-processing pipeline for common PDF extraction artifacts:
   - **Deterministic (always-on)**: `fix_hyphen_line_breaks` rejoins words split across lines by PDF column layout (`docu-\nment` → `docu-ment`); `fix_sentence_spacing` inserts missing spaces after sentence-ending punctuation (`text.Next` → `text. Next`); `fix_repeated_words` removes adjacent duplicate words caused by extraction boundary artifacts (`the the` → `the`). Applied in `postprocess()` after heading normalisation, zero latency, no config needed.
   - **AI-assisted (opt-in)**: `_polish_text()` in `enhance.py` splits markdown on paragraph boundaries, skips structural blocks (tables, headings, code fences, image refs, URLs), and sends each prose paragraph to the configured AI provider with a strict prompt that forbids rephrasing. Safety length check (0.75–1.30× ratio) rejects responses that deviate too far from the original. Enable with `polish_text = true` in `[ollama]` config.
   - 27 new unit tests: 14 in `test_postprocess.py` (per-function and end-to-end deterministic), 13 in new `test_enhance_polish.py` (AI fallbacks, structural paragraph skipping, metadata preservation, wire-up).
-
 - **D-2 `drop2md setup` interactive wizard** — guided first-run experience: prompts for watch/output/vault directories, AI provider (none/ollama/claude/openai/gemini), model and API key, optional VEP enable; offers to install the launchd service and Finder Quick Action; runs an Ollama connection test if that provider is chosen. Writes a complete `config.toml` without any manual TOML editing.
 - **D-4 Obsidian vault integration** — `output.vault_dir` in `[output]` config section (also settable via `DROP2MD_VAULT_DIR` env var). When set, every converted markdown file is atomic-written to `vault_dir/<filename>.md` in addition to the standard output directory. Supported in the watcher, CLI `convert`, and MCP `convert_document`.
 - **D-5 Coverage ≥ 85% and mypy strict clean** — 59 new unit tests covering VEP branch paths (diagram/formula/screenshot/photo fallbacks, unreferenced-image append with extra, `_enhance_tables` dispatch), `ProcessingLock` FileExistsError race condition, `atomic_write` failure cleanup, `score_quality` low fallthrough, `build_frontmatter` with warnings, `OpenAICompatProvider` reasoning_effort branch, `make_provider` gemini path, `mcp_server.main()`, `list_converted` with non-existent output dir, enhancement exception handling in MCP server, and `drop2md setup` wizard flows (8 scenarios). Total: 334 unit tests, 85.1% line coverage.
