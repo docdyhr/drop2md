@@ -184,15 +184,15 @@ first-class features.
 - [ ] **Conversion quality scoring** — `quality: high|medium|low` in YAML
       frontmatter; scoring factors: heading density, table count, image ref
       count, word count ratio, warning count
-- [ ] **Scanned document detection** — page character density check before the
-      tier chain; route image-only PDFs to a vision-LLM primary path instead of
-      running Marker against pages with no extractable text
+- [x] **Scanned document detection** — page character density check before the
+      tier chain; Marker and Docling skipped for image-only PDFs; warning added
+      to result (v0.4)
 - [ ] **Multi-page progress reporting** — CLI and watcher logs emit converter
       tier selected, page N of M (where available), elapsed time for documents
       > 10 pages
 - [ ] **Page-level partial recovery** — mix Marker and pdfplumber output per
       page rather than falling back the whole document on a single page failure
-- [ ] **RTF and ODT support** via the Pandoc fallback path
+- [x] **RTF and ODT support** via the Pandoc fallback path (v0.4)
 
 ### P2 — Distribution and Onboarding (Target: v1.0)
 

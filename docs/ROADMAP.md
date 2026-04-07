@@ -206,11 +206,10 @@ count, image ref count vs extracted image count, word count vs estimated word
 count, warning count. Lets downstream pipelines route low-quality conversions
 for manual review.
 
-**Q-2: Scanned document detection and rerouting**
-Before running the PDF tier chain, check if the first N pages are image-only
-(character density below threshold). If so, route directly to a vision-LLM
-primary path rather than running Marker against pages with no extractable text
-and producing near-empty output.
+**Q-2: Scanned document detection and rerouting** ✅ *complete (v0.4)*
+`_is_scanned_pdf()` samples the first 3 pages via pdfplumber; if total
+character count < 20, Marker and Docling are skipped and a warning is added
+to the result. PyMuPDF4LLM and pdfplumber still run as fallbacks.
 
 **Q-3: Multi-page progress reporting**
 For documents > 10 pages, emit progress: converter tier selected, page N of M
@@ -222,9 +221,9 @@ If a PDF page causes Marker to fail mid-document, convert completed pages
 with Marker and fall back to pdfplumber only for the failing page(s). Currently
 the full document falls back on a single page failure.
 
-**Q-5: RTF and ODT support**
-Add to the Pandoc fallback path. Low effort — Pandoc already handles both.
-Fills a frequently-requested format gap.
+**Q-5: RTF and ODT support** ✅ *complete (v0.4)*
+`.rtf`, `.odt`, `.odp`, `.ods` and their MIME types now route to
+`OfficeConverter`; the existing Pandoc fallback handles all four formats.
 
 ---
 

@@ -159,36 +159,44 @@ pages: 12
 
 | Format | Converter | Notes |
 |---|---|---|
-| PDF | Marker / Docling / pdfplumber | Tiered fallback |
+| PDF | Marker / Docling / pdfplumber | Tiered fallback; scanned PDFs detected automatically |
 | DOCX | MarkItDown / Pandoc | Tables, headings preserved |
 | PPTX | MarkItDown | Slide text + notes |
 | XLSX | MarkItDown | Multiple sheets as tables |
 | HTML | html2text / Pandoc | Links preserved |
 | EPUB | Pandoc | Chapter structure |
 | PNG/JPG | pytesseract + AI caption | OCR + optional AI description |
+| RTF | Pandoc | Via OfficeConverter Pandoc fallback |
+| ODT / ODP / ODS | Pandoc | OpenDocument formats |
 
 ## Optional AI Enhancement
 
 When `[ollama] enabled = true`, drop2md runs an optional post-processing pass:
 
-- **Image captions**: Embedded images get AI-generated alt-text
+- **Visual Enhancement Pipeline (VEP)**: Extracted images are classified as `chart | diagram | formula | table-image | screenshot | photo` and enriched with prose descriptions, Mermaid blocks, LaTeX math, or reconstructed GFM tables
+- **Image captions**: Images without a VEP handler get a one-sentence AI-generated alt-text
 - **Table validation**: Broken GFM tables are auto-corrected
 
-Four providers are supported. Set `provider` in your `config.toml`:
+**A vision-capable model is required for VEP.** The default `llava-llama3:8b` works out of the box with Ollama. Text-only models (e.g. `llama3`, `qwen3.5`) silently skip image classification.
+
+Four providers are supported:
+
+| Provider | Model | API key env var | Notes |
+|---|---|---|---|
+| `ollama` | `llava-llama3:8b` (default) | — | Free, local, private |
+| `claude` | `claude-haiku-4-5-20251001` | `ANTHROPIC_API_KEY` | Best output quality |
+| `openai` | `gpt-4o-mini` | `OPENAI_API_KEY` | Best speed and cost |
+| `gemini` | `gemini-2.5-flash` | `GEMINI_API_KEY` | Free tier available |
 
 ```toml
 [ollama]
 enabled  = true
-provider = "ollama"   # "ollama" | "claude" | "openai" | "hf"
-model    = "qwen3.5:latest"
-```
+provider = "ollama"          # "ollama" | "claude" | "openai" | "gemini" | "hf"
+model    = "llava-llama3:8b" # ollama pull llava-llama3:8b
 
-| Provider | Extra install | API key env var | Notes |
-|---|---|---|---|
-| `ollama` | — (default) | — | Free, local, requires Ollama running |
-| `claude` | `pip install drop2md[claude]` | `ANTHROPIC_API_KEY` | Claude Haiku by default |
-| `openai` | `pip install drop2md[openai]` | `OPENAI_API_KEY` | GPT-4o-mini by default |
-| `hf` | `pip install drop2md[openai]` | `HF_TOKEN` | HuggingFace Inference Router |
+[visual]
+enabled = true               # enable the Visual Enhancement Pipeline
+```
 
 API keys are resolved in order: `api_key` field in config → `DROP2MD_ENHANCE_API_KEY` env var → provider-native env var.
 
