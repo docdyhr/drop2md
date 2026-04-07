@@ -18,6 +18,7 @@ def _cfg(enabled: bool = True, timeout: int = 5, provider: str = "ollama") -> Ma
     cfg.ollama.base_url = "http://localhost:11434"
     cfg.ollama.timeout_seconds = timeout
     cfg.ollama.api_key = ""
+    cfg.ollama.polish_text = False
     cfg.openai.model = "gpt-4o-mini"
     cfg.openai.base_url = "https://api.openai.com/v1"
     cfg.openai.timeout_seconds = timeout

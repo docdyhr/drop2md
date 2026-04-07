@@ -9,6 +9,9 @@ from pathlib import Path
 from drop2md.converters import ConverterResult
 from drop2md.utils.gfm import (
     ensure_trailing_newline,
+    fix_hyphen_line_breaks,
+    fix_repeated_words,
+    fix_sentence_spacing,
     fix_table_alignment,
     normalize_headings,
     strip_page_markers,
@@ -106,6 +109,9 @@ def postprocess(
 
     md = fix_table_alignment(md)
     md = normalize_headings(md)
+    md = fix_hyphen_line_breaks(md)
+    md = fix_sentence_spacing(md)
+    md = fix_repeated_words(md)
     md = _collapse_blank_lines(md)
     md = ensure_trailing_newline(md)
 

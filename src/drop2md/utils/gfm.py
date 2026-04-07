@@ -58,3 +58,55 @@ def strip_page_markers(markdown: str) -> str:
 def ensure_trailing_newline(markdown: str) -> str:
     """Ensure markdown ends with a single newline."""
     return markdown.rstrip("\n") + "\n"
+
+
+# ---------------------------------------------------------------------------
+# Deterministic markdown polish (no AI required)
+# ---------------------------------------------------------------------------
+
+_HYPHEN_BREAK_RE = re.compile(r"(\w)-\n([a-z])")
+_SENTENCE_GAP_RE = re.compile(r"(?<=[a-z]{3}[.!?])([A-Z])")
+_REPEATED_WORD_RE = re.compile(r"\b([a-zA-Z]{3,})([ \t]+\1)+\b", re.IGNORECASE)
+
+
+def fix_hyphen_line_breaks(text: str) -> str:
+    """Rejoin words hyphenated across line breaks from PDF column layout.
+
+    Converts ``docu-\\nment`` → ``docu-ment``.  Only fires when the second
+    fragment starts with a lowercase letter to avoid touching real abbreviations
+    like ``EU-\\nUS`` or list markers.  The hyphen is always kept — we can't
+    reliably know whether ``some-\\nthing`` was ``something`` or ``some-thing``.
+    """
+    return _HYPHEN_BREAK_RE.sub(r"\1-\2", text)
+
+
+def fix_sentence_spacing(text: str) -> str:
+    """Insert a missing space between a sentence-ending punctuation and the next word.
+
+    Corrects ``end.Start`` → ``end. Start``.  The lookbehind requires at least
+    three lowercase letters before the punctuation mark to avoid triggering on
+    common abbreviations such as ``Dr.`` or ``Fig.``.  Lines starting with
+    spaces (code blocks), backticks, or containing ``://`` (URLs) are skipped.
+    """
+    lines = text.splitlines(keepends=True)
+    result = []
+    in_code_fence = False
+    for line in lines:
+        stripped = line.lstrip()
+        if stripped.startswith("```"):
+            in_code_fence = not in_code_fence
+        if in_code_fence or stripped.startswith("    ") or "://" in line:
+            result.append(line)
+        else:
+            result.append(_SENTENCE_GAP_RE.sub(r" \1", line))
+    return "".join(result)
+
+
+def fix_repeated_words(text: str) -> str:
+    """Remove adjacent duplicate words caused by PDF extraction boundary artifacts.
+
+    ``the the book`` → ``the book``.  Only matches words of 3+ characters to
+    avoid removing intentional repetition in informal prose (``ha ha``,
+    ``bye bye``).  Case-insensitive so ``The the`` is also caught.
+    """
+    return _REPEATED_WORD_RE.sub(r"\1", text)

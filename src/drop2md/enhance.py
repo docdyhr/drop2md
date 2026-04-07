@@ -364,6 +364,100 @@ def _enhance_tables(markdown: str, config: Config) -> str:
 
 
 # ---------------------------------------------------------------------------
+# AI-assisted text polish
+# ---------------------------------------------------------------------------
+
+_POLISH_PROMPT = """\
+Fix only obvious errors in this markdown text:
+- OCR character mistakes (rn→m, cl→d, 0/O, 1/l/I confusion, fi/fl ligature artifacts)
+- Repeated words from extraction artifacts (e.g. "the the")
+- Missing spaces after sentence-ending punctuation
+- Garbled or placeholder characters
+
+Rules:
+- Do NOT rephrase, restructure, summarize, or add content
+- Preserve all markdown syntax (headings, links, bold, code blocks, tables) exactly
+- If unsure whether something is an error, leave it unchanged
+- Return the corrected markdown text only, no explanation
+
+Text:
+{markdown}"""
+
+_CODE_FENCE_RE = re.compile(r"^```")
+
+
+def _is_structural_paragraph(para: str) -> bool:
+    """Return True for paragraphs that should never be sent to the AI for polishing.
+
+    Structural content includes: GFM tables, code fences, headings, horizontal
+    rules, image refs, and HTML comments.
+    """
+    first = para.lstrip()
+    return (
+        first.startswith("|")
+        or "|---|" in para
+        or first.startswith("```")
+        or first.startswith("#")
+        or first.startswith("---")
+        or first.startswith("![")
+        or first.startswith("<!--")
+        or "://" in para
+    )
+
+
+def _polish_text(result: ConverterResult, config: Config) -> ConverterResult:
+    """Ask the AI provider to fix obvious OCR/extraction errors in the markdown.
+
+    Only prose paragraphs are sent; tables, code blocks, headings, image refs,
+    and HTML comments are preserved verbatim.  The response is accepted only if
+    its length is between 75% and 130% of the original (safety check against
+    LLMs that delete or hallucinate large amounts of content).
+
+    Falls back to the original markdown on any failure.
+    """
+    try:
+        provider = make_provider(config)
+        paragraphs = result.markdown.split("\n\n")
+        polished_parts: list[str] = []
+        in_code_fence = False
+
+        for para in paragraphs:
+            # Track code fence state across paragraph splits
+            fence_count = sum(1 for ln in para.splitlines() if _CODE_FENCE_RE.match(ln))
+            if in_code_fence or _is_structural_paragraph(para):
+                polished_parts.append(para)
+                if fence_count % 2 == 1:
+                    in_code_fence = not in_code_fence
+                continue
+
+            if fence_count % 2 == 1:
+                in_code_fence = not in_code_fence
+
+            prompt = _POLISH_PROMPT.format(markdown=para)
+            fixed: str = str(provider.generate(prompt)).strip()
+
+            # Safety check: reject if the model removed or hallucinated too much
+            original_len = len(para)
+            if original_len > 0 and not (0.75 * original_len <= len(fixed) <= 1.3 * original_len):
+                log.debug("Text polish rejected response (length ratio out of bounds) for paragraph")
+                polished_parts.append(para)
+            else:
+                polished_parts.append(fixed)
+
+        polished_md = "\n\n".join(polished_parts)
+        return ConverterResult(
+            markdown=polished_md,
+            images=result.images,
+            metadata=result.metadata,
+            converter_used=result.converter_used,
+            warnings=result.warnings,
+        )
+    except Exception as exc:
+        log.debug("Text polish failed: %s", exc)
+        return result
+
+
+# ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
 
@@ -390,6 +484,20 @@ def enhance(result: ConverterResult, config: Config) -> ConverterResult:
 
     if "|" in md and getattr(config.ollama, "validate_tables", True):
         md = _enhance_tables(md, config)
+
+    if getattr(config.ollama, "polish_text", False):
+        try:
+            interim = ConverterResult(
+                markdown=md,
+                images=result.images,
+                metadata=result.metadata,
+                converter_used=result.converter_used,
+                warnings=result.warnings,
+            )
+            interim = _polish_text(interim, config)
+            md = interim.markdown
+        except Exception as exc:
+            log.warning("Text polish failed: %s", exc)
 
     return ConverterResult(
         markdown=md,

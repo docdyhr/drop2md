@@ -47,6 +47,7 @@ class OllamaConfig:
     provider: str = "ollama"   # "ollama" | "claude" | "openai" | "hf"
     api_key: str = ""          # blank → SDK reads env var (ANTHROPIC_API_KEY etc.)
     validate_tables: bool = True  # set False with slow local models to skip table repair
+    polish_text: bool = False     # AI-assisted prose correction (OCR errors, spacing)
 
 
 @dataclass

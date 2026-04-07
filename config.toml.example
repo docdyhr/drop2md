@@ -63,6 +63,10 @@ model = "llava-llama3:8b"
 timeout_seconds = 60
 # Set false to skip GFM table repair (useful with slow local models)
 validate_tables = true
+# Set true to enable AI-assisted prose correction (OCR character errors, missing
+# spaces, ligature artifacts). Sends each prose paragraph to the AI provider.
+# Disabled by default — adds latency, requires a capable text model.
+polish_text = false
 
 # OpenAI / HuggingFace / Gemini settings — used when provider = "openai" | "hf" | "gemini"
 # [openai]

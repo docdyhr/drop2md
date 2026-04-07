@@ -8,6 +8,9 @@ from drop2md.converters import ConverterResult
 from drop2md.postprocess import postprocess
 from drop2md.utils.gfm import (
     ensure_trailing_newline,
+    fix_hyphen_line_breaks,
+    fix_repeated_words,
+    fix_sentence_spacing,
     fix_table_alignment,
     normalize_headings,
     strip_page_markers,
@@ -195,3 +198,122 @@ def test_build_frontmatter_includes_warnings():
     assert "warnings:" in fm
     assert '"Scanned PDF detected"' in fm
     assert '"Low confidence OCR"' in fm
+
+
+# ── Deterministic polish: fix_hyphen_line_breaks ──────────────────────────────
+
+@pytest.mark.unit
+def test_fix_hyphen_line_breaks_rejoins_lowercase():
+    """Hyphen-broken word across a newline is rejoined when second fragment is lowercase."""
+    assert fix_hyphen_line_breaks("docu-\nment") == "docu-ment"
+
+
+@pytest.mark.unit
+def test_fix_hyphen_line_breaks_multi():
+    """Multiple broken words in the same text are all fixed."""
+    text = "state-\nof-\nthe art"
+    result = fix_hyphen_line_breaks(text)
+    assert "\n" not in result.split("art")[0]
+
+
+@pytest.mark.unit
+def test_fix_hyphen_line_breaks_preserves_uppercase():
+    """Second fragment starting with uppercase is left unchanged (abbreviation / proper noun)."""
+    assert fix_hyphen_line_breaks("EU-\nUS trade") == "EU-\nUS trade"
+
+
+@pytest.mark.unit
+def test_fix_hyphen_line_breaks_preserves_regular_newlines():
+    """Normal line breaks (no preceding hyphen) are not touched."""
+    text = "line one\nline two"
+    assert fix_hyphen_line_breaks(text) == text
+
+
+# ── Deterministic polish: fix_sentence_spacing ───────────────────────────────
+
+@pytest.mark.unit
+def test_fix_sentence_spacing_inserts_space_after_period():
+    """Missing space after full stop followed by capital letter is inserted."""
+    assert fix_sentence_spacing("sentence.Next word") == "sentence. Next word"
+
+
+@pytest.mark.unit
+def test_fix_sentence_spacing_inserts_space_after_exclamation():
+    """Missing space after exclamation mark followed by capital letter is inserted."""
+    assert fix_sentence_spacing("done!Start again") == "done! Start again"
+
+
+@pytest.mark.unit
+def test_fix_sentence_spacing_skips_short_word_abbreviations():
+    """Words shorter than 3 chars before punctuation are not touched (e.g. Dr., Fig.)."""
+    # "Dr" is only 2 chars before the dot — should not insert space
+    text = "Dr.Smith is here"
+    assert fix_sentence_spacing(text) == text
+
+
+@pytest.mark.unit
+def test_fix_sentence_spacing_skips_urls():
+    """Lines containing :// (URLs) are not modified."""
+    text = "See https://example.com/Doc for details"
+    assert fix_sentence_spacing(text) == text
+
+
+@pytest.mark.unit
+def test_fix_sentence_spacing_skips_code_fence():
+    """Content inside triple-backtick fences is not modified."""
+    text = "```\nend.Start\n```"
+    assert fix_sentence_spacing(text) == text
+
+
+@pytest.mark.unit
+def test_fix_sentence_spacing_already_correct():
+    """Text with correct spacing is returned unchanged."""
+    text = "First sentence. Second sentence."
+    assert fix_sentence_spacing(text) == text
+
+
+# ── Deterministic polish: fix_repeated_words ─────────────────────────────────
+
+@pytest.mark.unit
+def test_fix_repeated_words_removes_duplicate():
+    """Consecutive duplicate words (3+ chars) are collapsed to one."""
+    assert fix_repeated_words("the the book") == "the book"
+
+
+@pytest.mark.unit
+def test_fix_repeated_words_case_insensitive():
+    """Case variation still triggers deduplication."""
+    assert fix_repeated_words("The the answer") == "The answer"
+
+
+@pytest.mark.unit
+def test_fix_repeated_words_preserves_short_words():
+    """Two-char words are not deduplicated (too risky for legitimate use)."""
+    assert fix_repeated_words("ha ha laugh") == "ha ha laugh"
+
+
+@pytest.mark.unit
+def test_fix_repeated_words_three_copies():
+    """Three copies of a word collapse to one."""
+    assert fix_repeated_words("very very very good") == "very good"
+
+
+@pytest.mark.unit
+def test_fix_repeated_words_no_false_positive():
+    """Distinct 3+ char words next to each other are not affected."""
+    text = "big red apple"
+    assert fix_repeated_words(text) == text
+
+
+# ── postprocess applies all polish steps ─────────────────────────────────────
+
+@pytest.mark.unit
+def test_postprocess_applies_deterministic_polish(tmp_path):
+    """postprocess() applies all three deterministic polish steps."""
+    raw = "A para-\ngraph with the the same word.Next sentence.\n"
+    result = ConverterResult(markdown=raw, converter_used="pdfplumber")
+    source = tmp_path / "doc.pdf"
+    out = postprocess(result, source, add_frontmatter=False)
+    assert "para-\n" not in out          # hyphen rejoined
+    assert "the the" not in out          # duplicate removed
+    assert "word. Next" in out or "word.Next" not in out  # space inserted
