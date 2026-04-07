@@ -46,6 +46,7 @@ class OllamaConfig:
     timeout_seconds: int = 60
     provider: str = "ollama"   # "ollama" | "claude" | "openai" | "hf"
     api_key: str = ""          # blank → SDK reads env var (ANTHROPIC_API_KEY etc.)
+    validate_tables: bool = True  # set False with slow local models to skip table repair
 
 
 @dataclass
@@ -77,6 +78,24 @@ class LoggingConfig:
 
 
 @dataclass
+class VisualConfig:
+    """Controls the Visual Enhancement Pipeline (VEP) introduced in v0.3.
+
+    All handlers are independently toggleable. ``diagram_to_mermaid`` and
+    ``formula_to_latex`` default to False because they produce syntax that not
+    all markdown renderers support — users must opt in explicitly.
+    """
+
+    enabled: bool = False
+    classify: bool = True
+    chart_description: bool = True
+    diagram_to_mermaid: bool = False  # opt-in
+    formula_to_latex: bool = False    # opt-in
+    table_image_to_gfm: bool = True
+    screenshot_description: bool = True
+
+
+@dataclass
 class Config:
     paths: PathsConfig = field(default_factory=PathsConfig)
     pdf: PdfConfig = field(default_factory=PdfConfig)
@@ -87,6 +106,7 @@ class Config:
     claude: ClaudeConfig = field(default_factory=ClaudeConfig)
     output: OutputConfig = field(default_factory=OutputConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
+    visual: VisualConfig = field(default_factory=VisualConfig)
 
     def ensure_dirs(self) -> None:
         """Create watch_dir and output_dir if they do not exist."""
@@ -130,6 +150,7 @@ def load_config(path: Path | None = None) -> Config:
         claude=ClaudeConfig(**data.get("claude", {})),
         output=OutputConfig(**data.get("output", {})),
         logging=LoggingConfig(**data.get("logging", {})),
+        visual=VisualConfig(**data.get("visual", {})),
     )
     _expand_paths(cfg)
     _apply_env_overrides(cfg)

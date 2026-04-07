@@ -1,15 +1,21 @@
 """Legacy PDF converter — wraps the original pdfplumber-based logic.
 
 This is always available as a fallback when Marker/Docling/PyMuPDF are absent.
-The original standalone script (pdf_to_markdown.py) is preserved in the project root.
+
+v0.3 (VEP-5): when PyMuPDF is available as a library, run an image extraction
+pass so images are not silently lost at this fallback tier. The extracted images
+feed into the Visual Enhancement Pipeline exactly as they would from Marker.
 """
 
 from __future__ import annotations
 
+import logging
 import re
 from pathlib import Path
 
 from drop2md.converters import BaseConverter, ConverterResult
+
+log = logging.getLogger(__name__)
 
 
 class LegacyPdfConverter(BaseConverter):
@@ -84,8 +90,25 @@ class LegacyPdfConverter(BaseConverter):
                     md_parts.append(stripped)
 
         markdown = _clean_text("\n".join(md_parts))
+
+        # VEP-5: opportunistic image extraction via PyMuPDF when available.
+        # pdfplumber does not extract images; PyMuPDF does and may already be
+        # installed as part of [pdf-light]. This makes images available to the
+        # VEP pipeline without adding a hard dependency.
+        images: list[Path] = []
+        try:
+            from drop2md.utils.image_extractor import extract_pdf_images
+            images = extract_pdf_images(path, output_dir)
+            if images:
+                log.debug(
+                    "pdfplumber tier: extracted %d image(s) via PyMuPDF", len(images)
+                )
+        except Exception as exc:
+            log.debug("pdfplumber image pass skipped: %s", exc)
+
         return ConverterResult(
             markdown=markdown,
+            images=images,
             converter_used=self.name,
             metadata={"pages": page_count},
             warnings=warnings,

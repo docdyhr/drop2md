@@ -39,6 +39,11 @@ pdf-light = [
 office = [
     "markitdown[docx]>=0.1.0",
 ]
+# Office embedded image extraction (DOCX + PPTX) — feeds VEP pipeline
+office-images = [
+    "python-docx>=1.1.0",
+    "python-pptx>=1.0.0",
+]
 # OCR support
 ocr = [
     "pytesseract>=0.3.13",
@@ -70,6 +75,8 @@ all = [
     "docling>=2.0.0",
     "pymupdf4llm>=0.0.17",
     "markitdown[docx]>=0.1.0",
+    "python-docx>=1.1.0",
+    "python-pptx>=1.0.0",
     "pytesseract>=0.3.13",
     "Pillow>=10.0.0",
     "anthropic>=0.40.0",
@@ -97,6 +104,9 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 include = ["drop2md*"]
 exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+"drop2md" = ["services/*.template"]
 
 [tool.mypy]
 python_version = "3.11"

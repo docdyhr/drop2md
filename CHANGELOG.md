@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-04-07
+
+### Added
+
+#### Visual Enhancement Pipeline (VEP)
+- **`[visual]` config section** with per-handler toggles (`enabled`, `classify`, `chart_description`, `diagram_to_mermaid`, `formula_to_latex`, `table_image_to_gfm`, `screenshot_description`); Mermaid and LaTeX off by default since not all renderers support those syntaxes
+- **VEP-1: Visual element classifier** — classifies each extracted image as `chart | diagram | formula | table-image | screenshot | photo` using the configured AI provider; falls back to `photo` on any failure
+- **VEP-2: Per-class enhancement handlers**
+  - `chart` → prose paragraph describing chart type, axes, trend, and up to three key data points
+  - `diagram` → Mermaid code block (`\`\`\`mermaid`) with structured-prose fallback if the model cannot produce valid Mermaid
+  - `formula` → `$$...$$` LaTeX display-math block
+  - `table-image` → GFM pipe table (validates `|` and `---` before replacing original ref)
+  - `screenshot` → 2–3 sentence description of visible UI and content
+  - `photo` → unchanged one-sentence alt-text (existing behaviour)
+- **VEP-3: `VisualConfig` dataclass** in `config.py` — loaded from `[visual]` TOML section; injected into `Config`
+- **VEP-4: Office embedded image extraction** — `_extract_docx_images()` and `_extract_pptx_images()` extract embedded images from DOCX and PPTX files via `python-docx` / `python-pptx` before the MarkItDown/Pandoc conversion pass; extracted images feed into the VEP pipeline; new optional extra `[office-images]`
+- **VEP-5: pdfplumber tier image pass** — when the `pdfplumber` fallback is used and PyMuPDF is installed as a library, opportunistically extract PDF images via `image_extractor.py` to prevent silent image loss at the fallback tier
+
+#### Workflow templates packaged inside the distribution
+- Moved `services/Info.plist.template` and `services/document.wflow.template` into `src/drop2md/services/` so `pip install` includes them
+- `install_quick_action` now loads templates via `importlib.resources.files("drop2md") / "services"` — works under pip, pipx, uvx, and `python -m drop2md.cli`
+- `sys.executable` used directly for the Quick Action shell script path (replaced fragile `sys.argv[0]` + venv-bin-search logic)
+- Quick Action log path changed from `/tmp/drop2mark.log` to `$HOME/Library/Logs/drop2md/drop2mark.log`; log directory created automatically
+
+#### CLI
+- `drop2md install-quick-action` — installs the **drop2mark** Finder Quick Action (`~/Library/Services/drop2mark.workflow`) for in-place document-to-markdown conversion via right-click in Finder
+- `drop2md uninstall-quick-action` — removes the workflow bundle
+
+#### Documentation
+- `docs/ROADMAP.md` — versioned milestones (v0.3 → v0.4 → v1.0 → v2.0), competitive positioning, architecture decisions
+- `docs/PRD.md` v2.0 — three personas, four-tier workflow table, full P0–P3 feature requirements, visual intelligence architecture diagram
+
+### Fixed
+- `_get_launchd_pid()` regex fix (was character-set stripping, not substring removal) — merged from v0.2.0
+
+### Added (testing)
+- 39 new unit tests in `tests/unit/test_vep.py` covering classifier, all five VEP handlers, `_apply_vep()`, `enhance()` entry point, `VisualConfig` TOML loading, office image extraction, and legacy PDF image pass
+- Total: 246 unit tests, 77.95% coverage
+
 ## [0.2.0] — 2026-04-06
 
 ### Added

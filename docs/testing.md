@@ -170,7 +170,50 @@ launchctl kickstart -k gui/$(id -u)/com.thomasdyhr.drop2md
 
 ---
 
-## 4. MCP Server Testing
+## 4. Quick Action Testing
+
+### Install and validate
+
+```bash
+# Install
+drop2md install-quick-action
+# Expected:
+#   Quick Action installed.
+#   Location: ~/Library/Services/drop2mark.workflow
+#   Python:   /path/to/.venv/bin/python3.x
+
+# Verify plist validity
+plutil -lint ~/Library/Services/drop2mark.workflow/Contents/Info.plist
+plutil -lint ~/Library/Services/drop2mark.workflow/Contents/document.wflow
+# Both should print: OK
+
+# Verify placeholder substitution
+grep -c "__PYTHON_PATH__" ~/Library/Services/drop2mark.workflow/Contents/document.wflow
+# 0
+
+# Uninstall
+drop2md uninstall-quick-action
+# Quick Action removed.
+```
+
+### Finder smoke-test
+
+1. Install with `drop2md install-quick-action`
+2. If needed, enable in **System Settings → Privacy & Security → Extensions → Finder**
+3. Right-click a supported file (PDF, DOCX, etc.) in Finder
+4. Choose **Quick Actions → drop2mark**
+5. A macOS notification should appear: "Converted 1 file(s) to Markdown"
+6. A `.md` file appears next to the original
+
+### Unit tests
+
+```bash
+pytest -k "quick_action" -v
+```
+
+---
+
+## 5. MCP Server Testing
 
 The MCP server exposes four tools and two resources to Claude Desktop.
 There are three ways to test it.

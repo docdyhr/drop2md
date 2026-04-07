@@ -108,6 +108,20 @@ tail -f ~/Library/Logs/drop2md/drop2md.log
 
 The `status` command includes a **Process Resources** table showing CPU%, memory, file descriptors, and uptime for every running drop2md process (watcher, MCP server, active converters).
 
+## Finder Quick Action
+
+Right-click any supported file in Finder and choose **Quick Actions → drop2mark** to convert it to Markdown in-place (output saved next to the original):
+
+```bash
+# Install the Quick Action
+drop2md install-quick-action
+
+# Remove it
+drop2md uninstall-quick-action
+```
+
+After installation the action may need to be enabled in **System Settings → Privacy & Security → Extensions → Finder**. A macOS notification confirms conversion results.
+
 ## Claude Desktop Integration
 
 Claude Desktop can read PDFs directly with full vision support (tables, charts,
@@ -183,6 +197,13 @@ All providers fall back gracefully — a missing key or offline service never bl
 ## Development
 
 See [CLAUDE.md](CLAUDE.md) for the full developer guide.
+
+| Document | Contents |
+|---|---|
+| [`docs/ROADMAP.md`](docs/ROADMAP.md) | Versioned milestones, competitive position, architecture decisions |
+| [`docs/PRD.md`](docs/PRD.md) | Product requirements, personas, feature checklist |
+| [`docs/testing.md`](docs/testing.md) | Full testing reference |
+| [`docs/mcp_integration.md`](docs/mcp_integration.md) | Claude Desktop MCP setup |
 
 ```bash
 pip install -e ".[dev,test]"

@@ -33,9 +33,16 @@ class OllamaProvider:
     def generate(self, prompt: str, image_path: Path | None = None) -> str:
         import httpx
 
+        # Prepend /no_think if not already present — required for qwen3/deepseek-r1
+        # reasoning models to suppress chain-of-thought that can take minutes.
+        # The options.think=False flag alone is insufficient for some model versions.
+        effective_prompt = (
+            prompt if prompt.startswith("/no_think") else f"/no_think {prompt}"
+        )
+
         payload: dict = {
             "model": self._model,
-            "prompt": prompt,
+            "prompt": effective_prompt,
             "stream": False,
             "options": {"think": False},
         }
