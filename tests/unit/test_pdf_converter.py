@@ -251,3 +251,125 @@ def test_marker_converter_saves_bytes_images(tmp_path):
     saved = tmp_path / "images" / "test_chart.png"
     assert saved.exists()
     assert saved.read_bytes() == b"\x89PNG\r\n\x1a\n"
+
+
+# ─── Q-2: Scanned PDF detection ──────────────────────────────────────────────
+
+@pytest.mark.unit
+def test_scanned_pdf_skips_ml_tiers(tmp_path):
+    """Scanned PDFs skip Marker and Docling; pdfplumber is used instead."""
+    from drop2md.converters.pdf import _is_scanned_pdf
+
+    path = tmp_path / "scanned.pdf"
+    path.touch()
+
+    mock_result = _make_result("pdfplumber")
+
+    with (
+        patch("drop2md.converters.pdf._is_scanned_pdf", return_value=True),
+        patch.object(MarkerPdfConverter, "is_available", return_value=True),
+        patch.object(MarkerPdfConverter, "convert") as mock_marker,
+        patch.object(DoclingPdfConverter, "is_available", return_value=True),
+        patch.object(DoclingPdfConverter, "convert") as mock_docling,
+        patch.object(PyMuPdfConverter, "is_available", return_value=False),
+        patch.object(LegacyPdfConverter, "is_available", return_value=True),
+        patch.object(LegacyPdfConverter, "convert", return_value=mock_result),
+    ):
+        result = TieredPdfConverter().convert(path, tmp_path)
+
+    mock_marker.assert_not_called()
+    mock_docling.assert_not_called()
+    assert result.converter_used == "pdfplumber"
+    assert any("Scanned PDF" in w for w in result.warnings)
+
+
+@pytest.mark.unit
+def test_scanned_pdf_warning_in_result(tmp_path):
+    """Result carries a scanned-PDF warning when detected."""
+    path = tmp_path / "scan.pdf"
+    path.touch()
+
+    mock_result = _make_result("pymupdf4llm")
+
+    with (
+        patch("drop2md.converters.pdf._is_scanned_pdf", return_value=True),
+        patch.object(MarkerPdfConverter, "is_available", return_value=False),
+        patch.object(DoclingPdfConverter, "is_available", return_value=False),
+        patch.object(PyMuPdfConverter, "is_available", return_value=True),
+        patch.object(PyMuPdfConverter, "convert", return_value=mock_result),
+    ):
+        result = TieredPdfConverter().convert(path, tmp_path)
+
+    assert result.warnings
+    assert any("Scanned PDF" in w for w in result.warnings)
+
+
+@pytest.mark.unit
+def test_non_scanned_pdf_uses_normal_tiers(tmp_path):
+    """Non-scanned PDFs run through the normal tier order."""
+    path = tmp_path / "text.pdf"
+    path.touch()
+
+    mock_result = _make_result("marker")
+
+    with (
+        patch("drop2md.converters.pdf._is_scanned_pdf", return_value=False),
+        patch.object(MarkerPdfConverter, "is_available", return_value=True),
+        patch.object(MarkerPdfConverter, "convert", return_value=mock_result),
+    ):
+        result = TieredPdfConverter().convert(path, tmp_path)
+
+    assert result.converter_used == "marker"
+    assert not result.warnings
+
+
+@pytest.mark.unit
+def test_is_scanned_pdf_low_char_count(tmp_path):
+    """_is_scanned_pdf returns True when pages have very few characters."""
+    from drop2md.converters.pdf import _is_scanned_pdf
+
+    path = tmp_path / "scan.pdf"
+    path.touch()
+
+    mock_page = MagicMock()
+    mock_page.extract_text.return_value = "ab"  # 2 chars — below threshold of 20
+
+    mock_pdf = MagicMock()
+    mock_pdf.__enter__ = lambda s: s
+    mock_pdf.__exit__ = MagicMock(return_value=False)
+    mock_pdf.pages = [mock_page, mock_page, mock_page]
+
+    with patch("pdfplumber.open", return_value=mock_pdf):
+        assert _is_scanned_pdf(path) is True
+
+
+@pytest.mark.unit
+def test_is_scanned_pdf_sufficient_text(tmp_path):
+    """_is_scanned_pdf returns False when pages have sufficient text."""
+    from drop2md.converters.pdf import _is_scanned_pdf
+
+    path = tmp_path / "text.pdf"
+    path.touch()
+
+    mock_page = MagicMock()
+    mock_page.extract_text.return_value = "A" * 100  # 100 chars — above threshold
+
+    mock_pdf = MagicMock()
+    mock_pdf.__enter__ = lambda s: s
+    mock_pdf.__exit__ = MagicMock(return_value=False)
+    mock_pdf.pages = [mock_page]
+
+    with patch("pdfplumber.open", return_value=mock_pdf):
+        assert _is_scanned_pdf(path) is False
+
+
+@pytest.mark.unit
+def test_is_scanned_pdf_graceful_on_error(tmp_path):
+    """_is_scanned_pdf returns False (safe default) if pdfplumber raises."""
+    from drop2md.converters.pdf import _is_scanned_pdf
+
+    path = tmp_path / "broken.pdf"
+    path.touch()
+
+    with patch("pdfplumber.open", side_effect=Exception("corrupt")):
+        assert _is_scanned_pdf(path) is False

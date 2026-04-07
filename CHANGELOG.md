@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-04-07
+
+### Added
+
+- **Q-2 Scanned PDF detection** — `TieredPdfConverter` now samples the first 3 pages with pdfplumber before running any converter; if total character count is < 20 the PDF is treated as scanned. Marker and Docling (which produce garbage on image-only pages) are skipped automatically. A `"Scanned PDF detected"` warning is appended to the `ConverterResult` so downstream tools can surface the quality downgrade.
+- **Q-5 RTF and ODF support** — `dispatcher.py` now routes `.rtf`, `.odt`, `.odp`, `.ods` files (and their MIME types) to `OfficeConverter`, which hands them to the Pandoc fallback. No new dependencies required.
+- 15 new unit tests covering scanned-PDF detection, ML-tier skipping, warning propagation, graceful error handling, and RTF/ODF dispatcher routing. Total: 263 unit tests, 78.3% coverage.
+
 ## [0.3.0] — 2026-04-07
 
 ### Added

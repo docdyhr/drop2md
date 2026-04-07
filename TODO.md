@@ -1,7 +1,7 @@
 # TODO — drop2md
 
 Derived from [`docs/ROADMAP.md`](docs/ROADMAP.md) and [`docs/PRD.md`](docs/PRD.md).
-Current version: **0.3.0**
+Current version: **0.4.0**
 
 ---
 
@@ -38,10 +38,10 @@ Current version: **0.3.0**
 > Key files: `src/drop2md/postprocess.py`, `src/drop2md/converters/pdf.py`, `src/drop2md/dispatcher.py`
 
 - [ ] **Q-1** `postprocess.py` — Compute `quality: high | medium | low` score (heading density, table count, image ref count, word count ratio, warning count) and write to YAML frontmatter
-- [ ] **Q-2** `converters/pdf.py` — Scanned document detection: check character density of first N pages; route image-only PDFs to vision-LLM primary path before running Marker
+- [x] **Q-2** `converters/pdf.py` — Scanned document detection: check character density of first N pages; skip ML text-based converters for image-only PDFs; add warning to result
 - [ ] **Q-3** `cli.py`, `watcher.py` — Multi-page progress reporting for documents > 10 pages: converter tier, page N of M, elapsed time
 - [ ] **Q-4** `converters/pdf.py` — Page-level partial recovery: keep Marker output for successful pages, fall back to pdfplumber only for failing pages, merge results
-- [ ] **Q-5** `dispatcher.py` — RTF and ODT support via Pandoc fallback (add to `_EXT_MAP` and `_MIME_MAP`)
+- [x] **Q-5** `dispatcher.py` — RTF and ODT support via Pandoc fallback (add to `_EXT_MAP` and `_MIME_MAP`)
 
 ### Tests
 

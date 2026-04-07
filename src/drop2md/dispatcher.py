@@ -28,6 +28,13 @@ _MIME_MAP: dict[str, type[BaseConverter]] = {
     "application/msword": OfficeConverter,
     "application/vnd.ms-powerpoint": OfficeConverter,
     "application/vnd.ms-excel": OfficeConverter,
+    # RTF
+    "application/rtf": OfficeConverter,
+    "text/rtf": OfficeConverter,
+    # ODF (OpenDocument)
+    "application/vnd.oasis.opendocument.text": OfficeConverter,
+    "application/vnd.oasis.opendocument.presentation": OfficeConverter,
+    "application/vnd.oasis.opendocument.spreadsheet": OfficeConverter,
     # HTML
     "text/html": HtmlConverter,
     # EPUB
@@ -49,6 +56,10 @@ _EXT_MAP: dict[str, type[BaseConverter]] = {
     ".doc": OfficeConverter,
     ".ppt": OfficeConverter,
     ".xls": OfficeConverter,
+    ".rtf": OfficeConverter,
+    ".odt": OfficeConverter,
+    ".odp": OfficeConverter,
+    ".ods": OfficeConverter,
     ".html": HtmlConverter,
     ".htm": HtmlConverter,
     ".epub": EpubConverter,

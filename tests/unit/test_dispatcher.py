@@ -74,3 +74,39 @@ def test_mime_type_overrides_extension(tmp_path: Path):
     with patch("drop2md.dispatcher._detect_mime", return_value="application/pdf"):
         result = get_converter(path)
     assert result is TieredPdfConverter
+
+
+# ─── Q-5: RTF / ODT routing ──────────────────────────────────────────────────
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "filename",
+    ["document.rtf", "document.odt", "slides.odp", "spreadsheet.ods"],
+)
+def test_rtf_odt_extension_routing(filename: str, tmp_path: Path):
+    """RTF and ODF files route to OfficeConverter via extension fallback."""
+    path = tmp_path / filename
+    path.touch()
+    with patch("drop2md.dispatcher._detect_mime", return_value=None):
+        result = get_converter(path)
+    assert result is OfficeConverter, f"Expected OfficeConverter for {filename}, got {result}"
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "mime",
+    [
+        "application/rtf",
+        "text/rtf",
+        "application/vnd.oasis.opendocument.text",
+        "application/vnd.oasis.opendocument.presentation",
+        "application/vnd.oasis.opendocument.spreadsheet",
+    ],
+)
+def test_rtf_odt_mime_routing(mime: str, tmp_path: Path):
+    """RTF and ODF MIME types route to OfficeConverter."""
+    path = tmp_path / "document.bin"
+    path.touch()
+    with patch("drop2md.dispatcher._detect_mime", return_value=mime):
+        result = get_converter(path)
+    assert result is OfficeConverter, f"Expected OfficeConverter for MIME {mime!r}"

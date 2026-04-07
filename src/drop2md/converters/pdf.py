@@ -118,14 +118,56 @@ _TIERS: list[type[BaseConverter]] = [
     LegacyPdfConverter,
 ]
 
+# ML-based text converters that produce garbage output on scanned (image-only) PDFs
+_TEXT_ONLY_TIERS: frozenset[type[BaseConverter]] = frozenset(
+    {MarkerPdfConverter, DoclingPdfConverter}
+)
+
+
+def _is_scanned_pdf(path: Path, sample_pages: int = 3, char_threshold: int = 20) -> bool:
+    """Return True if the PDF appears to be image-only (scanned).
+
+    Samples the first *sample_pages* pages via pdfplumber (always available).
+    If the total extracted character count is below *char_threshold* the PDF
+    is treated as scanned and text-based ML converters will be skipped.
+    """
+    try:
+        import pdfplumber
+
+        with pdfplumber.open(str(path)) as pdf:
+            pages = pdf.pages[:sample_pages]
+            if not pages:
+                return False
+            total_chars = sum(len(p.extract_text() or "") for p in pages)
+            return total_chars < char_threshold
+    except Exception as exc:
+        log.debug("Scanned-PDF detection failed for %s: %s — assuming not scanned", path.name, exc)
+        return False
+
 
 class TieredPdfConverter(BaseConverter):
-    """Tries each PDF converter in order, falling back on failure."""
+    """Tries each PDF converter in order, falling back on failure.
+
+    When the PDF is detected as scanned (image-only, < 20 characters across
+    the first 3 pages) the ML text-based tiers (Marker, Docling) are skipped
+    because they produce garbage output on pages with no embedded text.
+    PyMuPDF4LLM and pdfplumber are still tried; a warning is added to the
+    result so downstream tooling can surface the degraded quality.
+    """
 
     name = "pdf"
 
     def convert(self, path: Path, output_dir: Path) -> ConverterResult:
+        scanned = _is_scanned_pdf(path)
+        if scanned:
+            log.info(
+                "Scanned PDF detected: %s — skipping ML text-based converters", path.name
+            )
+
         for ConverterClass in _TIERS:
+            if scanned and ConverterClass in _TEXT_ONLY_TIERS:
+                log.debug("Skipping %s for scanned PDF: %s", ConverterClass.name, path.name)
+                continue
             if not ConverterClass.is_available():
                 log.debug("PDF tier %s not available, skipping", ConverterClass.name)
                 continue
@@ -133,6 +175,11 @@ class TieredPdfConverter(BaseConverter):
                 log.debug("Trying PDF tier: %s", ConverterClass.name)
                 result = ConverterClass().convert(path, output_dir)
                 result.converter_used = ConverterClass.name
+                if scanned:
+                    result.warnings = list(result.warnings or []) + [
+                        "Scanned PDF detected — text extraction may be incomplete. "
+                        "Enable OCR or a vision-LLM provider for best results."
+                    ]
                 log.info("Converted %s via %s", path.name, ConverterClass.name)
                 return result
             except Exception as exc:
