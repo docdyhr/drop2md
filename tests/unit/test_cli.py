@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from contextlib import ExitStack
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -578,3 +579,118 @@ def test_status_psutil_unavailable(tmp_path, monkeypatch):
     result = runner.invoke(app, ["status", "--config", str(cfg)])
     assert result.exit_code == 0
     assert "unavailable" in result.output
+
+
+# ── install-quick-action / uninstall-quick-action tests ──────────────────────
+
+
+@pytest.mark.unit
+def test_install_quick_action_help() -> None:
+    result = runner.invoke(app, ["install-quick-action", "--help"])
+    assert result.exit_code == 0
+    assert "Quick Action" in result.output
+
+
+@pytest.mark.unit
+def test_uninstall_quick_action_help() -> None:
+    result = runner.invoke(app, ["uninstall-quick-action", "--help"])
+    assert result.exit_code == 0
+    assert "Quick Action" in result.output
+
+
+@pytest.mark.unit
+def test_install_quick_action_non_macos(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.platform", "linux")
+    result = runner.invoke(app, ["install-quick-action"])
+    assert result.exit_code == 1
+    assert "macOS" in result.output
+
+
+@pytest.mark.unit
+def test_uninstall_quick_action_non_macos(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.platform", "linux")
+    result = runner.invoke(app, ["uninstall-quick-action"])
+    assert result.exit_code == 1
+    assert "macOS" in result.output
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
+def test_install_quick_action_creates_bundle(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    result = runner.invoke(app, ["install-quick-action"])
+    assert result.exit_code == 0, result.output
+    contents = tmp_path / "Library" / "Services" / "drop2mark.workflow" / "Contents"
+    assert (contents / "Info.plist").exists()
+    assert (contents / "document.wflow").exists()
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
+def test_install_quick_action_substitutes_placeholders(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    runner.invoke(app, ["install-quick-action"])
+    wflow = (
+        tmp_path / "Library" / "Services" / "drop2mark.workflow" / "Contents" / "document.wflow"
+    ).read_text(encoding="utf-8")
+    assert "__PYTHON_PATH__" not in wflow
+    assert "__ACTION_UUID__" not in wflow
+    assert "__INPUT_UUID__" not in wflow
+    assert "__OUTPUT_UUID__" not in wflow
+    # The PYTHON variable should be set to a real path
+    assert 'PYTHON="/' in wflow
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
+def test_install_quick_action_idempotent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    assert runner.invoke(app, ["install-quick-action"]).exit_code == 0
+    assert runner.invoke(app, ["install-quick-action"]).exit_code == 0
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
+def test_uninstall_quick_action_removes_bundle(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    workflow = tmp_path / "Library" / "Services" / "drop2mark.workflow"
+    workflow.mkdir(parents=True)
+    result = runner.invoke(app, ["uninstall-quick-action"])
+    assert result.exit_code == 0
+    assert not workflow.exists()
+    assert "removed" in result.output
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
+def test_uninstall_quick_action_not_installed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    result = runner.invoke(app, ["uninstall-quick-action"])
+    assert result.exit_code == 0
+    assert "not installed" in result.output
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
+def test_install_quick_action_missing_templates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """install-quick-action exits 1 with a helpful message when package templates are missing."""
+
+    def _raise() -> tuple[str, str]:
+        raise FileNotFoundError("workflow template not found: no such file")
+
+    monkeypatch.setattr("drop2md.cli._load_quick_action_templates", _raise)
+    result = runner.invoke(app, ["install-quick-action"])
+    assert result.exit_code == 1
+    assert "template" in result.output

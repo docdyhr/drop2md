@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import shutil
 import sys
+import uuid
+from importlib.resources import files as _res_files
 from pathlib import Path
 from typing import Annotated
 
@@ -195,6 +198,68 @@ def uninstall_service() -> None:
     subprocess.run(["launchctl", "unload", str(plist_dest)], check=False)
     plist_dest.unlink()
     typer.echo("Service removed.")
+
+
+def _load_quick_action_templates() -> tuple[str, str]:
+    """Load Info.plist and document.wflow templates from package data."""
+    try:
+        svc = _res_files("drop2md") / "services"
+        info = (svc / "Info.plist.template").read_text(encoding="utf-8")
+        wflow = (svc / "document.wflow.template").read_text(encoding="utf-8")
+        return info, wflow
+    except FileNotFoundError as exc:
+        raise FileNotFoundError(f"workflow template not found: {exc}") from exc
+
+
+@app.command(name="install-quick-action")
+def install_quick_action() -> None:
+    """Install the drop2mark Finder Quick Action for in-place conversion."""
+    if sys.platform != "darwin":
+        typer.echo("Error: Quick Action installation requires macOS", err=True)
+        raise typer.Exit(1)
+
+    try:
+        info_text, wflow_text = _load_quick_action_templates()
+    except FileNotFoundError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+
+    python_path = Path(sys.executable)
+
+    wflow = (
+        wflow_text
+        .replace("__PYTHON_PATH__", str(python_path))
+        .replace("__ACTION_UUID__", str(uuid.uuid4()).upper())
+        .replace("__INPUT_UUID__", str(uuid.uuid4()).upper())
+        .replace("__OUTPUT_UUID__", str(uuid.uuid4()).upper())
+    )
+
+    workflow_dir = Path("~/Library/Services/drop2mark.workflow/Contents").expanduser()
+    workflow_dir.mkdir(parents=True, exist_ok=True)
+    (workflow_dir / "Info.plist").write_text(info_text, encoding="utf-8")
+    (workflow_dir / "document.wflow").write_text(wflow, encoding="utf-8")
+
+    typer.echo("Quick Action installed.")
+    typer.echo(f"  Location: {workflow_dir.parent}")
+    typer.echo(f"  Python:   {python_path}")
+    typer.echo("")
+    typer.echo("To enable: System Settings → Privacy & Security → Extensions → Finder")
+
+
+@app.command(name="uninstall-quick-action")
+def uninstall_quick_action() -> None:
+    """Remove the drop2mark Finder Quick Action."""
+    if sys.platform != "darwin":
+        typer.echo("Error: requires macOS", err=True)
+        raise typer.Exit(1)
+
+    workflow_dest = Path("~/Library/Services/drop2mark.workflow").expanduser()
+    if not workflow_dest.exists():
+        typer.echo("Quick Action not installed.")
+        return
+
+    shutil.rmtree(workflow_dest)
+    typer.echo("Quick Action removed.")
 
 
 @app.command()
