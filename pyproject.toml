@@ -16,6 +16,25 @@ dependencies = [
     "psutil>=6.0.0",
 ]
 
+keywords = [
+    "markdown", "pdf", "docx", "pptx", "converter", "llm", "macos",
+    "obsidian", "claude", "ocr", "watcher",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: MacOS X",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Text Processing :: Markup :: Markdown",
+    "Topic :: Utilities",
+]
+
 [[project.authors]]
 name = "Thomas Juul Dyhr"
 email = "docdyhr@me.com"
@@ -47,7 +66,7 @@ office-images = [
 # OCR support
 ocr = [
     "pytesseract>=0.3.13",
-    "Pillow>=10.0.0",
+    "Pillow>=12.1.1",
 ]
 # Cloud AI providers for enhancement (optional alternatives to Ollama)
 claude = ["anthropic>=0.40.0"]
@@ -78,7 +97,7 @@ all = [
     "python-docx>=1.1.0",
     "python-pptx>=1.0.0",
     "pytesseract>=0.3.13",
-    "Pillow>=10.0.0",
+    "Pillow>=12.1.1",
     "anthropic>=0.40.0",
     "openai>=1.50.0",
     "ruff==0.11.2",
