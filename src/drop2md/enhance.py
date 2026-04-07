@@ -100,7 +100,7 @@ def _describe_chart(image_path: Path, config: Config) -> str:
             "the main trend or finding, and up to three specific data points or values. "
             "Write 2–4 sentences. Be factual — do not invent values you cannot see."
         )
-        return provider.generate(prompt, image_path).strip()
+        return str(provider.generate(prompt, image_path)).strip()
     except Exception as exc:
         log.debug("chart description failed for %s: %s", image_path.name, exc)
         return ""
@@ -120,7 +120,7 @@ def _diagram_to_mermaid(image_path: Path, config: Config) -> str:
             "description: list the nodes/boxes and the relationships between them "
             "(e.g. 'Box A → Box B → Box C'). Do not mix Mermaid and prose."
         )
-        return provider.generate(prompt, image_path).strip()
+        return str(provider.generate(prompt, image_path)).strip()
     except Exception as exc:
         log.debug("diagram-to-mermaid failed for %s: %s", image_path.name, exc)
         return ""
@@ -136,7 +136,7 @@ def _formula_to_latex(image_path: Path, config: Config) -> str:
             "Return ONLY the LaTeX block, nothing else. "
             "If you cannot read the formula clearly, return a best-effort attempt."
         )
-        return provider.generate(prompt, image_path).strip()
+        return str(provider.generate(prompt, image_path)).strip()
     except Exception as exc:
         log.debug("formula-to-latex failed for %s: %s", image_path.name, exc)
         return ""
@@ -153,7 +153,7 @@ def _table_image_to_gfm(image_path: Path, config: Config) -> str:
             "Return ONLY the markdown table, nothing else. "
             "If you cannot read all cells clearly, use '?' for unreadable values."
         )
-        result = provider.generate(prompt, image_path).strip()
+        result: str = str(provider.generate(prompt, image_path)).strip()
         # Only return if the response looks like a real table
         if "|" in result and "---" in result:
             return result
@@ -174,7 +174,7 @@ def _describe_screenshot(image_path: Path, config: Config) -> str:
             "what content or data is displayed, and what the screenshot is illustrating "
             "in the context of a document. Write 2–3 sentences."
         )
-        return provider.generate(prompt, image_path).strip()
+        return str(provider.generate(prompt, image_path)).strip()
     except Exception as exc:
         log.debug("screenshot description failed for %s: %s", image_path.name, exc)
         return ""
@@ -191,7 +191,7 @@ def describe_image(image_path: Path, config: Config) -> str:
             "Describe this image from a document in one concise sentence "
             "suitable for use as Markdown alt-text. Be specific and factual."
         )
-        return provider.generate(prompt, image_path).strip()
+        return str(provider.generate(prompt, image_path)).strip()
     except Exception as exc:
         log.debug("Image description failed for %s: %s", image_path.name, exc)
         return ""
@@ -319,7 +319,7 @@ def validate_table(table_md: str, config: Config) -> str:
             "Return ONLY the corrected table, no explanation:\n\n"
             f"{table_md}"
         )
-        fixed = provider.generate(prompt)
+        fixed: str = str(provider.generate(prompt))
         if "|" in fixed:
             return fixed
         return table_md

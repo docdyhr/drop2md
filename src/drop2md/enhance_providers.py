@@ -9,7 +9,10 @@ from __future__ import annotations
 import base64
 import logging
 from pathlib import Path
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
+
+if TYPE_CHECKING:
+    from drop2md.config import Config
 
 log = logging.getLogger(__name__)
 
@@ -56,7 +59,7 @@ class OllamaProvider:
             timeout=self._timeout,
         )
         resp.raise_for_status()
-        return resp.json().get("response", "").strip()
+        return str(resp.json().get("response", "")).strip()
 
 
 class OpenAICompatProvider:
@@ -153,13 +156,13 @@ class ClaudeProvider:
         message = client.messages.create(
             model=self._model,
             max_tokens=1024,
-            messages=[{"role": "user", "content": content}],
+            messages=[{"role": "user", "content": content}],  # type: ignore[typeddict-item]
         )
         block = message.content[0]
         return (block.text if hasattr(block, "text") else "").strip()
 
 
-def make_provider(config: object) -> AIProvider:
+def make_provider(config: Config) -> AIProvider:
     """Factory: create the correct provider based on ``config.ollama.provider``.
 
     Supported values: ``"ollama"`` (default), ``"claude"``, ``"openai"``, ``"hf"``.
@@ -168,23 +171,23 @@ def make_provider(config: object) -> AIProvider:
     """
     import os
 
-    provider_name: str = getattr(config.ollama, "provider", "ollama")  # type: ignore[union-attr]
-    api_key: str = getattr(config.ollama, "api_key", "")  # type: ignore[union-attr]
+    provider_name: str = getattr(config.ollama, "provider", "ollama")
+    api_key: str = getattr(config.ollama, "api_key", "")
 
     if provider_name == "ollama":
         return OllamaProvider(
-            base_url=config.ollama.base_url,  # type: ignore[union-attr]
-            model=config.ollama.model,  # type: ignore[union-attr]
-            timeout=config.ollama.timeout_seconds,  # type: ignore[union-attr]
+            base_url=config.ollama.base_url,
+            model=config.ollama.model,
+            timeout=config.ollama.timeout_seconds,
         )
 
     if provider_name == "claude":
         # Fall back to ANTHROPIC_API_KEY; passing None lets the SDK read it
         resolved_key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
         return ClaudeProvider(
-            model=config.claude.model,  # type: ignore[union-attr]
+            model=config.claude.model,
             api_key=resolved_key,
-            timeout=config.claude.timeout_seconds,  # type: ignore[union-attr]
+            timeout=config.claude.timeout_seconds,
         )
 
     if provider_name == "openai":
@@ -195,31 +198,31 @@ def make_provider(config: object) -> AIProvider:
             or os.environ.get("GEMINI_API_KEY", "")
         )
         return OpenAICompatProvider(
-            model=config.openai.model,  # type: ignore[union-attr]
-            base_url=config.openai.base_url,  # type: ignore[union-attr]
+            model=config.openai.model,
+            base_url=config.openai.base_url,
             api_key=resolved_key,
-            timeout=config.openai.timeout_seconds,  # type: ignore[union-attr]
-            reasoning_effort=getattr(config.openai, "reasoning_effort", ""),  # type: ignore[union-attr]
+            timeout=config.openai.timeout_seconds,
+            reasoning_effort=getattr(config.openai, "reasoning_effort", ""),
         )
 
     if provider_name == "gemini":
         # Dedicated Gemini provider — reads GEMINI_API_KEY automatically
         resolved_key = api_key or os.environ.get("GEMINI_API_KEY", "")
         return OpenAICompatProvider(
-            model=config.openai.model,  # type: ignore[union-attr]
-            base_url=config.openai.base_url,  # type: ignore[union-attr]
+            model=config.openai.model,
+            base_url=config.openai.base_url,
             api_key=resolved_key,
-            timeout=config.openai.timeout_seconds,  # type: ignore[union-attr]
+            timeout=config.openai.timeout_seconds,
         )
 
     if provider_name == "hf":
         # HuggingFace uses HF_TOKEN; the openai SDK won't read it automatically
         resolved_key = api_key or os.environ.get("HF_TOKEN", "")
         return OpenAICompatProvider(
-            model=config.openai.model,  # type: ignore[union-attr]
-            base_url=config.openai.base_url,  # type: ignore[union-attr]
+            model=config.openai.model,
+            base_url=config.openai.base_url,
             api_key=resolved_key,
-            timeout=config.openai.timeout_seconds,  # type: ignore[union-attr]
+            timeout=config.openai.timeout_seconds,
         )
 
     raise ValueError(

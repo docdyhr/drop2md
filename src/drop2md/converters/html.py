@@ -81,7 +81,8 @@ class HtmlConverter(BaseConverter):
     name = "html"
 
     def convert(self, path: Path, output_dir: Path) -> ConverterResult:
-        for ConverterClass in [Html2TextConverter, PandocHtmlConverter]:
+        _converters: list[type[BaseConverter]] = [Html2TextConverter, PandocHtmlConverter]
+        for ConverterClass in _converters:
             if not ConverterClass.is_available():
                 continue
             try:

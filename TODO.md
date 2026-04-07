@@ -56,10 +56,10 @@ Current version: **0.4.0**
 > Theme: Install in 2 minutes, configured in 5, running in 10.
 
 - [ ] **D-1** Homebrew formula and tap: `brew install docdyhr/tap/drop2md` (handles venv, pandoc, tesseract, Quick Action, launchd)
-- [ ] **D-2** `cli.py` — `drop2md setup` interactive wizard: config.toml creation, AI provider selection + connection test, Quick Action + service install; no manual TOML editing required
+- [x] **D-2** `cli.py` — `drop2md setup` interactive wizard: config.toml creation, AI provider selection + connection test, Quick Action + service install; no manual TOML editing required
 - [ ] **D-3** GitHub Releases prebuilt binary: PyInstaller or Briefcase → `.app` bundle + single-binary CLI dmg
-- [ ] **D-4** `config.py` — `output.vault_dir` option: atomic-write output into an Obsidian vault directory
-- [ ] **D-5** Raise test coverage floor to ≥ 85%; resolve all mypy strict violations
+- [x] **D-4** `config.py` — `output.vault_dir` option: atomic-write output into an Obsidian vault directory
+- [x] **D-5** Raise test coverage floor to ≥ 85%; resolve all mypy strict violations
 - [ ] **D-6** Sign and notarize the macOS package (Apple Developer account required; Gatekeeper blocks unsigned dmg on macOS 13+)
 
 ---

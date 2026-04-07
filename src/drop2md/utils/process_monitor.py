@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -46,11 +47,11 @@ def _format_uptime(create_time: float) -> str:
     return f"{d}d {h}h"
 
 
-def _collect_procs(launchd_pid: int | None) -> list[object]:
+def _collect_procs(launchd_pid: int | None) -> list[Any]:
     """Return deduplicated list of psutil.Process objects for drop2md."""
     import psutil  # late import so module is importable without psutil installed
 
-    found: dict[int, object] = {}
+    found: dict[int, Any] = {}
 
     # Primary: launchd-managed root + children
     if launchd_pid is not None:
@@ -93,7 +94,7 @@ def sample_processes(launchd_pid: int | None = None) -> list[ProcessInfo]:
     # First poll — seeds the interval counter, returns 0.0 (discard)
     for p in procs:
         try:
-            p.cpu_percent()  # type: ignore[union-attr]
+            p.cpu_percent()
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
 
@@ -102,24 +103,24 @@ def sample_processes(launchd_pid: int | None = None) -> list[ProcessInfo]:
     results: list[ProcessInfo] = []
     for p in procs:
         try:
-            with p.oneshot():  # type: ignore[union-attr]
-                name = p.name()  # type: ignore[union-attr]
-                cmdline: list[str] = p.cmdline() or []  # type: ignore[union-attr]
-                status = p.status()  # type: ignore[union-attr]
-                cpu = p.cpu_percent()  # type: ignore[union-attr]
-                mem_info = p.memory_info()  # type: ignore[union-attr]
+            with p.oneshot():
+                name = p.name()
+                cmdline: list[str] = p.cmdline() or []
+                status = p.status()
+                cpu = p.cpu_percent()
+                mem_info = p.memory_info()
                 rss_mb = mem_info.rss / (1024 * 1024)
-                mem_pct = p.memory_percent()  # type: ignore[union-attr]
+                mem_pct = p.memory_percent()
                 try:
-                    num_fds = p.num_fds()  # type: ignore[union-attr]
+                    num_fds = p.num_fds()
                 except (psutil.AccessDenied, AttributeError):
                     num_fds = -1
-                create_time = p.create_time()  # type: ignore[union-attr]
+                create_time = p.create_time()
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             continue
 
         results.append(ProcessInfo(
-            pid=p.pid,  # type: ignore[union-attr]
+            pid=p.pid,
             name=name,
             role=_infer_role(cmdline),
             status=status,

@@ -164,3 +164,34 @@ def test_quality_not_in_frontmatter_when_disabled(tmp_path):
     source = tmp_path / "doc.pdf"
     out = postprocess(result, source, add_frontmatter=False)
     assert "quality:" not in out
+
+
+@pytest.mark.unit
+def test_score_quality_low_fallthrough():
+    """score_quality returns 'low' when 100-399 words, no headings/images, 1-2 warnings."""
+    from drop2md.postprocess import score_quality
+    # 150 words, no headings, no image refs, 2 non-scanned warnings
+    md = "word " * 150
+    result = ConverterResult(
+        markdown=md,
+        converter_used="pdfplumber",
+        warnings=["minor issue one", "minor issue two"],
+    )
+    assert score_quality(md, result) == "low"
+
+
+@pytest.mark.unit
+def test_build_frontmatter_includes_warnings():
+    """build_frontmatter writes warnings: block when result.warnings is non-empty."""
+    from pathlib import Path
+
+    from drop2md.postprocess import build_frontmatter
+    result = ConverterResult(
+        markdown="# Doc",
+        converter_used="marker",
+        warnings=["Scanned PDF detected", "Low confidence OCR"],
+    )
+    fm = build_frontmatter(Path("report.pdf"), result)
+    assert "warnings:" in fm
+    assert '"Scanned PDF detected"' in fm
+    assert '"Low confidence OCR"' in fm

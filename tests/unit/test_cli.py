@@ -694,3 +694,159 @@ def test_install_quick_action_missing_templates(
     result = runner.invoke(app, ["install-quick-action"])
     assert result.exit_code == 1
     assert "template" in result.output
+
+
+# ── setup command ─────────────────────────────────────────────────────────────
+
+
+@pytest.mark.unit
+def test_setup_creates_config_with_defaults(tmp_path: Path) -> None:
+    """setup creates a config.toml when provider=none and no macOS installs."""
+    config_file = tmp_path / "config.toml"
+    # Inputs: watch_dir, output_dir, vault_dir, provider, no-service, no-quick-action
+    user_input = "\n\n\nnone\nn\nn\n"
+    result = runner.invoke(
+        app,
+        ["setup", "--config", str(config_file)],
+        input=user_input,
+    )
+    assert result.exit_code == 0, result.output
+    assert config_file.exists()
+    content = config_file.read_text()
+    assert "drop-to-md" in content
+    assert "enabled = false" in content
+
+
+@pytest.mark.unit
+def test_setup_creates_config_with_vault_dir(tmp_path: Path) -> None:
+    """setup writes vault_dir when provided."""
+    config_file = tmp_path / "config.toml"
+    vault = tmp_path / "vault"
+    # Inputs: watch_dir, output_dir, vault_dir=/vault, provider=none, no-service, no-qa
+    user_input = f"\n\n{vault}\nnone\nn\nn\n"
+    result = runner.invoke(
+        app,
+        ["setup", "--config", str(config_file)],
+        input=user_input,
+    )
+    assert result.exit_code == 0, result.output
+    content = config_file.read_text()
+    assert str(vault) in content
+
+
+@pytest.mark.unit
+def test_setup_aborts_when_overwrite_declined(tmp_path: Path) -> None:
+    """setup exits cleanly if the user declines to overwrite an existing config."""
+    config_file = tmp_path / "config.toml"
+    config_file.write_text("# existing\n", encoding="utf-8")
+    result = runner.invoke(
+        app,
+        ["setup", "--config", str(config_file)],
+        input="n\n",  # decline overwrite
+    )
+    assert result.exit_code == 0
+    # Original file unchanged
+    assert config_file.read_text() == "# existing\n"
+
+
+@pytest.mark.unit
+def test_setup_overwrites_existing_config(tmp_path: Path) -> None:
+    """setup overwrites an existing config when user confirms."""
+    config_file = tmp_path / "config.toml"
+    config_file.write_text("# old\n", encoding="utf-8")
+    # Inputs: yes overwrite, defaults, no-service, no-qa
+    user_input = "y\n\n\n\nnone\nn\nn\n"
+    result = runner.invoke(
+        app,
+        ["setup", "--config", str(config_file)],
+        input=user_input,
+    )
+    assert result.exit_code == 0, result.output
+    assert config_file.read_text() != "# old\n"
+
+
+@pytest.mark.unit
+def test_setup_with_ollama_provider(tmp_path: Path) -> None:
+    """setup writes enabled=true and provider=ollama when ollama is chosen."""
+    config_file = tmp_path / "config.toml"
+    # Inputs: watch, output, vault, provider=ollama, model, VEP=no, no-service, no-qa
+    # Then connection test runs — mock httpx.get
+    user_input = "\n\n\nollama\n\nn\nn\nn\n"
+    with patch("httpx.get", side_effect=ConnectionError("offline")):
+        result = runner.invoke(
+            app,
+            ["setup", "--config", str(config_file)],
+            input=user_input,
+        )
+    assert result.exit_code == 0, result.output
+    content = config_file.read_text()
+    assert "enabled = true" in content
+    assert 'provider = "ollama"' in content
+
+
+@pytest.mark.unit
+def test_setup_with_claude_provider(tmp_path: Path) -> None:
+    """setup writes enabled=true and provider=claude when claude is chosen."""
+    config_file = tmp_path / "config.toml"
+    # Inputs: watch, output, vault, provider=claude, api_key=sk-test, VEP=yes, no-service, no-qa
+    user_input = "\n\n\nclaude\nsk-test\ny\nn\nn\n"
+    result = runner.invoke(
+        app,
+        ["setup", "--config", str(config_file)],
+        input=user_input,
+    )
+    assert result.exit_code == 0, result.output
+    content = config_file.read_text()
+    assert "enabled = true" in content
+    assert 'provider = "claude"' in content
+    assert "[visual]" in content
+
+
+@pytest.mark.unit
+def test_setup_rejects_invalid_provider_then_accepts(tmp_path: Path) -> None:
+    """setup loops until a valid provider is entered."""
+    config_file = tmp_path / "config.toml"
+    # Inputs: watch, output, vault, invalid provider, then valid provider=none, no-service, no-qa
+    user_input = "\n\n\nbadprovider\nnone\nn\nn\n"
+    result = runner.invoke(
+        app,
+        ["setup", "--config", str(config_file)],
+        input=user_input,
+    )
+    assert result.exit_code == 0, result.output
+    assert config_file.exists()
+
+
+@pytest.mark.unit
+def test_setup_ollama_connection_success(tmp_path: Path) -> None:
+    """setup reports Ollama as reachable when httpx returns HTTP 200."""
+    config_file = tmp_path / "config.toml"
+    user_input = "\n\n\nollama\n\nn\nn\nn\n"
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = {"models": [{"name": "llava-llama3:8b"}]}
+    with patch("httpx.get", return_value=mock_resp):
+        result = runner.invoke(
+            app,
+            ["setup", "--config", str(config_file)],
+            input=user_input,
+        )
+    assert result.exit_code == 0, result.output
+    assert "reachable" in result.output
+
+
+@pytest.mark.unit
+def test_setup_ollama_connection_non_200(tmp_path: Path) -> None:
+    """setup reports Ollama error when httpx returns non-200."""
+    config_file = tmp_path / "config.toml"
+    user_input = "\n\n\nollama\n\nn\nn\nn\n"
+    mock_resp = MagicMock()
+    mock_resp.status_code = 503
+    with patch("httpx.get", return_value=mock_resp):
+        result = runner.invoke(
+            app,
+            ["setup", "--config", str(config_file)],
+            input=user_input,
+        )
+    assert result.exit_code == 0, result.output
+    assert "HTTP 503" in result.output

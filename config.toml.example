@@ -172,6 +172,10 @@ image_subdir = "images"
 preserve_page_markers = false
 # Overwrite existing .md files (false = skip if exists)
 overwrite = true
+# Optional: also write a copy of each converted file to an Obsidian vault.
+# The markdown is written atomically to vault_dir/<filename>.md in addition to
+# the standard output_dir. Leave commented out (or set to "") to disable.
+# vault_dir = "~/Documents/Obsidian/MyVault"
 
 [logging]
 # Log level: DEBUG, INFO, WARNING, ERROR

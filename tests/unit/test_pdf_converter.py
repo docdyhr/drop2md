@@ -258,7 +258,6 @@ def test_marker_converter_saves_bytes_images(tmp_path):
 @pytest.mark.unit
 def test_scanned_pdf_skips_ml_tiers(tmp_path):
     """Scanned PDFs skip Marker and Docling; pdfplumber is used instead."""
-    from drop2md.converters.pdf import _is_scanned_pdf
 
     path = tmp_path / "scanned.pdf"
     path.touch()
@@ -450,7 +449,6 @@ def test_partial_recover_graceful_on_pdfplumber_error(tmp_path):
 @pytest.mark.unit
 def test_tiered_converter_applies_partial_recovery_for_ml_tiers(tmp_path):
     """TieredPdfConverter calls _partial_recover for Marker and Docling results."""
-    from drop2md.converters.pdf import _partial_recover
 
     path = tmp_path / "test.pdf"
     path.touch()

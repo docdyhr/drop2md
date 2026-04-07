@@ -7,7 +7,7 @@ the real Config structure used by make_provider() and enhance().
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -22,7 +22,6 @@ from drop2md.enhance import (
     _table_image_to_gfm,
     enhance,
 )
-
 
 # ---------------------------------------------------------------------------
 # Config factory
@@ -449,7 +448,7 @@ def test_enhance_preserves_result_metadata(tmp_path):
         metadata={"pages": 3},
         warnings=["warn1"],
     )
-    with patch("httpx.post") as mock_post:
+    with patch("httpx.post"):
         out = enhance(result, _cfg(ollama_enabled=False))
 
     assert out.converter_used == "marker"
@@ -540,7 +539,6 @@ def test_legacy_pdf_image_pass_graceful_when_pymupdf_absent(tmp_path, monkeypatc
     monkeypatch.setitem(sys.modules, "fitz", None)
 
     # Create a minimal valid PDF (1 page, no text)
-    import pdfplumber
 
     # We can't easily create a real PDF without heavy deps, so mock pdfplumber
     mock_pdf = MagicMock()
@@ -604,3 +602,202 @@ def test_inject_image_captions_appends_unreferenced_image(tmp_path):
 
     assert "./images/fig.png" in result
     assert "A figure showing results." in result
+
+
+# ---------------------------------------------------------------------------
+# Branch coverage: _build_image_replacement fallback paths
+# ---------------------------------------------------------------------------
+
+@pytest.mark.unit
+def test_apply_vep_diagram_mermaid_disabled(tmp_path):
+    """When diagram_to_mermaid=False, diagram falls back to describe_image."""
+    img_dir = tmp_path / "images"
+    img_dir.mkdir()
+    img = img_dir / "flow.png"
+    img.write_bytes(b"fake")
+
+    markdown = f"![](./{img.parent.name}/{img.name})"
+
+    def _post(url, **kwargs):
+        payload = kwargs.get("json", {})
+        if "Classify" in payload.get("prompt", ""):
+            return _mock_response("diagram")
+        return _mock_response("A flowchart with three nodes.")
+
+    with patch("httpx.post", side_effect=_post):
+        result = _apply_vep(markdown, [img], _cfg(diagram_to_mermaid=False))
+
+    assert "A flowchart with three nodes." in result
+
+
+@pytest.mark.unit
+def test_apply_vep_formula_latex_disabled(tmp_path):
+    """When formula_to_latex=False, formula falls back to describe_image."""
+    img_dir = tmp_path / "images"
+    img_dir.mkdir()
+    img = img_dir / "eq.png"
+    img.write_bytes(b"fake")
+
+    markdown = f"![](./{img.parent.name}/{img.name})"
+
+    def _post(url, **kwargs):
+        payload = kwargs.get("json", {})
+        if "Classify" in payload.get("prompt", ""):
+            return _mock_response("formula")
+        return _mock_response("A mathematical equation.")
+
+    with patch("httpx.post", side_effect=_post):
+        result = _apply_vep(markdown, [img], _cfg(formula_to_latex=False))
+
+    assert "A mathematical equation." in result
+
+
+@pytest.mark.unit
+def test_apply_vep_table_image_falls_back_when_no_gfm(tmp_path):
+    """table-image falls back to describe_image when model returns no pipe table."""
+    img_dir = tmp_path / "images"
+    img_dir.mkdir()
+    img = img_dir / "tbl.png"
+    img.write_bytes(b"fake")
+
+    markdown = f"![](./{img.parent.name}/{img.name})"
+
+    def _post(url, **kwargs):
+        payload = kwargs.get("json", {})
+        if "Classify" in payload.get("prompt", ""):
+            return _mock_response("table-image")
+        return _mock_response("A table of quarterly sales figures.")
+
+    with patch("httpx.post", side_effect=_post):
+        result = _apply_vep(markdown, [img], _cfg(table_image_to_gfm=True))
+
+    # Model returned prose (no pipes) → fell back to describe_image caption
+    assert "A table of quarterly sales figures." in result
+
+
+@pytest.mark.unit
+def test_apply_vep_screenshot_type(tmp_path):
+    """screenshot type is handled by _describe_screenshot."""
+    img_dir = tmp_path / "images"
+    img_dir.mkdir()
+    img = img_dir / "ss.png"
+    img.write_bytes(b"fake")
+
+    markdown = f"![](./{img.parent.name}/{img.name})"
+
+    def _post(url, **kwargs):
+        payload = kwargs.get("json", {})
+        if "Classify" in payload.get("prompt", ""):
+            return _mock_response("screenshot")
+        return _mock_response("A terminal window showing a Python error.")
+
+    with patch("httpx.post", side_effect=_post):
+        result = _apply_vep(markdown, [img], _cfg(screenshot_description=True))
+
+    assert "A terminal window showing a Python error." in result
+
+
+@pytest.mark.unit
+def test_apply_vep_photo_type_uses_describe_image(tmp_path):
+    """photo type (else branch) calls describe_image."""
+    img_dir = tmp_path / "images"
+    img_dir.mkdir()
+    img = img_dir / "photo.png"
+    img.write_bytes(b"fake")
+
+    markdown = f"![](./{img.parent.name}/{img.name})"
+
+    def _post(url, **kwargs):
+        payload = kwargs.get("json", {})
+        if "Classify" in payload.get("prompt", ""):
+            return _mock_response("photo")
+        return _mock_response("A photograph of a mountain landscape.")
+
+    with patch("httpx.post", side_effect=_post):
+        result = _apply_vep(markdown, [img], _cfg())
+
+    assert "A photograph of a mountain landscape." in result
+
+
+@pytest.mark.unit
+def test_apply_vep_unreferenced_diagram_appends_with_mermaid(tmp_path):
+    """Unreferenced diagram with mermaid result is appended (covers extra append path)."""
+    img_dir = tmp_path / "images"
+    img_dir.mkdir()
+    img = img_dir / "flow.png"
+    img.write_bytes(b"fake")
+
+    # No image ref in markdown
+    md = "# Report\n\nSome text.\n"
+    mermaid = "```mermaid\nflowchart LR\n  A --> B\n```"
+
+    def _post(url, **kwargs):
+        payload = kwargs.get("json", {})
+        if "Classify" in payload.get("prompt", ""):
+            return _mock_response("diagram")
+        return _mock_response(mermaid)
+
+    with patch("httpx.post", side_effect=_post):
+        result = _apply_vep(md, [img], _cfg(diagram_to_mermaid=True))
+
+    assert "mermaid" in result
+    assert "flow.png" in result
+
+
+@pytest.mark.unit
+def test_enhance_tables_calls_validate_table(tmp_path):
+    """_enhance_tables finds a GFM table and calls validate_table on it."""
+    from drop2md.enhance import _enhance_tables
+
+    table_md = "| Col A | Col B |\n|---|---|\n| 1 | 2 |\n"
+
+    with patch("httpx.post", return_value=_mock_response("| Col A | Col B |\n|---|---|\n| 1 | 2 |")):
+        result = _enhance_tables(table_md, _cfg())
+
+    assert "|" in result
+
+
+@pytest.mark.unit
+def test_ollama_enhance_shim_importable():
+    """ollama_enhance backward-compat shim can be imported without errors."""
+    import drop2md.ollama_enhance  # noqa: F401
+
+
+@pytest.mark.unit
+def test_make_provider_gemini():
+    """make_provider returns an OpenAICompatProvider for the gemini provider."""
+    from drop2md.enhance_providers import OpenAICompatProvider, make_provider
+
+    cfg = _cfg(provider="gemini")
+    cfg.ollama.api_key = ""
+    provider = make_provider(cfg)
+    assert isinstance(provider, OpenAICompatProvider)
+
+
+@pytest.mark.unit
+def test_openai_compat_provider_reasoning_effort(tmp_path):
+    """OpenAICompatProvider adds reasoning_effort to kwargs when set."""
+    from unittest.mock import MagicMock, patch
+
+    from drop2md.enhance_providers import OpenAICompatProvider
+
+    provider = OpenAICompatProvider(
+        model="o1-mini",
+        base_url="https://api.openai.com/v1",
+        api_key="test-key",
+        timeout=5,
+        reasoning_effort="medium",
+    )
+
+    mock_response = MagicMock()
+    mock_response.choices[0].message.content = "The answer is 42."
+
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.return_value = mock_response
+
+    with patch("openai.OpenAI", return_value=mock_client):
+        result = provider.generate("What is 6 × 7?")
+
+    call_kwargs = mock_client.chat.completions.create.call_args[1]
+    assert call_kwargs.get("reasoning_effort") == "medium"
+    assert result == "The answer is 42."

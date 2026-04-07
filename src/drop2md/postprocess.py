@@ -114,7 +114,7 @@ def postprocess(
         frontmatter = build_frontmatter(source, result, quality=quality)
         md = frontmatter + md
 
-    return md
+    return str(md)
 
 
 def _collapse_blank_lines(text: str) -> str:

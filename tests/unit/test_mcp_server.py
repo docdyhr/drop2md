@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import pytest
 
 
@@ -153,3 +155,121 @@ def test_output_resource_missing(out_dir):
     result = output_resource("ghost.md")
     assert "Not found" in result
     assert "ghost.md" in result
+
+
+@pytest.mark.unit
+def test_convert_document_conversion_error(tmp_path):
+    """convert_document returns an error string when ConversionError is raised."""
+    from drop2md.converters import ConversionError
+    from drop2md.mcp_server import convert_document
+
+    html = tmp_path / "broken.html"
+    html.write_text("<p>test</p>", encoding="utf-8")
+
+    with patch("drop2md.mcp_server.dispatch", side_effect=ConversionError("pdf parse error")):
+        result = convert_document(str(html), output_dir=str(tmp_path))
+
+    assert "Conversion failed" in result
+    assert "pdf parse error" in result
+
+
+@pytest.mark.unit
+def test_convert_document_unexpected_error(tmp_path):
+    """convert_document returns an error string for unexpected exceptions."""
+    from drop2md.mcp_server import convert_document
+
+    html = tmp_path / "crash.html"
+    html.write_text("<p>test</p>", encoding="utf-8")
+
+    with patch("drop2md.mcp_server.dispatch", side_effect=RuntimeError("boom")):
+        result = convert_document(str(html), output_dir=str(tmp_path))
+
+    assert "Unexpected error" in result
+
+
+@pytest.mark.unit
+def test_config_resource_returns_string():
+    """config_resource returns a non-empty string."""
+    from drop2md.mcp_server import config_resource
+
+    result = config_resource()
+    assert isinstance(result, str)
+    assert len(result) > 0
+
+
+@pytest.mark.unit
+def test_list_converted_respects_limit(out_dir):
+    """list_converted obeys the limit parameter."""
+    from drop2md.mcp_server import list_converted
+
+    for i in range(5):
+        (out_dir / f"file{i}.md").write_text(f"# File {i}", encoding="utf-8")
+
+    result = list_converted(limit=3)
+    # Should list at most 3 files
+    assert result.count(".md") <= 3
+
+
+@pytest.mark.unit
+def test_list_converted_nonexistent_output_dir(tmp_path, monkeypatch):
+    """list_converted returns error message when output_dir does not exist."""
+    from drop2md import mcp_server
+    nonexistent = tmp_path / "does_not_exist"
+    monkeypatch.setattr(mcp_server._cfg.paths, "output_dir", nonexistent)
+
+    from drop2md.mcp_server import list_converted
+    result = list_converted()
+    assert "does not exist" in result
+
+
+@pytest.mark.unit
+def test_main_configures_logging_and_starts_mcp():
+    """main() sets up logging and calls mcp.run over stdio."""
+    with patch("drop2md.mcp_server.mcp") as mock_mcp:
+        from drop2md.mcp_server import main
+        main()
+    mock_mcp.run.assert_called_once_with(transport="stdio")
+
+
+@pytest.mark.unit
+def test_convert_document_enhancement_failure_is_swallowed(tmp_path, monkeypatch):
+    """convert_document logs but still returns markdown when enhance() raises."""
+    from drop2md import mcp_server
+
+    monkeypatch.setattr(mcp_server._cfg.paths, "output_dir", tmp_path)
+    monkeypatch.setattr(mcp_server._cfg.output, "vault_dir", None)
+    monkeypatch.setattr(mcp_server._cfg.output, "preserve_page_markers", False)
+    monkeypatch.setattr(mcp_server._cfg.ollama, "enabled", True)
+
+    html = tmp_path / "enhance_fail.html"
+    html.write_text("<p>hello</p>", encoding="utf-8")
+
+    with patch("drop2md.enhance.enhance", side_effect=RuntimeError("enhance exploded")):
+        from drop2md.mcp_server import convert_document
+        result = convert_document(str(html), output_dir=str(tmp_path), add_frontmatter=False)
+
+    assert "hello" in result
+
+
+@pytest.mark.unit
+def test_convert_document_writes_to_vault_dir(tmp_path, monkeypatch):
+    """convert_document also writes a copy to vault_dir when configured."""
+    from drop2md import mcp_server
+
+    vault = tmp_path / "vault"
+    vault.mkdir()
+    monkeypatch.setattr(mcp_server._cfg.paths, "output_dir", tmp_path)
+    monkeypatch.setattr(mcp_server._cfg.output, "vault_dir", vault)
+    monkeypatch.setattr(mcp_server._cfg.output, "preserve_page_markers", False)
+    monkeypatch.setattr(mcp_server._cfg.output, "add_frontmatter", False)
+    monkeypatch.setattr(mcp_server._cfg.ollama, "enabled", False)
+
+    html = tmp_path / "report.html"
+    html.write_text("<h1>Vault Test</h1>", encoding="utf-8")
+
+    from drop2md.mcp_server import convert_document
+    result = convert_document(str(html), output_dir=str(tmp_path), add_frontmatter=False)
+
+    assert "Vault Test" in result
+    vault_files = list(vault.glob("*.md"))
+    assert len(vault_files) == 1

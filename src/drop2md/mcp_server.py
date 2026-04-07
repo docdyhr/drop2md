@@ -90,7 +90,14 @@ def convert_document(
         )
         atomic_write(out_path, md)
         log.info("MCP convert_document: %s → %s", src.name, out_path)
-        return md
+
+        if _cfg.output.vault_dir:
+            vault_path = _cfg.output.vault_dir / out_path.name
+            _cfg.output.vault_dir.mkdir(parents=True, exist_ok=True)
+            atomic_write(vault_path, md)
+            log.info("MCP vault copy: %s", vault_path)
+
+        return str(md)
 
     except ConversionError as exc:
         return f"Conversion failed: {exc}"
@@ -208,13 +215,13 @@ def output_resource(filename: str) -> str:
     path = _cfg.paths.output_dir / filename
     if not path.exists():
         return f"# Not found\n\nFile `{filename}` does not exist in output dir."
-    return path.read_text(encoding="utf-8")
+    return str(path.read_text(encoding="utf-8"))
 
 
 @mcp.resource("drop2md://config")
 def config_resource() -> str:
     """Return the current drop2md configuration as markdown."""
-    return watch_status()
+    return str(watch_status())
 
 
 # ─── Entry point ──────────────────────────────────────────────────────────────

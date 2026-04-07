@@ -69,6 +69,11 @@ class OutputConfig:
     image_subdir: str = "images"
     preserve_page_markers: bool = False
     overwrite: bool = True
+    vault_dir: Path | None = None
+
+    def __post_init__(self) -> None:
+        if self.vault_dir is not None:
+            self.vault_dir = Path(self.vault_dir).expanduser()
 
 
 @dataclass
@@ -168,5 +173,7 @@ def _apply_env_overrides(cfg: Config) -> None:
         cfg.ollama.provider = val
     if val := os.environ.get("DROP2MD_ENHANCE_API_KEY"):
         cfg.ollama.api_key = val
+    if val := os.environ.get("DROP2MD_VAULT_DIR"):
+        cfg.output.vault_dir = Path(val).expanduser()
     if val := os.environ.get("DROP2MD_LOG_LEVEL"):
         cfg.logging.level = val.upper()

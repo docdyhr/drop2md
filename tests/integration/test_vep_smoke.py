@@ -88,8 +88,16 @@ skip_no_gemini = pytest.mark.skipif(
 
 def _ollama_config() -> object:
     from drop2md.config import (
-        ClaudeConfig, Config, LoggingConfig, OcrConfig, OfficeConfig,
-        OllamaConfig, OpenAIConfig, OutputConfig, PathsConfig, PdfConfig,
+        ClaudeConfig,
+        Config,
+        LoggingConfig,
+        OcrConfig,
+        OfficeConfig,
+        OllamaConfig,
+        OpenAIConfig,
+        OutputConfig,
+        PathsConfig,
+        PdfConfig,
         VisualConfig,
     )
     return Config(
@@ -123,8 +131,16 @@ def _ollama_config() -> object:
 
 def _openai_config() -> object:
     from drop2md.config import (
-        ClaudeConfig, Config, LoggingConfig, OcrConfig, OfficeConfig,
-        OllamaConfig, OpenAIConfig, OutputConfig, PathsConfig, PdfConfig,
+        ClaudeConfig,
+        Config,
+        LoggingConfig,
+        OcrConfig,
+        OfficeConfig,
+        OllamaConfig,
+        OpenAIConfig,
+        OutputConfig,
+        PathsConfig,
+        PdfConfig,
         VisualConfig,
     )
     return Config(
@@ -159,8 +175,16 @@ def _openai_config() -> object:
 
 def _gemini_config() -> object:
     from drop2md.config import (
-        ClaudeConfig, Config, LoggingConfig, OcrConfig, OfficeConfig,
-        OllamaConfig, OpenAIConfig, OutputConfig, PathsConfig, PdfConfig,
+        ClaudeConfig,
+        Config,
+        LoggingConfig,
+        OcrConfig,
+        OfficeConfig,
+        OllamaConfig,
+        OpenAIConfig,
+        OutputConfig,
+        PathsConfig,
+        PdfConfig,
         VisualConfig,
     )
     api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY", "")

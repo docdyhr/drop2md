@@ -60,11 +60,11 @@ class _DebounceHandler(FileSystemEventHandler):
 
     def on_created(self, event: FileCreatedEvent) -> None:  # type: ignore[override]
         if not event.is_directory:
-            self._schedule(event.src_path)
+            self._schedule(str(event.src_path))
 
     def on_moved(self, event: FileMovedEvent) -> None:  # type: ignore[override]
         if not event.is_directory:
-            self._schedule(event.dest_path)
+            self._schedule(str(event.dest_path))
 
 
 def _process_file(path: Path, config: Config) -> None:
@@ -125,6 +125,12 @@ def _process_file(path: Path, config: Config) -> None:
             )
             atomic_write(out_path, md)
             log.info("Output: %s", out_path)
+
+            if config.output.vault_dir:
+                vault_path = config.output.vault_dir / out_filename
+                config.output.vault_dir.mkdir(parents=True, exist_ok=True)
+                atomic_write(vault_path, md)
+                log.info("Vault:  %s", vault_path)
         except ConversionError as exc:
             log.error("Conversion failed for %s: %s", path.name, exc)
         except Exception as exc:

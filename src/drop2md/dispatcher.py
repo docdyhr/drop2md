@@ -80,7 +80,7 @@ def _detect_mime(path: Path) -> str | None:
     try:
         import magic
 
-        return magic.from_file(str(path), mime=True)
+        return str(magic.from_file(str(path), mime=True))
     except (ImportError, Exception) as exc:
         log.debug("MIME detection unavailable: %s — using extension fallback", exc)
         return None

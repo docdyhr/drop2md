@@ -203,3 +203,117 @@ def test_worker_exits_on_stop_event(tmp_path):
     stop.set()
     t.join(timeout=2)
     assert not t.is_alive()
+
+
+@pytest.mark.unit
+def test_process_file_lock_contention(tmp_path):
+    """_process_file skips conversion when ProcessingLock cannot be acquired."""
+    html = tmp_path / "doc.html"
+    html.write_text("<p>test</p>")
+
+    cfg = MagicMock()
+    cfg.paths.output_dir = tmp_path
+    cfg.output.overwrite = True
+
+    # Simulate a locked file by patching ProcessingLock context manager
+    with patch("drop2md.watcher.ProcessingLock") as mock_lock_cls:
+        mock_lock_cls.return_value.__enter__ = MagicMock(return_value=False)
+        mock_lock_cls.return_value.__exit__ = MagicMock(return_value=False)
+        with patch("drop2md.watcher.dispatch") as mock_dispatch:
+            _process_file(html, cfg)
+    mock_dispatch.assert_not_called()
+
+
+@pytest.mark.unit
+def test_process_file_logs_page_count(tmp_path):
+    """_process_file emits page count when document has > 10 pages."""
+    html = tmp_path / "big.html"
+    html.write_text("<p>text</p>")
+
+    from drop2md.converters import ConverterResult
+
+    mock_result = ConverterResult(
+        markdown="# Big\n\n" + "word " * 500,
+        metadata={"pages": 15},
+        converter_used="test",
+    )
+
+    cfg = MagicMock()
+    cfg.paths.output_dir = tmp_path
+    cfg.output.overwrite = True
+    cfg.output.add_frontmatter = False
+    cfg.output.preserve_page_markers = False
+    cfg.ollama.enabled = False
+
+    with patch("drop2md.watcher.dispatch", return_value=mock_result):
+        _process_file(html, cfg)
+
+    md_files = list(tmp_path.glob("*.md"))
+    assert len(md_files) == 1
+
+
+@pytest.mark.unit
+def test_process_file_with_warnings(tmp_path):
+    """_process_file promotes conversion warnings to log.warning."""
+    html = tmp_path / "warn.html"
+    html.write_text("<p>text</p>")
+
+    from drop2md.converters import ConverterResult
+
+    mock_result = ConverterResult(
+        markdown="# Doc\n\nContent here.\n",
+        converter_used="test",
+        warnings=["Scanned PDF detected", "Low character density"],
+    )
+
+    cfg = MagicMock()
+    cfg.paths.output_dir = tmp_path
+    cfg.output.overwrite = True
+    cfg.output.add_frontmatter = False
+    cfg.output.preserve_page_markers = False
+    cfg.ollama.enabled = False
+
+    with patch("drop2md.watcher.dispatch", return_value=mock_result):
+        _process_file(html, cfg)
+
+    md_files = list(tmp_path.glob("*.md"))
+    assert len(md_files) == 1
+
+
+@pytest.mark.unit
+def test_process_file_ollama_enabled(tmp_path):
+    """_process_file calls enhance() when ollama is enabled."""
+    html = tmp_path / "enhanced.html"
+    html.write_text("<p>text</p>")
+
+    from drop2md.converters import ConverterResult
+
+    mock_result = ConverterResult(markdown="# Doc\n\nContent.\n", converter_used="test")
+
+    cfg = MagicMock()
+    cfg.paths.output_dir = tmp_path
+    cfg.output.overwrite = True
+    cfg.output.add_frontmatter = False
+    cfg.output.preserve_page_markers = False
+    cfg.ollama.enabled = True
+
+    mock_enhance = MagicMock(return_value=mock_result)
+    with patch("drop2md.watcher.dispatch", return_value=mock_result), patch("drop2md.enhance.enhance", mock_enhance):
+        _process_file(html, cfg)
+
+
+@pytest.mark.unit
+def test_process_file_unexpected_error_does_not_raise(tmp_path):
+    """Unexpected exceptions during conversion are caught and logged, not raised."""
+    html = tmp_path / "crash.html"
+    html.write_text("<p>test</p>")
+
+    cfg = MagicMock()
+    cfg.paths.output_dir = tmp_path
+    cfg.output.overwrite = True
+    cfg.output.add_frontmatter = False
+    cfg.output.preserve_page_markers = False
+    cfg.ollama.enabled = False
+
+    with patch("drop2md.watcher.dispatch", side_effect=RuntimeError("unexpected crash")):
+        _process_file(html, cfg)  # must not raise

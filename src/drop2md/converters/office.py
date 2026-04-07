@@ -180,7 +180,8 @@ class OfficeConverter(BaseConverter):
     name = "office"
 
     def convert(self, path: Path, output_dir: Path) -> ConverterResult:
-        for ConverterClass in [MarkItDownConverter, PandocOfficeConverter]:
+        _converters: list[type[BaseConverter]] = [MarkItDownConverter, PandocOfficeConverter]
+        for ConverterClass in _converters:
             if not ConverterClass.is_available():
                 continue
             try:
