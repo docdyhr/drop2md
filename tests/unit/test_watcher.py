@@ -15,6 +15,7 @@ from drop2md.watcher import _DebounceHandler, _process_file, _worker
 
 # ─── _DebounceHandler ────────────────────────────────────────────────────────
 
+
 @pytest.mark.unit
 def test_debounce_enqueues_after_delay():
     """A created file is put on the queue after the debounce window."""
@@ -90,6 +91,7 @@ def test_directory_events_ignored():
 
 # ─── _process_file ────────────────────────────────────────────────────────────
 
+
 @pytest.mark.unit
 def test_process_file_writes_output(tmp_path):
     """_process_file converts an HTML file and writes the .md to output_dir."""
@@ -163,6 +165,7 @@ def test_process_file_handles_conversion_error(tmp_path):
 
 
 # ─── _worker ─────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.unit
 def test_worker_processes_queued_files(tmp_path):
@@ -298,7 +301,10 @@ def test_process_file_ollama_enabled(tmp_path):
     cfg.ollama.enabled = True
 
     mock_enhance = MagicMock(return_value=mock_result)
-    with patch("drop2md.watcher.dispatch", return_value=mock_result), patch("drop2md.enhance.enhance", mock_enhance):
+    with (
+        patch("drop2md.watcher.dispatch", return_value=mock_result),
+        patch("drop2md.enhance.enhance", mock_enhance),
+    ):
         _process_file(html, cfg)
 
 
@@ -315,5 +321,7 @@ def test_process_file_unexpected_error_does_not_raise(tmp_path):
     cfg.output.preserve_page_markers = False
     cfg.ollama.enabled = False
 
-    with patch("drop2md.watcher.dispatch", side_effect=RuntimeError("unexpected crash")):
+    with patch(
+        "drop2md.watcher.dispatch", side_effect=RuntimeError("unexpected crash")
+    ):
         _process_file(html, cfg)  # must not raise

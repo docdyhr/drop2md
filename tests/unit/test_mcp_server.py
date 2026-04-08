@@ -11,11 +11,13 @@ import pytest
 def out_dir(tmp_path, monkeypatch):
     """Redirect the global _cfg output directory to tmp_path for isolation."""
     from drop2md import mcp_server
+
     monkeypatch.setattr(mcp_server._cfg.paths, "output_dir", tmp_path)
     return tmp_path
 
 
 # ─── convert_document ─────────────────────────────────────────────────────────
+
 
 @pytest.mark.unit
 def test_convert_document_missing_file(tmp_path):
@@ -33,9 +35,13 @@ def test_convert_document_html(tmp_path):
     from drop2md.mcp_server import convert_document
 
     html = tmp_path / "test.html"
-    html.write_text("<html><body><h1>Hello</h1><p>World</p></body></html>", encoding="utf-8")
+    html.write_text(
+        "<html><body><h1>Hello</h1><p>World</p></body></html>", encoding="utf-8"
+    )
 
-    result = convert_document(str(html), output_dir=str(tmp_path), add_frontmatter=False)
+    result = convert_document(
+        str(html), output_dir=str(tmp_path), add_frontmatter=False
+    )
     assert "Hello" in result
     assert "World" in result
 
@@ -68,6 +74,7 @@ def test_convert_document_writes_output_file(tmp_path):
 
 # ─── list_converted ───────────────────────────────────────────────────────────
 
+
 @pytest.mark.unit
 def test_list_converted_empty_dir(out_dir):
     """list_converted returns a helpful message when no files exist."""
@@ -91,6 +98,7 @@ def test_list_converted_shows_files(out_dir):
 
 
 # ─── get_output_file ──────────────────────────────────────────────────────────
+
 
 @pytest.mark.unit
 def test_get_output_file_returns_content(out_dir):
@@ -124,6 +132,7 @@ def test_get_output_file_rejects_non_markdown(out_dir):
 
 # ─── watch_status ─────────────────────────────────────────────────────────────
 
+
 @pytest.mark.unit
 def test_watch_status_returns_config():
     """watch_status includes key config values."""
@@ -135,6 +144,7 @@ def test_watch_status_returns_config():
 
 
 # ─── Resources ────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.unit
 def test_output_resource_returns_content(out_dir):
@@ -166,7 +176,9 @@ def test_convert_document_conversion_error(tmp_path):
     html = tmp_path / "broken.html"
     html.write_text("<p>test</p>", encoding="utf-8")
 
-    with patch("drop2md.mcp_server.dispatch", side_effect=ConversionError("pdf parse error")):
+    with patch(
+        "drop2md.mcp_server.dispatch", side_effect=ConversionError("pdf parse error")
+    ):
         result = convert_document(str(html), output_dir=str(tmp_path))
 
     assert "Conversion failed" in result
@@ -214,10 +226,12 @@ def test_list_converted_respects_limit(out_dir):
 def test_list_converted_nonexistent_output_dir(tmp_path, monkeypatch):
     """list_converted returns error message when output_dir does not exist."""
     from drop2md import mcp_server
+
     nonexistent = tmp_path / "does_not_exist"
     monkeypatch.setattr(mcp_server._cfg.paths, "output_dir", nonexistent)
 
     from drop2md.mcp_server import list_converted
+
     result = list_converted()
     assert "does not exist" in result
 
@@ -227,6 +241,7 @@ def test_main_configures_logging_and_starts_mcp():
     """main() sets up logging and calls mcp.run over stdio."""
     with patch("drop2md.mcp_server.mcp") as mock_mcp:
         from drop2md.mcp_server import main
+
         main()
     mock_mcp.run.assert_called_once_with(transport="stdio")
 
@@ -246,7 +261,10 @@ def test_convert_document_enhancement_failure_is_swallowed(tmp_path, monkeypatch
 
     with patch("drop2md.enhance.enhance", side_effect=RuntimeError("enhance exploded")):
         from drop2md.mcp_server import convert_document
-        result = convert_document(str(html), output_dir=str(tmp_path), add_frontmatter=False)
+
+        result = convert_document(
+            str(html), output_dir=str(tmp_path), add_frontmatter=False
+        )
 
     assert "hello" in result
 
@@ -268,7 +286,10 @@ def test_convert_document_writes_to_vault_dir(tmp_path, monkeypatch):
     html.write_text("<h1>Vault Test</h1>", encoding="utf-8")
 
     from drop2md.mcp_server import convert_document
-    result = convert_document(str(html), output_dir=str(tmp_path), add_frontmatter=False)
+
+    result = convert_document(
+        str(html), output_dir=str(tmp_path), add_frontmatter=False
+    )
 
     assert "Vault Test" in result
     vault_files = list(vault.glob("*.md"))

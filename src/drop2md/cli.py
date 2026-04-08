@@ -41,7 +41,9 @@ def convert(
     files: Annotated[list[Path], typer.Argument(help="File(s) to convert")],
     output: Annotated[
         Path | None,
-        typer.Option("--output", "-o", help="Output directory (default: same as input)"),
+        typer.Option(
+            "--output", "-o", help="Output directory (default: same as input)"
+        ),
     ] = None,
     config_path: Annotated[
         Path | None,
@@ -73,6 +75,7 @@ def convert(
 
         try:
             import time
+
             typer.echo(f"Converting {file_path.name} ...", nl=False)
             t0 = time.monotonic()
             result = dispatch(file_path, out_dir)
@@ -86,6 +89,7 @@ def convert(
             if cfg.ollama.enabled:
                 try:
                     from drop2md.enhance import enhance
+
                     result = enhance(result, cfg)
                 except Exception as exc:
                     typer.echo(f" [enhance skipped: {exc}]", nl=False)
@@ -97,7 +101,9 @@ def convert(
                 preserve_page_markers=cfg.output.preserve_page_markers,
             )
             atomic_write(out_path, md)
-            typer.echo(f" → {out_path}  [{result.converter_used}{progress}  {elapsed:.1f}s]")
+            typer.echo(
+                f" → {out_path}  [{result.converter_used}{progress}  {elapsed:.1f}s]"
+            )
 
             if cfg.output.vault_dir:
                 vault_path = cfg.output.vault_dir / out_path.name
@@ -168,8 +174,7 @@ def install_service(
 
     template = template_path.read_text(encoding="utf-8")
     plist = (
-        template
-        .replace("__PYTHON_PATH__", str(python_path))
+        template.replace("__PYTHON_PATH__", str(python_path))
         .replace("__WATCH_DIR__", str(cfg.paths.watch_dir))
         .replace("__LOG_DIR__", str(log_dir))
     )
@@ -177,10 +182,14 @@ def install_service(
         plist = plist.replace("__CONFIG_PATH__", str(config_path.resolve()))
     else:
         # Strip the --config <path> lines — no config arg → watcher uses env/defaults
-        plist = "\n".join(
-            line for line in plist.splitlines()
-            if "--config" not in line and "__CONFIG_PATH__" not in line
-        ) + "\n"
+        plist = (
+            "\n".join(
+                line
+                for line in plist.splitlines()
+                if "--config" not in line and "__CONFIG_PATH__" not in line
+            )
+            + "\n"
+        )
 
     agents_dir = Path("~/Library/LaunchAgents").expanduser()
     agents_dir.mkdir(parents=True, exist_ok=True)
@@ -194,7 +203,9 @@ def install_service(
         check=False,
     )
     if result.returncode != 0:
-        typer.echo(f"Warning: launchctl load returned {result.returncode}: {result.stderr}")
+        typer.echo(
+            f"Warning: launchctl load returned {result.returncode}: {result.stderr}"
+        )
     else:
         typer.echo("Service installed and started.")
         typer.echo(f"  Plist:  {plist_dest}")
@@ -212,7 +223,9 @@ def uninstall_service() -> None:
         typer.echo("Error: requires macOS", err=True)
         raise typer.Exit(1)
 
-    plist_dest = Path("~/Library/LaunchAgents/com.thomasdyhr.drop2md.plist").expanduser()
+    plist_dest = Path(
+        "~/Library/LaunchAgents/com.thomasdyhr.drop2md.plist"
+    ).expanduser()
     if not plist_dest.exists():
         typer.echo("Service not installed.")
         return
@@ -249,8 +262,7 @@ def install_quick_action() -> None:
     python_path = Path(sys.executable)
 
     wflow = (
-        wflow_text
-        .replace("__PYTHON_PATH__", str(python_path))
+        wflow_text.replace("__PYTHON_PATH__", str(python_path))
         .replace("__ACTION_UUID__", str(uuid.uuid4()).upper())
         .replace("__INPUT_UUID__", str(uuid.uuid4()).upper())
         .replace("__OUTPUT_UUID__", str(uuid.uuid4()).upper())
@@ -300,7 +312,9 @@ def setup(
     typer.echo("")
 
     if dest.exists():
-        overwrite = typer.confirm(f"{dest} already exists — overwrite it?", default=False)
+        overwrite = typer.confirm(
+            f"{dest} already exists — overwrite it?", default=False
+        )
         if not overwrite:
             typer.echo("Aborted.")
             raise typer.Exit()
@@ -342,8 +356,12 @@ def setup(
         ai_enabled = False
     elif provider == "ollama":
         ai_enabled = True
-        ollama_model = typer.prompt("Ollama model (needs vision support)", default="llava-llama3:8b")
-        enable_vep = typer.confirm("Enable Visual Enhancement Pipeline (VEP)?", default=False)
+        ollama_model = typer.prompt(
+            "Ollama model (needs vision support)", default="llava-llama3:8b"
+        )
+        enable_vep = typer.confirm(
+            "Enable Visual Enhancement Pipeline (VEP)?", default=False
+        )
     else:
         ai_enabled = True
         env_var = {
@@ -354,7 +372,9 @@ def setup(
         }.get(provider, "API_KEY")
         typer.echo(f"  Leave blank to use {env_var} environment variable.")
         api_key = typer.prompt("API key", default="", hide_input=True)
-        enable_vep = typer.confirm("Enable Visual Enhancement Pipeline (VEP)?", default=True)
+        enable_vep = typer.confirm(
+            "Enable Visual Enhancement Pipeline (VEP)?", default=True
+        )
 
     typer.echo("")
 
@@ -396,6 +416,7 @@ file = "~/Library/Logs/drop2md/drop2md.log"
         if typer.confirm("Install background service (launchd)?", default=True):
             try:
                 from drop2md.cli import install_service
+
                 install_service()
             except SystemExit:
                 pass  # install_service calls raise typer.Exit on error
@@ -403,6 +424,7 @@ file = "~/Library/Logs/drop2md/drop2md.log"
         if typer.confirm("Install Finder Quick Action?", default=True):
             try:
                 from drop2md.cli import install_quick_action
+
                 install_quick_action()
             except SystemExit:
                 pass
@@ -414,12 +436,15 @@ file = "~/Library/Logs/drop2md/drop2md.log"
         typer.echo("── Connection Test ───────────────────────")
         try:
             import httpx
+
             base_url = "http://localhost:11434"
             r = httpx.get(f"{base_url}/api/tags", timeout=3)
             if r.status_code == 200:
                 typer.echo(f"  Ollama reachable at {base_url}")
             else:
-                typer.echo(f"  Ollama returned HTTP {r.status_code} — run: ollama serve")
+                typer.echo(
+                    f"  Ollama returned HTTP {r.status_code} — run: ollama serve"
+                )
         except Exception:
             typer.echo("  Ollama unreachable — run: ollama serve")
 
@@ -472,11 +497,16 @@ def check(
     elif config_path:
         _fail(f"{config_path} not found", "create config.toml from config.toml.example")
     else:
-        _warn("No config.toml — running on defaults", "cp config.toml.example config.toml")
+        _warn(
+            "No config.toml — running on defaults", "cp config.toml.example config.toml"
+        )
 
     cfg = load_config(config_path)
 
-    for label, path in [("Watch dir ", cfg.paths.watch_dir), ("Output dir", cfg.paths.output_dir)]:
+    for label, path in [
+        ("Watch dir ", cfg.paths.watch_dir),
+        ("Output dir", cfg.paths.output_dir),
+    ]:
         if not path.exists():
             _warn(f"{label}  {path}  (will be created on first use)")
         elif not os.access(path, os.W_OK):
@@ -498,7 +528,10 @@ def check(
         if MarkerPdfConverter.is_available():
             _ok("marker       (enabled, installed)")
         else:
-            _warn("marker       (enabled in config, not installed)", "pip install drop2md[pdf-ml]")
+            _warn(
+                "marker       (enabled in config, not installed)",
+                "pip install drop2md[pdf-ml]",
+            )
     else:
         _ok("marker       (disabled in config)")
 
@@ -506,7 +539,10 @@ def check(
         if DoclingPdfConverter.is_available():
             _ok("docling      (enabled, installed)")
         else:
-            _warn("docling      (enabled in config, not installed)", "pip install drop2md[pdf-ml]")
+            _warn(
+                "docling      (enabled in config, not installed)",
+                "pip install drop2md[pdf-ml]",
+            )
     else:
         _ok("docling      (disabled in config)")
 
@@ -518,7 +554,10 @@ def check(
     if LegacyPdfConverter.is_available():
         _ok("pdfplumber   (installed — baseline fallback)")
     else:
-        _fail("pdfplumber   (not installed — no PDF conversion possible)", "pip install pdfplumber")
+        _fail(
+            "pdfplumber   (not installed — no PDF conversion possible)",
+            "pip install pdfplumber",
+        )
 
     # ── Office converters ────────────────────────────────────────────────────
     _section("Office  (DOCX / PPTX / XLSX)")
@@ -529,14 +568,20 @@ def check(
         if MarkItDownConverter.is_available():
             _ok("markitdown   (enabled, installed)")
         else:
-            _warn("markitdown   (enabled in config, not installed)", "pip install drop2md[office]")
+            _warn(
+                "markitdown   (enabled in config, not installed)",
+                "pip install drop2md[office]",
+            )
     else:
         _ok("markitdown   (disabled in config)")
 
     if PandocOfficeConverter.is_available():
         _ok("pandoc       (installed — fallback converter)")
     else:
-        _warn("pandoc       (not found — no fallback for office files)", "brew install pandoc")
+        _warn(
+            "pandoc       (not found — no fallback for office files)",
+            "brew install pandoc",
+        )
 
     # ── HTML / EPUB ──────────────────────────────────────────────────────────
     _section("HTML / EPUB")
@@ -547,12 +592,18 @@ def check(
     if Html2TextConverter.is_available():
         _ok("html2text    (installed)")
     else:
-        _fail("html2text    (not installed — HTML conversion broken)", "pip install html2text")
+        _fail(
+            "html2text    (not installed — HTML conversion broken)",
+            "pip install html2text",
+        )
 
     if EpubConverter.is_available():
         _ok("pandoc       (installed — EPUB supported)")
     else:
-        _warn("pandoc       (not found — EPUB conversion unavailable)", "brew install pandoc")
+        _warn(
+            "pandoc       (not found — EPUB conversion unavailable)",
+            "brew install pandoc",
+        )
 
     # ── OCR ──────────────────────────────────────────────────────────────────
     _section("OCR  (images / scanned PDFs)")
@@ -587,11 +638,16 @@ def check(
             _ok(f"Installed    ({plist})")
             lc = subprocess.run(
                 ["launchctl", "list", "com.thomasdyhr.drop2md"],
-                capture_output=True, text=True, check=False,
+                capture_output=True,
+                text=True,
+                check=False,
             )
-            pid_line = next((ln for ln in lc.stdout.splitlines() if '"PID"' in ln), None)
+            pid_line = next(
+                (ln for ln in lc.stdout.splitlines() if '"PID"' in ln), None
+            )
             if pid_line:
                 import re as _re
+
                 m = _re.search(r'"PID"\s*=\s*(\d+)', pid_line)
                 pid = m.group(1) if m else "?"
                 _ok(f"Running      (PID {pid})")
@@ -612,6 +668,7 @@ def check(
         if provider == "ollama":
             try:
                 import httpx
+
                 r = httpx.get(f"{cfg.ollama.base_url}/api/tags", timeout=3)
                 if r.status_code == 200:
                     _ok(f"Ollama       (running at {cfg.ollama.base_url})")
@@ -625,7 +682,9 @@ def check(
                             f"ollama pull {cfg.ollama.model}  (available: {available})",
                         )
                 else:
-                    _fail(f"Ollama       (HTTP {r.status_code} from {cfg.ollama.base_url})")
+                    _fail(
+                        f"Ollama       (HTTP {r.status_code} from {cfg.ollama.base_url})"
+                    )
             except Exception:
                 _fail(
                     f"Ollama       (unreachable at {cfg.ollama.base_url})",
@@ -635,18 +694,25 @@ def check(
         elif provider == "claude":
             try:
                 import anthropic  # noqa: F401
+
                 _ok("anthropic    (package installed)")
             except ImportError:
                 _fail("anthropic    (not installed)", "pip install drop2md[claude]")
-            api_key = getattr(cfg.ollama, "api_key", "") or os.environ.get("ANTHROPIC_API_KEY", "")
+            api_key = getattr(cfg.ollama, "api_key", "") or os.environ.get(
+                "ANTHROPIC_API_KEY", ""
+            )
             if api_key:
                 _ok(f"API key      (set — model: {cfg.claude.model})")
             else:
-                _fail("API key      (ANTHROPIC_API_KEY not set)", "export ANTHROPIC_API_KEY=sk-ant-...")
+                _fail(
+                    "API key      (ANTHROPIC_API_KEY not set)",
+                    "export ANTHROPIC_API_KEY=sk-ant-...",
+                )
 
         elif provider in ("openai", "gemini"):
             try:
                 import openai  # noqa: F401
+
                 _ok("openai       (package installed)")
             except ImportError:
                 _fail("openai       (not installed)", "pip install drop2md[openai]")
@@ -660,10 +726,13 @@ def check(
         elif provider == "hf":
             try:
                 import openai  # noqa: F401
+
                 _ok("openai       (package installed — required for HuggingFace)")
             except ImportError:
                 _fail("openai       (not installed)", "pip install drop2md[openai]")
-            api_key = getattr(cfg.ollama, "api_key", "") or os.environ.get("HF_TOKEN", "")
+            api_key = getattr(cfg.ollama, "api_key", "") or os.environ.get(
+                "HF_TOKEN", ""
+            )
             if api_key:
                 _ok(f"HF_TOKEN     (set — model: {cfg.openai.model})")
             else:
@@ -693,7 +762,9 @@ def _get_launchd_pid() -> int | None:
         return None
     lc = subprocess.run(
         ["launchctl", "list", "com.thomasdyhr.drop2md"],
-        capture_output=True, text=True, check=False,
+        capture_output=True,
+        text=True,
+        check=False,
     )
     for line in lc.stdout.splitlines():
         m = re.search(r'"PID"\s*=\s*(\d+)', line)
@@ -702,7 +773,9 @@ def _get_launchd_pid() -> int | None:
     return None
 
 
-def _render_status_panel(cfg: object, config_path: Path | None, launchd_pid: int | None) -> object:
+def _render_status_panel(
+    cfg: object, config_path: Path | None, launchd_pid: int | None
+) -> object:
     """Build a rich renderable with all status sections."""
     import datetime
 
@@ -736,12 +809,16 @@ def _render_status_panel(cfg: object, config_path: Path | None, launchd_pid: int
     # ── Recent conversions ──────────────────────────────────────────────────
     output_dir = cfg.paths.output_dir
     if output_dir.exists():
-        md_files = sorted(output_dir.glob("*.md"), key=lambda p: p.stat().st_mtime, reverse=True)[:5]
+        md_files = sorted(
+            output_dir.glob("*.md"), key=lambda p: p.stat().st_mtime, reverse=True
+        )[:5]
         if md_files:
             lines.append("")
             lines.append("Recent conversions:")
             for f in md_files:
-                mtime = datetime.datetime.fromtimestamp(f.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+                mtime = datetime.datetime.fromtimestamp(f.stat().st_mtime).strftime(
+                    "%Y-%m-%d %H:%M"
+                )
                 lines.append(f"  {f.name:<45} {mtime}")
         else:
             lines.append("")
@@ -751,11 +828,16 @@ def _render_status_panel(cfg: object, config_path: Path | None, launchd_pid: int
     if cfg.ollama.enabled:
         try:
             import httpx
+
             r = httpx.get(f"{cfg.ollama.base_url}/api/tags", timeout=3)
             if r.status_code == 200:
                 models = [m.get("name", "") for m in r.json().get("models", [])]
                 model_ok = any(cfg.ollama.model in m for m in models)
-                model_status = f"{cfg.ollama.model} ✓" if model_ok else f"{cfg.ollama.model} (not pulled)"
+                model_status = (
+                    f"{cfg.ollama.model} ✓"
+                    if model_ok
+                    else f"{cfg.ollama.model} (not pulled)"
+                )
                 lines.append(f"\nOllama:   running  ({model_status})")
             else:
                 lines.append(f"\nOllama:   unreachable at {cfg.ollama.base_url}")
@@ -812,7 +894,9 @@ def status(
     ] = None,
     watch: Annotated[
         bool,
-        typer.Option("--watch", "-w", help="Refresh display every N seconds (like top)."),
+        typer.Option(
+            "--watch", "-w", help="Refresh display every N seconds (like top)."
+        ),
     ] = False,
     interval: Annotated[
         float,
@@ -853,7 +937,10 @@ def install_mcp(
     ] = None,
     claude_config: Annotated[
         Path | None,
-        typer.Option("--claude-config", help="Path to Claude Desktop config.json (auto-detected if omitted)"),
+        typer.Option(
+            "--claude-config",
+            help="Path to Claude Desktop config.json (auto-detected if omitted)",
+        ),
     ] = None,
 ) -> None:
     """Register drop2md as an MCP server in Claude Desktop.
@@ -866,7 +953,9 @@ def install_mcp(
     # Auto-detect Claude Desktop config
     if claude_config is None:
         candidates = [
-            Path("~/Library/Application Support/Claude/claude_desktop_config.json").expanduser(),
+            Path(
+                "~/Library/Application Support/Claude/claude_desktop_config.json"
+            ).expanduser(),
         ]
         for c in candidates:
             if c.exists():
@@ -916,14 +1005,19 @@ def install_mcp(
 def uninstall_mcp(
     claude_config: Annotated[
         Path | None,
-        typer.Option("--claude-config", help="Path to Claude Desktop config.json (auto-detected if omitted)"),
+        typer.Option(
+            "--claude-config",
+            help="Path to Claude Desktop config.json (auto-detected if omitted)",
+        ),
     ] = None,
 ) -> None:
     """Remove drop2md from Claude Desktop MCP servers."""
     import json
 
     if claude_config is None:
-        candidate = Path("~/Library/Application Support/Claude/claude_desktop_config.json").expanduser()
+        candidate = Path(
+            "~/Library/Application Support/Claude/claude_desktop_config.json"
+        ).expanduser()
         if candidate.exists():
             claude_config = candidate
 

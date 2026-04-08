@@ -41,6 +41,7 @@ _VISUAL_TYPES = frozenset(
 # VEP-1: Classifier
 # ---------------------------------------------------------------------------
 
+
 def _classify_images(images: list[Path], config: Config) -> dict[Path, str]:
     """Classify each image into a visual element type.
 
@@ -88,6 +89,7 @@ def _classify_images(images: list[Path], config: Config) -> dict[Path, str]:
 # ---------------------------------------------------------------------------
 # VEP-2: Per-class handlers
 # ---------------------------------------------------------------------------
+
 
 def _describe_chart(image_path: Path, config: Config) -> str:
     """Extract chart type, axes, trend, and key data points as prose."""
@@ -201,6 +203,7 @@ def describe_image(image_path: Path, config: Config) -> str:
 # VEP dispatch
 # ---------------------------------------------------------------------------
 
+
 def _build_image_replacement(
     img_path: Path,
     visual_type: str,
@@ -306,6 +309,7 @@ def _apply_vep(markdown: str, images: list[Path], config: Config) -> str:
 # ---------------------------------------------------------------------------
 # Legacy helpers (kept for backward compatibility and direct use)
 # ---------------------------------------------------------------------------
+
 
 def validate_table(table_md: str, config: Config) -> str:
     """Ask the AI provider to validate and fix a GFM table.
@@ -438,8 +442,12 @@ def _polish_text(result: ConverterResult, config: Config) -> ConverterResult:
 
             # Safety check: reject if the model removed or hallucinated too much
             original_len = len(para)
-            if original_len > 0 and not (0.75 * original_len <= len(fixed) <= 1.3 * original_len):
-                log.debug("Text polish rejected response (length ratio out of bounds) for paragraph")
+            if original_len > 0 and not (
+                0.75 * original_len <= len(fixed) <= 1.3 * original_len
+            ):
+                log.debug(
+                    "Text polish rejected response (length ratio out of bounds) for paragraph"
+                )
                 polished_parts.append(para)
             else:
                 polished_parts.append(fixed)
@@ -460,6 +468,7 @@ def _polish_text(result: ConverterResult, config: Config) -> ConverterResult:
 # ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
+
 
 def enhance(result: ConverterResult, config: Config) -> ConverterResult:
     """Apply AI enhancement to a ConverterResult.

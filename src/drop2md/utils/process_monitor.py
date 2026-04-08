@@ -1,4 +1,5 @@
 """Process resource monitoring for drop2md-related processes."""
+
 from __future__ import annotations
 
 import time
@@ -10,13 +11,13 @@ from typing import Any
 class ProcessInfo:
     pid: int
     name: str
-    role: str      # "watcher" | "mcp-server" | "converter" | "unknown"
-    status: str    # psutil status: "running", "sleeping", "zombie", etc.
+    role: str  # "watcher" | "mcp-server" | "converter" | "unknown"
+    status: str  # psutil status: "running", "sleeping", "zombie", etc.
     cpu_pct: float
     rss_mb: float
     mem_pct: float
     num_fds: int
-    uptime: str    # e.g. "2h 14m", "45m 3s", "3d 7h"
+    uptime: str  # e.g. "2h 14m", "45m 3s", "3d 7h"
 
 
 def _infer_role(cmdline: list[str]) -> str:
@@ -119,16 +120,18 @@ def sample_processes(launchd_pid: int | None = None) -> list[ProcessInfo]:
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             continue
 
-        results.append(ProcessInfo(
-            pid=p.pid,
-            name=name,
-            role=_infer_role(cmdline),
-            status=status,
-            cpu_pct=round(cpu, 1),
-            rss_mb=round(rss_mb, 1),
-            mem_pct=round(mem_pct, 2),
-            num_fds=num_fds,
-            uptime=_format_uptime(create_time),
-        ))
+        results.append(
+            ProcessInfo(
+                pid=p.pid,
+                name=name,
+                role=_infer_role(cmdline),
+                status=status,
+                cpu_pct=round(cpu, 1),
+                rss_mb=round(rss_mb, 1),
+                mem_pct=round(mem_pct, 2),
+                num_fds=num_fds,
+                uptime=_format_uptime(create_time),
+            )
+        )
 
     return results

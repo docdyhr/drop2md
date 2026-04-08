@@ -34,7 +34,9 @@ class MarkerPdfConverter(BaseConverter):
         except ImportError:
             return False
 
-    def convert(self, path: Path, output_dir: Path, device: str = "mps") -> ConverterResult:
+    def convert(
+        self, path: Path, output_dir: Path, device: str = "mps"
+    ) -> ConverterResult:
         from marker.converters.pdf import PdfConverter
         from marker.models import create_model_dict
         from marker.output import text_from_rendered
@@ -129,7 +131,9 @@ _TEXT_ONLY_TIERS: frozenset[type[BaseConverter]] = frozenset(
 )
 
 
-def _is_scanned_pdf(path: Path, sample_pages: int = 3, char_threshold: int = 20) -> bool:
+def _is_scanned_pdf(
+    path: Path, sample_pages: int = 3, char_threshold: int = 20
+) -> bool:
     """Return True if the PDF appears to be image-only (scanned).
 
     Samples the first *sample_pages* pages via pdfplumber (always available).
@@ -146,7 +150,11 @@ def _is_scanned_pdf(path: Path, sample_pages: int = 3, char_threshold: int = 20)
             total_chars = sum(len(p.extract_text() or "") for p in pages)
             return total_chars < char_threshold
     except Exception as exc:
-        log.debug("Scanned-PDF detection failed for %s: %s — assuming not scanned", path.name, exc)
+        log.debug(
+            "Scanned-PDF detection failed for %s: %s — assuming not scanned",
+            path.name,
+            exc,
+        )
         return False
 
 
@@ -166,12 +174,15 @@ class TieredPdfConverter(BaseConverter):
         scanned = _is_scanned_pdf(path)
         if scanned:
             log.info(
-                "Scanned PDF detected: %s — skipping ML text-based converters", path.name
+                "Scanned PDF detected: %s — skipping ML text-based converters",
+                path.name,
             )
 
         for ConverterClass in _TIERS:
             if scanned and ConverterClass in _TEXT_ONLY_TIERS:
-                log.debug("Skipping %s for scanned PDF: %s", ConverterClass.name, path.name)
+                log.debug(
+                    "Skipping %s for scanned PDF: %s", ConverterClass.name, path.name
+                )
                 continue
             if not ConverterClass.is_available():
                 log.debug("PDF tier %s not available, skipping", ConverterClass.name)
@@ -227,7 +238,8 @@ def _partial_recover(
 
     log.info(
         "Partial recovery: %s produced %.0f chars/page — augmenting with pdfplumber",
-        primary.converter_used, avg_chars,
+        primary.converter_used,
+        avg_chars,
     )
 
     try:
@@ -238,16 +250,15 @@ def _partial_recover(
             for page_num, page in enumerate(pdf.pages, 1):
                 page_text = (page.extract_text() or "").strip()
                 if len(page_text) >= min_chars_per_page:
-                    recovered_pages.append(
-                        f"<!-- Page {page_num} -->\n\n{page_text}"
-                    )
+                    recovered_pages.append(f"<!-- Page {page_num} -->\n\n{page_text}")
 
         if not recovered_pages:
             return primary
 
         # Only append pages whose content doesn't appear in the primary output
         new_pages = [
-            p for p in recovered_pages
+            p
+            for p in recovered_pages
             if p.split("\n\n", 1)[-1][:40] not in primary.markdown
         ]
         if not new_pages:

@@ -78,6 +78,7 @@ def test_mime_type_overrides_extension(tmp_path: Path):
 
 # ─── Q-5: RTF / ODT routing ──────────────────────────────────────────────────
 
+
 @pytest.mark.unit
 @pytest.mark.parametrize(
     "filename",
@@ -89,7 +90,9 @@ def test_rtf_odt_extension_routing(filename: str, tmp_path: Path):
     path.touch()
     with patch("drop2md.dispatcher._detect_mime", return_value=None):
         result = get_converter(path)
-    assert result is OfficeConverter, f"Expected OfficeConverter for {filename}, got {result}"
+    assert result is OfficeConverter, (
+        f"Expected OfficeConverter for {filename}, got {result}"
+    )
 
 
 @pytest.mark.unit

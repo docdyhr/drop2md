@@ -16,6 +16,7 @@ from drop2md.enhance_providers import (
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
+
 def _cfg(provider: str = "ollama", api_key: str = "") -> MagicMock:
     cfg = MagicMock()
     cfg.ollama.provider = provider
@@ -40,14 +41,21 @@ def _mock_httpx_response(text: str) -> MagicMock:
 
 # ─── OllamaProvider ──────────────────────────────────────────────────────────
 
+
 @pytest.mark.unit
 def test_ollama_provider_text_prompt():
     provider = OllamaProvider("http://localhost:11434", "test-model", timeout=5)
-    with patch("httpx.post", return_value=_mock_httpx_response("Hello from Ollama")) as mock_post:
+    with patch(
+        "httpx.post", return_value=_mock_httpx_response("Hello from Ollama")
+    ) as mock_post:
         result = provider.generate("Say hello")
     assert result == "Hello from Ollama"
     call_kwargs = mock_post.call_args
-    payload = call_kwargs[1]["json"] if "json" in call_kwargs[1] else call_kwargs.kwargs["json"]
+    payload = (
+        call_kwargs[1]["json"]
+        if "json" in call_kwargs[1]
+        else call_kwargs.kwargs["json"]
+    )
     assert payload["model"] == "test-model"
     assert payload["options"] == {"think": False}
 
@@ -77,6 +85,7 @@ def test_ollama_provider_skips_missing_image(tmp_path):
 
 # ─── OpenAICompatProvider ────────────────────────────────────────────────────
 
+
 @pytest.mark.unit
 def test_openai_provider_text_prompt():
     mock_client = MagicMock()
@@ -87,7 +96,9 @@ def test_openai_provider_text_prompt():
     mock_openai = MagicMock()
     mock_openai.OpenAI.return_value = mock_client
 
-    provider = OpenAICompatProvider("gpt-4o-mini", "https://api.openai.com/v1", "", timeout=5)
+    provider = OpenAICompatProvider(
+        "gpt-4o-mini", "https://api.openai.com/v1", "", timeout=5
+    )
     with patch.dict(sys.modules, {"openai": mock_openai}):
         result = provider.generate("Say hello")
 
@@ -108,7 +119,9 @@ def test_openai_provider_sends_image(tmp_path):
     mock_openai = MagicMock()
     mock_openai.OpenAI.return_value = mock_client
 
-    provider = OpenAICompatProvider("gpt-4o-mini", "https://api.openai.com/v1", "", timeout=5)
+    provider = OpenAICompatProvider(
+        "gpt-4o-mini", "https://api.openai.com/v1", "", timeout=5
+    )
     with patch.dict(sys.modules, {"openai": mock_openai}):
         result = provider.generate("Describe", image_path=img)
 
@@ -123,13 +136,20 @@ def test_openai_provider_sends_image(tmp_path):
 
 @pytest.mark.unit
 def test_openai_provider_import_error():
-    provider = OpenAICompatProvider("gpt-4o-mini", "https://api.openai.com/v1", "", timeout=5)
-    with patch("builtins.__import__", side_effect=ImportError("No module named 'openai'")), \
-         pytest.raises(ImportError, match="openai package"):
+    provider = OpenAICompatProvider(
+        "gpt-4o-mini", "https://api.openai.com/v1", "", timeout=5
+    )
+    with (
+        patch(
+            "builtins.__import__", side_effect=ImportError("No module named 'openai'")
+        ),
+        pytest.raises(ImportError, match="openai package"),
+    ):
         provider.generate("Hello")
 
 
 # ─── ClaudeProvider ──────────────────────────────────────────────────────────
+
 
 @pytest.mark.unit
 def test_claude_provider_text_prompt():
@@ -181,16 +201,23 @@ def test_claude_provider_sends_image(tmp_path):
 @pytest.mark.unit
 def test_claude_provider_import_error():
     provider = ClaudeProvider("claude-haiku-4-5-20251001", "", timeout=5)
-    with patch("builtins.__import__", side_effect=ImportError("No module named 'anthropic'")), \
-         pytest.raises(ImportError, match="anthropic package"):
+    with (
+        patch(
+            "builtins.__import__",
+            side_effect=ImportError("No module named 'anthropic'"),
+        ),
+        pytest.raises(ImportError, match="anthropic package"),
+    ):
         provider.generate("Hello")
 
 
 # ─── make_provider factory ───────────────────────────────────────────────────
 
+
 @pytest.mark.unit
 def test_make_provider_returns_ollama():
     from drop2md.enhance_providers import OllamaProvider
+
     provider = make_provider(_cfg(provider="ollama"))
     assert isinstance(provider, OllamaProvider)
 
@@ -198,6 +225,7 @@ def test_make_provider_returns_ollama():
 @pytest.mark.unit
 def test_make_provider_returns_claude():
     from drop2md.enhance_providers import ClaudeProvider
+
     provider = make_provider(_cfg(provider="claude"))
     assert isinstance(provider, ClaudeProvider)
 
@@ -205,6 +233,7 @@ def test_make_provider_returns_claude():
 @pytest.mark.unit
 def test_make_provider_returns_openai():
     from drop2md.enhance_providers import OpenAICompatProvider
+
     provider = make_provider(_cfg(provider="openai"))
     assert isinstance(provider, OpenAICompatProvider)
 
@@ -212,6 +241,7 @@ def test_make_provider_returns_openai():
 @pytest.mark.unit
 def test_make_provider_returns_openai_for_hf():
     from drop2md.enhance_providers import OpenAICompatProvider
+
     provider = make_provider(_cfg(provider="hf"))
     assert isinstance(provider, OpenAICompatProvider)
 

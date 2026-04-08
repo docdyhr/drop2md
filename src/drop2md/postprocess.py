@@ -55,7 +55,9 @@ def score_quality(markdown: str, result: ConverterResult) -> str:
         return "high"
 
     # Medium: decent word count, at least some structure or images
-    if words >= _WORDS_MEDIUM and (headings >= 1 or image_refs >= 1 or warning_count <= 1):
+    if words >= _WORDS_MEDIUM and (
+        headings >= 1 or image_refs >= 1 or warning_count <= 1
+    ):
         return "medium"
 
     return "low"

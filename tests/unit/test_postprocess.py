@@ -96,10 +96,12 @@ def test_postprocess_ends_with_newline(tmp_path):
 
 # ─── Q-1: Quality scoring ─────────────────────────────────────────────────────
 
+
 @pytest.mark.unit
 def test_quality_high(tmp_path):
     """Rich, structured, warning-free document scores high."""
     from drop2md.postprocess import score_quality
+
     md = "# Title\n\n## Section\n\n" + ("word " * 450)
     result = ConverterResult(markdown=md, converter_used="marker")
     assert score_quality(md, result) == "high"
@@ -109,6 +111,7 @@ def test_quality_high(tmp_path):
 def test_quality_medium_few_words_with_headings(tmp_path):
     """Moderate word count with at least one heading scores medium."""
     from drop2md.postprocess import score_quality
+
     md = "# Title\n\n" + ("word " * 150)
     result = ConverterResult(markdown=md, converter_used="marker")
     assert score_quality(md, result) == "medium"
@@ -118,6 +121,7 @@ def test_quality_medium_few_words_with_headings(tmp_path):
 def test_quality_low_sparse(tmp_path):
     """Very few words → low quality."""
     from drop2md.postprocess import score_quality
+
     md = "Just a few words."
     result = ConverterResult(markdown=md, converter_used="pdfplumber")
     assert score_quality(md, result) == "low"
@@ -127,6 +131,7 @@ def test_quality_low_sparse(tmp_path):
 def test_quality_low_scanned_warning(tmp_path):
     """Scanned PDF warning → always low quality regardless of word count."""
     from drop2md.postprocess import score_quality
+
     md = "# Doc\n\n" + ("word " * 500)
     result = ConverterResult(
         markdown=md,
@@ -140,6 +145,7 @@ def test_quality_low_scanned_warning(tmp_path):
 def test_quality_low_many_warnings(tmp_path):
     """Three or more warnings → always low quality."""
     from drop2md.postprocess import score_quality
+
     md = "# Doc\n\n## Section\n\n" + ("word " * 500)
     result = ConverterResult(
         markdown=md,
@@ -173,6 +179,7 @@ def test_quality_not_in_frontmatter_when_disabled(tmp_path):
 def test_score_quality_low_fallthrough():
     """score_quality returns 'low' when 100-399 words, no headings/images, 1-2 warnings."""
     from drop2md.postprocess import score_quality
+
     # 150 words, no headings, no image refs, 2 non-scanned warnings
     md = "word " * 150
     result = ConverterResult(
@@ -189,6 +196,7 @@ def test_build_frontmatter_includes_warnings():
     from pathlib import Path
 
     from drop2md.postprocess import build_frontmatter
+
     result = ConverterResult(
         markdown="# Doc",
         converter_used="marker",
@@ -201,6 +209,7 @@ def test_build_frontmatter_includes_warnings():
 
 
 # ── Deterministic polish: fix_hyphen_line_breaks ──────────────────────────────
+
 
 @pytest.mark.unit
 def test_fix_hyphen_line_breaks_rejoins_lowercase():
@@ -230,6 +239,7 @@ def test_fix_hyphen_line_breaks_preserves_regular_newlines():
 
 
 # ── Deterministic polish: fix_sentence_spacing ───────────────────────────────
+
 
 @pytest.mark.unit
 def test_fix_sentence_spacing_inserts_space_after_period():
@@ -274,6 +284,7 @@ def test_fix_sentence_spacing_already_correct():
 
 # ── Deterministic polish: fix_repeated_words ─────────────────────────────────
 
+
 @pytest.mark.unit
 def test_fix_repeated_words_removes_duplicate():
     """Consecutive duplicate words (3+ chars) are collapsed to one."""
@@ -307,6 +318,7 @@ def test_fix_repeated_words_no_false_positive():
 
 # ── postprocess applies all polish steps ─────────────────────────────────────
 
+
 @pytest.mark.unit
 def test_postprocess_applies_deterministic_polish(tmp_path):
     """postprocess() applies all three deterministic polish steps."""
@@ -314,6 +326,6 @@ def test_postprocess_applies_deterministic_polish(tmp_path):
     result = ConverterResult(markdown=raw, converter_used="pdfplumber")
     source = tmp_path / "doc.pdf"
     out = postprocess(result, source, add_frontmatter=False)
-    assert "para-\n" not in out          # hyphen rejoined
-    assert "the the" not in out          # duplicate removed
+    assert "para-\n" not in out  # hyphen rejoined
+    assert "the the" not in out  # duplicate removed
     assert "word. Next" in out or "word.Next" not in out  # space inserted

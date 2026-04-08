@@ -102,6 +102,7 @@ def test_real_pdf_reaches_legacy(sample_pdf, tmp_path):
 
 # ─── is_available() with mocked imports ──────────────────────────────────────
 
+
 @pytest.mark.unit
 def test_marker_is_available_when_installed():
     """MarkerPdfConverter.is_available() returns True when marker is importable."""
@@ -124,6 +125,7 @@ def test_pymupdf_is_available_when_installed():
 
 
 # ─── convert() via mocked lazy imports ───────────────────────────────────────
+
 
 @pytest.mark.unit
 def test_pymupdf_converter_convert(tmp_path):
@@ -158,10 +160,13 @@ def test_docling_converter_convert(tmp_path):
     mock_docling_mod = MagicMock()
     mock_docling_mod.DocumentConverter.return_value = mock_converter_instance
 
-    with patch.dict(sys.modules, {
-        "docling": MagicMock(),
-        "docling.document_converter": mock_docling_mod,
-    }):
+    with patch.dict(
+        sys.modules,
+        {
+            "docling": MagicMock(),
+            "docling.document_converter": mock_docling_mod,
+        },
+    ):
         result = DoclingPdfConverter().convert(path, tmp_path)
 
     assert result.markdown == "# From Docling"
@@ -181,13 +186,16 @@ def test_marker_converter_convert_no_images(tmp_path):
     mock_output_mod = MagicMock()
     mock_output_mod.text_from_rendered.return_value = ("# From Marker", None, {})
 
-    with patch.dict(sys.modules, {
-        "marker": MagicMock(),
-        "marker.converters": MagicMock(),
-        "marker.converters.pdf": mock_pdf_mod,
-        "marker.models": mock_models_mod,
-        "marker.output": mock_output_mod,
-    }):
+    with patch.dict(
+        sys.modules,
+        {
+            "marker": MagicMock(),
+            "marker.converters": MagicMock(),
+            "marker.converters.pdf": mock_pdf_mod,
+            "marker.models": mock_models_mod,
+            "marker.output": mock_output_mod,
+        },
+    ):
         result = MarkerPdfConverter().convert(path, tmp_path)
 
     assert result.markdown == "# From Marker"
@@ -209,16 +217,21 @@ def test_marker_converter_saves_pil_images(tmp_path):
     mock_models_mod.create_model_dict.return_value = {}
     mock_output_mod = MagicMock()
     mock_output_mod.text_from_rendered.return_value = (
-        "# With Image", None, {"figure.png": mock_pil_img}
+        "# With Image",
+        None,
+        {"figure.png": mock_pil_img},
     )
 
-    with patch.dict(sys.modules, {
-        "marker": MagicMock(),
-        "marker.converters": MagicMock(),
-        "marker.converters.pdf": mock_pdf_mod,
-        "marker.models": mock_models_mod,
-        "marker.output": mock_output_mod,
-    }):
+    with patch.dict(
+        sys.modules,
+        {
+            "marker": MagicMock(),
+            "marker.converters": MagicMock(),
+            "marker.converters.pdf": mock_pdf_mod,
+            "marker.models": mock_models_mod,
+            "marker.output": mock_output_mod,
+        },
+    ):
         result = MarkerPdfConverter().convert(path, tmp_path)
 
     mock_pil_img.save.assert_called_once()
@@ -236,16 +249,21 @@ def test_marker_converter_saves_bytes_images(tmp_path):
     mock_models_mod.create_model_dict.return_value = {}
     mock_output_mod = MagicMock()
     mock_output_mod.text_from_rendered.return_value = (
-        "# With Bytes Image", None, {"chart.png": b"\x89PNG\r\n\x1a\n"}
+        "# With Bytes Image",
+        None,
+        {"chart.png": b"\x89PNG\r\n\x1a\n"},
     )
 
-    with patch.dict(sys.modules, {
-        "marker": MagicMock(),
-        "marker.converters": MagicMock(),
-        "marker.converters.pdf": mock_pdf_mod,
-        "marker.models": mock_models_mod,
-        "marker.output": mock_output_mod,
-    }):
+    with patch.dict(
+        sys.modules,
+        {
+            "marker": MagicMock(),
+            "marker.converters": MagicMock(),
+            "marker.converters.pdf": mock_pdf_mod,
+            "marker.models": mock_models_mod,
+            "marker.output": mock_output_mod,
+        },
+    ):
         MarkerPdfConverter().convert(path, tmp_path)
 
     saved = tmp_path / "images" / "test_chart.png"
@@ -254,6 +272,7 @@ def test_marker_converter_saves_bytes_images(tmp_path):
 
 
 # ─── Q-2: Scanned PDF detection ──────────────────────────────────────────────
+
 
 @pytest.mark.unit
 def test_scanned_pdf_skips_ml_tiers(tmp_path):
@@ -376,6 +395,7 @@ def test_is_scanned_pdf_graceful_on_error(tmp_path):
 
 # ─── Q-4: Page-level partial recovery ────────────────────────────────────────
 
+
 @pytest.mark.unit
 def test_partial_recover_skips_healthy_output(tmp_path):
     """_partial_recover returns original when avg chars/page is sufficient."""
@@ -461,7 +481,9 @@ def test_tiered_converter_applies_partial_recovery_for_ml_tiers(tmp_path):
         patch("drop2md.converters.pdf._is_scanned_pdf", return_value=False),
         patch.object(MarkerPdfConverter, "is_available", return_value=True),
         patch.object(MarkerPdfConverter, "convert", return_value=mock_result),
-        patch("drop2md.converters.pdf._partial_recover", return_value=mock_result) as mock_recover,
+        patch(
+            "drop2md.converters.pdf._partial_recover", return_value=mock_result
+        ) as mock_recover,
     ):
         TieredPdfConverter().convert(path, tmp_path)
 

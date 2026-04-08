@@ -27,6 +27,7 @@ from drop2md.enhance import (
 # Config factory
 # ---------------------------------------------------------------------------
 
+
 def _cfg(
     *,
     ollama_enabled: bool = True,
@@ -72,6 +73,7 @@ def _mock_response(text: str) -> MagicMock:
 # VEP-1: Classifier
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 def test_classify_images_returns_known_type(tmp_path):
     img = tmp_path / "fig.png"
@@ -82,7 +84,9 @@ def test_classify_images_returns_known_type(tmp_path):
 
 
 @pytest.mark.unit
-@pytest.mark.parametrize("label", ["chart", "diagram", "formula", "table-image", "screenshot", "photo"])
+@pytest.mark.parametrize(
+    "label", ["chart", "diagram", "formula", "table-image", "screenshot", "photo"]
+)
 def test_classify_images_accepts_all_valid_types(tmp_path, label):
     img = tmp_path / "img.png"
     img.write_bytes(b"fake")
@@ -103,6 +107,7 @@ def test_classify_images_falls_back_to_photo_for_unknown(tmp_path):
 @pytest.mark.unit
 def test_classify_images_falls_back_to_photo_on_error(tmp_path):
     import httpx
+
     img = tmp_path / "img.png"
     img.write_bytes(b"fake")
     with patch("httpx.post", side_effect=httpx.ConnectError("refused")):
@@ -134,6 +139,7 @@ def test_classify_strips_punctuation_from_model_output(tmp_path):
 # VEP-2a: Chart description
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 def test_describe_chart_returns_prose(tmp_path):
     img = tmp_path / "chart.png"
@@ -147,6 +153,7 @@ def test_describe_chart_returns_prose(tmp_path):
 @pytest.mark.unit
 def test_describe_chart_returns_empty_on_error(tmp_path):
     import httpx
+
     img = tmp_path / "chart.png"
     img.write_bytes(b"fake")
     with patch("httpx.post", side_effect=httpx.ConnectError("refused")):
@@ -157,6 +164,7 @@ def test_describe_chart_returns_empty_on_error(tmp_path):
 # ---------------------------------------------------------------------------
 # VEP-2b: Diagram to Mermaid
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 def test_diagram_to_mermaid_returns_mermaid_block(tmp_path):
@@ -171,6 +179,7 @@ def test_diagram_to_mermaid_returns_mermaid_block(tmp_path):
 @pytest.mark.unit
 def test_diagram_to_mermaid_returns_empty_on_error(tmp_path):
     import httpx
+
     img = tmp_path / "flow.png"
     img.write_bytes(b"fake")
     with patch("httpx.post", side_effect=httpx.ConnectError("refused")):
@@ -181,6 +190,7 @@ def test_diagram_to_mermaid_returns_empty_on_error(tmp_path):
 # ---------------------------------------------------------------------------
 # VEP-2c: Formula to LaTeX
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 def test_formula_to_latex_returns_latex_block(tmp_path):
@@ -195,6 +205,7 @@ def test_formula_to_latex_returns_latex_block(tmp_path):
 @pytest.mark.unit
 def test_formula_to_latex_returns_empty_on_error(tmp_path):
     import httpx
+
     img = tmp_path / "eq.png"
     img.write_bytes(b"fake")
     with patch("httpx.post", side_effect=httpx.ConnectError("refused")):
@@ -205,6 +216,7 @@ def test_formula_to_latex_returns_empty_on_error(tmp_path):
 # ---------------------------------------------------------------------------
 # VEP-2d: Table image to GFM
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 def test_table_image_to_gfm_returns_pipe_table(tmp_path):
@@ -228,6 +240,7 @@ def test_table_image_to_gfm_returns_empty_when_no_pipes(tmp_path):
 @pytest.mark.unit
 def test_table_image_to_gfm_returns_empty_on_error(tmp_path):
     import httpx
+
     img = tmp_path / "tbl.png"
     img.write_bytes(b"fake")
     with patch("httpx.post", side_effect=httpx.ConnectError("refused")):
@@ -238,6 +251,7 @@ def test_table_image_to_gfm_returns_empty_on_error(tmp_path):
 # ---------------------------------------------------------------------------
 # VEP-2e: Screenshot description
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 def test_describe_screenshot_returns_prose(tmp_path):
@@ -252,6 +266,7 @@ def test_describe_screenshot_returns_prose(tmp_path):
 @pytest.mark.unit
 def test_describe_screenshot_returns_empty_on_error(tmp_path):
     import httpx
+
     img = tmp_path / "ss.png"
     img.write_bytes(b"fake")
     with patch("httpx.post", side_effect=httpx.ConnectError("refused")):
@@ -262,6 +277,7 @@ def test_describe_screenshot_returns_empty_on_error(tmp_path):
 # ---------------------------------------------------------------------------
 # _apply_vep — integration of classifier + dispatch
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 def test_apply_vep_replaces_empty_alt_for_chart(tmp_path):
@@ -383,6 +399,7 @@ def test_apply_vep_no_images_returns_unchanged():
 # enhance() — top-level integration
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 def test_enhance_vep_disabled_uses_legacy_captions(tmp_path):
     img_dir = tmp_path / "images"
@@ -460,9 +477,11 @@ def test_enhance_preserves_result_metadata(tmp_path):
 # VisualConfig loading
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 def test_visual_config_defaults():
     from drop2md.config import VisualConfig
+
     vc = VisualConfig()
     assert vc.enabled is False
     assert vc.classify is True
@@ -476,6 +495,7 @@ def test_visual_config_defaults():
 @pytest.mark.unit
 def test_visual_config_loaded_from_toml(tmp_path):
     from drop2md.config import load_config
+
     cfg_file = tmp_path / "config.toml"
     cfg_file.write_text(
         "[visual]\nenabled = true\ndiagram_to_mermaid = true\nformula_to_latex = true\n",
@@ -491,6 +511,7 @@ def test_visual_config_loaded_from_toml(tmp_path):
 @pytest.mark.unit
 def test_visual_config_missing_section_uses_defaults(tmp_path):
     from drop2md.config import load_config
+
     cfg_file = tmp_path / "config.toml"
     cfg_file.write_text("[paths]\n", encoding="utf-8")
     cfg = load_config(cfg_file)
@@ -501,12 +522,15 @@ def test_visual_config_missing_section_uses_defaults(tmp_path):
 # Office image extraction
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 def test_extract_docx_images_no_python_docx(tmp_path, monkeypatch):
     """When python-docx is absent, extraction returns [] without error."""
     import sys
+
     monkeypatch.setitem(sys.modules, "docx", None)
     from drop2md.converters.office import _extract_docx_images
+
     result = _extract_docx_images(tmp_path / "test.docx", tmp_path)
     assert result == []
 
@@ -515,8 +539,10 @@ def test_extract_docx_images_no_python_docx(tmp_path, monkeypatch):
 def test_extract_pptx_images_no_python_pptx(tmp_path, monkeypatch):
     """When python-pptx is absent, extraction returns [] without error."""
     import sys
+
     monkeypatch.setitem(sys.modules, "pptx", None)
     from drop2md.converters.office import _extract_pptx_images
+
     result = _extract_pptx_images(tmp_path / "test.pptx", tmp_path)
     assert result == []
 
@@ -524,6 +550,7 @@ def test_extract_pptx_images_no_python_pptx(tmp_path, monkeypatch):
 @pytest.mark.unit
 def test_extract_office_images_unsupported_suffix(tmp_path):
     from drop2md.converters.office import _extract_office_images
+
     result = _extract_office_images(tmp_path / "test.xlsx", tmp_path)
     assert result == []
 
@@ -532,10 +559,12 @@ def test_extract_office_images_unsupported_suffix(tmp_path):
 # Legacy PDF image pass (VEP-5)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 def test_legacy_pdf_image_pass_graceful_when_pymupdf_absent(tmp_path, monkeypatch):
     """pdfplumber converter succeeds even when PyMuPDF is not installed."""
     import sys
+
     monkeypatch.setitem(sys.modules, "fitz", None)
 
     # Create a minimal valid PDF (1 page, no text)
@@ -548,6 +577,7 @@ def test_legacy_pdf_image_pass_graceful_when_pymupdf_absent(tmp_path, monkeypatc
 
     with patch("pdfplumber.open", return_value=mock_pdf):
         from drop2md.converters.legacy_pdf import LegacyPdfConverter
+
         result = LegacyPdfConverter().convert(tmp_path / "test.pdf", tmp_path)
 
     assert result.converter_used == "pdfplumber"
@@ -557,6 +587,7 @@ def test_legacy_pdf_image_pass_graceful_when_pymupdf_absent(tmp_path, monkeypatc
 # ---------------------------------------------------------------------------
 # Unreferenced image append (pdfplumber / MarkItDown case)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 def test_apply_vep_appends_unreferenced_image(tmp_path):
@@ -607,6 +638,7 @@ def test_inject_image_captions_appends_unreferenced_image(tmp_path):
 # ---------------------------------------------------------------------------
 # Branch coverage: _build_image_replacement fallback paths
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 def test_apply_vep_diagram_mermaid_disabled(tmp_path):
@@ -751,7 +783,10 @@ def test_enhance_tables_calls_validate_table(tmp_path):
 
     table_md = "| Col A | Col B |\n|---|---|\n| 1 | 2 |\n"
 
-    with patch("httpx.post", return_value=_mock_response("| Col A | Col B |\n|---|---|\n| 1 | 2 |")):
+    with patch(
+        "httpx.post",
+        return_value=_mock_response("| Col A | Col B |\n|---|---|\n| 1 | 2 |"),
+    ):
         result = _enhance_tables(table_md, _cfg())
 
     assert "|" in result

@@ -67,7 +67,10 @@ def test_processing_lock_prevents_double_processing(tmp_path):
 def test_atomic_write_cleans_up_tmp_on_failure(tmp_path):
     """atomic_write removes the .tmp file and re-raises when writing fails."""
     dest = tmp_path / "output.md"
-    with patch("pathlib.Path.rename", side_effect=OSError("rename failed")), pytest.raises(OSError, match="rename failed"):
+    with (
+        patch("pathlib.Path.rename", side_effect=OSError("rename failed")),
+        pytest.raises(OSError, match="rename failed"),
+    ):
         atomic_write(dest, "content")
     tmp = dest.with_suffix(".tmp")
     assert not tmp.exists()
@@ -91,5 +94,8 @@ def test_processing_lock_file_exists_error(tmp_path):
         # Second call succeeds (simulates the race condition resolving)
         return original_touch(self, *args, **kwargs)
 
-    with patch.object(type(path.with_suffix(".lock")), "touch", mock_touch), ProcessingLock(path, timeout=1.0) as locked:
+    with (
+        patch.object(type(path.with_suffix(".lock")), "touch", mock_touch),
+        ProcessingLock(path, timeout=1.0) as locked,
+    ):
         assert locked is True

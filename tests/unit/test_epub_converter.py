@@ -53,7 +53,10 @@ def test_epub_convert_failure(tmp_path):
     mock_result.returncode = 1
     mock_result.stderr = "pandoc: cannot read epub"
 
-    with patch("subprocess.run", return_value=mock_result), pytest.raises(ConversionError, match="pandoc failed"):
+    with (
+        patch("subprocess.run", return_value=mock_result),
+        pytest.raises(ConversionError, match="pandoc failed"),
+    ):
         EpubConverter().convert(epub, tmp_path)
 
 

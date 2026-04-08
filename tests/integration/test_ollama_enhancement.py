@@ -21,6 +21,7 @@ FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 def _ollama_available() -> bool:
     try:
         import httpx
+
         r = httpx.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=3)
         return r.status_code == 200
     except Exception:
@@ -30,6 +31,7 @@ def _ollama_available() -> bool:
 def _model_available() -> bool:
     try:
         import httpx
+
         r = httpx.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=3)
         tags = r.json().get("models", [])
         return any(MODEL in t.get("name", "") for t in tags)
@@ -61,16 +63,17 @@ def _make_config(enabled: bool = True) -> MagicMock:
 
 # ── Provider-level tests ─────────────────────────────────────────────────────
 
+
 @pytest.mark.ollama
 @requires_ollama
 @requires_model
 def test_ollama_text_prompt_returns_nonempty():
     """Model responds to a plain text prompt."""
     from drop2md.enhance_providers import OllamaProvider
+
     provider = OllamaProvider(OLLAMA_BASE_URL, MODEL, timeout=300)
     result = provider.generate("/no_think Say the word PONG and nothing else.")
     assert result.strip(), "Expected non-empty response"
-
 
 
 @pytest.mark.ollama
@@ -80,6 +83,7 @@ def test_ollama_text_prompt_returns_nonempty():
 def test_ollama_image_captioning(sample_png: Path):
     """Model returns a non-empty caption for a real PNG fixture."""
     from drop2md.enhance_providers import OllamaProvider
+
     provider = OllamaProvider(OLLAMA_BASE_URL, MODEL, timeout=300)
     prompt = (
         "/no_think Describe this image from a document in one concise sentence "
@@ -91,6 +95,7 @@ def test_ollama_image_captioning(sample_png: Path):
 
 
 # ── enhance() pipeline tests ─────────────────────────────────────────────────
+
 
 @pytest.mark.ollama
 @pytest.mark.timeout(360)

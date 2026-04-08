@@ -31,7 +31,9 @@ _SKIP_EXTENSIONS = {".md", ".tmp", ".lock", ".log", ".part", ".crdownload"}
 class _DebounceHandler(FileSystemEventHandler):
     """Watchdog event handler that debounces rapid file writes."""
 
-    def __init__(self, file_queue: queue.Queue[Path], debounce_seconds: float = 1.0) -> None:
+    def __init__(
+        self, file_queue: queue.Queue[Path], debounce_seconds: float = 1.0
+    ) -> None:
         super().__init__()
         self._queue = file_queue
         self._debounce = debounce_seconds
@@ -54,7 +56,9 @@ class _DebounceHandler(FileSystemEventHandler):
         with self._lock:
             self._timers.pop(src_path, None)
         path = Path(src_path)
-        if path.suffix.lower() not in _SKIP_EXTENSIONS and not path.name.startswith("."):
+        if path.suffix.lower() not in _SKIP_EXTENSIONS and not path.name.startswith(
+            "."
+        ):
             log.debug("Enqueuing %s", path.name)
             self._queue.put(path)
 
@@ -88,6 +92,7 @@ def _process_file(path: Path, config: Config) -> None:
 
         try:
             import time
+
             t0 = time.monotonic()
             log.info("Converting: %s", path.name)
             result = dispatch(path, output_dir)
@@ -97,12 +102,17 @@ def _process_file(path: Path, config: Config) -> None:
             if pages and pages > 10:
                 log.info(
                     "Converted %s via %s (%d pages, %.1fs)",
-                    path.name, result.converter_used, pages, elapsed,
+                    path.name,
+                    result.converter_used,
+                    pages,
+                    elapsed,
                 )
             else:
                 log.info(
                     "Converted %s via %s (%.1fs)",
-                    path.name, result.converter_used, elapsed,
+                    path.name,
+                    result.converter_used,
+                    elapsed,
                 )
 
             for w in result.warnings or []:
@@ -137,7 +147,9 @@ def _process_file(path: Path, config: Config) -> None:
             log.exception("Unexpected error processing %s: %s", path.name, exc)
 
 
-def _worker(file_queue: queue.Queue[Path], config: Config, stop_event: threading.Event) -> None:
+def _worker(
+    file_queue: queue.Queue[Path], config: Config, stop_event: threading.Event
+) -> None:
     """Worker thread: pulls paths from queue and processes them."""
     while not stop_event.is_set():
         try:

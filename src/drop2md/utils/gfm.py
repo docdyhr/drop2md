@@ -44,7 +44,7 @@ def fix_table_alignment(markdown: str) -> str:
         # Only insert a separator when the next line is a pipe row without one,
         # AND the previous input line was not a pipe row (i.e. this is the header).
         prev_line = lines[i - 1] if i > 0 else ""
-        if ("|" in next_line and not _is_separator(next_line) and "|" not in prev_line):
+        if "|" in next_line and not _is_separator(next_line) and "|" not in prev_line:
             cols = max(line.count("|") - 1, 1)
             result.append("| " + " | ".join(["---"] * cols) + " |")
     return "\n".join(result)

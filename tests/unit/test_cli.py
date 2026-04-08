@@ -85,7 +85,11 @@ def _launchctl_result(pid: str | None = None) -> MagicMock:
 
 def _invoke_check(tmp_path: Path, **patch_kwargs) -> object:
     """Invoke `drop2md check` with mocked converters and launchctl."""
-    cfg_kwargs = {k: v for k, v in patch_kwargs.items() if k in ("ocr_enabled", "ollama_enabled", "ollama_model")}
+    cfg_kwargs = {
+        k: v
+        for k, v in patch_kwargs.items()
+        if k in ("ocr_enabled", "ollama_enabled", "ollama_model")
+    }
     patch_kwargs = {k: v for k, v in patch_kwargs.items() if k not in cfg_kwargs}
     cfg = _check_config(tmp_path, **cfg_kwargs)
     patches = _converter_patches(**patch_kwargs)
@@ -228,7 +232,11 @@ def test_check_no_config_file(tmp_path):
             stack.enter_context(p)
         stack.enter_context(patch("subprocess.run", return_value=lc_mock))
         # Prevent picking up any real config.toml in cwd
-        stack.enter_context(patch.dict(os.environ, {"DROP2MD_CONFIG": str(tmp_path / "nonexistent.toml")}))
+        stack.enter_context(
+            patch.dict(
+                os.environ, {"DROP2MD_CONFIG": str(tmp_path / "nonexistent.toml")}
+            )
+        )
         result = runner.invoke(app, ["check"])
     assert result.exit_code == 0, result.output
     assert "warnings" in result.output
@@ -295,7 +303,10 @@ def test_check_ocr_enabled_pytesseract_missing(tmp_path):
         for p in patches:
             stack.enter_context(p)
         stack.enter_context(
-            patch("drop2md.converters.image.ImageConverter.is_available", return_value=False)
+            patch(
+                "drop2md.converters.image.ImageConverter.is_available",
+                return_value=False,
+            )
         )
         # subprocess.run side_effect: first call = tesseract, second = launchctl
         stack.enter_context(patch("subprocess.run", side_effect=[tess_proc, lc_mock]))
@@ -318,7 +329,10 @@ def test_check_ocr_enabled_installed(tmp_path):
         for p in patches:
             stack.enter_context(p)
         stack.enter_context(
-            patch("drop2md.converters.image.ImageConverter.is_available", return_value=True)
+            patch(
+                "drop2md.converters.image.ImageConverter.is_available",
+                return_value=True,
+            )
         )
         stack.enter_context(patch("subprocess.run", side_effect=[tess_proc, lc_mock]))
         result = runner.invoke(app, ["check", "--config", str(cfg)])
@@ -364,7 +378,9 @@ def test_check_ollama_unreachable(tmp_path):
         for p in patches:
             stack.enter_context(p)
         stack.enter_context(patch("subprocess.run", return_value=lc_mock))
-        stack.enter_context(patch("httpx.get", side_effect=Exception("connection refused")))
+        stack.enter_context(
+            patch("httpx.get", side_effect=Exception("connection refused"))
+        )
         result = runner.invoke(app, ["check", "--config", str(cfg)])
     assert result.exit_code == 1
     assert "unreachable" in result.output
@@ -635,7 +651,12 @@ def test_install_quick_action_substitutes_placeholders(
     monkeypatch.setenv("HOME", str(tmp_path))
     runner.invoke(app, ["install-quick-action"])
     wflow = (
-        tmp_path / "Library" / "Services" / "drop2mark.workflow" / "Contents" / "document.wflow"
+        tmp_path
+        / "Library"
+        / "Services"
+        / "drop2mark.workflow"
+        / "Contents"
+        / "document.wflow"
     ).read_text(encoding="utf-8")
     assert "__PYTHON_PATH__" not in wflow
     assert "__ACTION_UUID__" not in wflow

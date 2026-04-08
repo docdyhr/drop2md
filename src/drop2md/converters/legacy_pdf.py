@@ -98,6 +98,7 @@ class LegacyPdfConverter(BaseConverter):
         images: list[Path] = []
         try:
             from drop2md.utils.image_extractor import extract_pdf_images
+
             images = extract_pdf_images(path, output_dir)
             if images:
                 log.debug(

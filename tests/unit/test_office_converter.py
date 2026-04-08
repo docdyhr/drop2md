@@ -104,7 +104,10 @@ def test_pandoc_office_convert_fails(tmp_path):
     mock_result = MagicMock()
     mock_result.returncode = 1
     mock_result.stderr = "pandoc: error"
-    with patch("subprocess.run", return_value=mock_result), pytest.raises(ConversionError, match="pandoc failed"):
+    with (
+        patch("subprocess.run", return_value=mock_result),
+        pytest.raises(ConversionError, match="pandoc failed"),
+    ):
         PandocOfficeConverter().convert(path, tmp_path)
 
 
@@ -126,7 +129,9 @@ def test_office_converter_all_raise_conversion_error(tmp_path):
         patch.object(MarkItDownConverter, "is_available", return_value=True),
         patch.object(MarkItDownConverter, "convert", side_effect=Exception("fail")),
         patch.object(PandocOfficeConverter, "is_available", return_value=True),
-        patch.object(PandocOfficeConverter, "convert", side_effect=Exception("also fail")),
+        patch.object(
+            PandocOfficeConverter, "convert", side_effect=Exception("also fail")
+        ),
         pytest.raises(ConversionError),
     ):
         OfficeConverter().convert(path, tmp_path)
@@ -156,7 +161,9 @@ def test_extract_docx_images_success(tmp_path):
     mock_img_part.blob = b"\x89PNG\r\n"
 
     mock_rel = MagicMock()
-    mock_rel.reltype = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+    mock_rel.reltype = (
+        "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+    )
     mock_rel.target_part = mock_img_part
 
     mock_doc = MagicMock()
@@ -207,7 +214,9 @@ def test_extract_pptx_images_success(tmp_path):
     mock_pptx_module.Presentation.return_value = mock_prs
     mock_pptx_util = MagicMock()
 
-    with patch.dict(sys.modules, {"pptx": mock_pptx_module, "pptx.util": mock_pptx_util}):
+    with patch.dict(
+        sys.modules, {"pptx": mock_pptx_module, "pptx.util": mock_pptx_util}
+    ):
         result = _extract_pptx_images(path, tmp_path)
 
     assert len(result) == 1

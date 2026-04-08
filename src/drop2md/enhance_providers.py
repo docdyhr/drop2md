@@ -68,7 +68,14 @@ class OpenAICompatProvider:
     Requires ``openai`` package (``pip install drop2md[openai]``).
     """
 
-    def __init__(self, model: str, base_url: str, api_key: str, timeout: int, reasoning_effort: str = "") -> None:
+    def __init__(
+        self,
+        model: str,
+        base_url: str,
+        api_key: str,
+        timeout: int,
+        reasoning_effort: str = "",
+    ) -> None:
         self._model = model
         self._base_url = base_url
         self._api_key = api_key
@@ -94,16 +101,18 @@ class OpenAICompatProvider:
         if image_path and image_path.exists():
             img_b64 = base64.b64encode(image_path.read_bytes()).decode()
             img_type = _mime_from_suffix(image_path.suffix)
-            messages.append({
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt},
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:{img_type};base64,{img_b64}"},
-                    },
-                ],
-            })
+            messages.append(
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:{img_type};base64,{img_b64}"},
+                        },
+                    ],
+                }
+            )
         else:
             messages.append({"role": "user", "content": prompt})
 
@@ -143,14 +152,16 @@ class ClaudeProvider:
         if image_path and image_path.exists():
             img_b64 = base64.b64encode(image_path.read_bytes()).decode()
             img_type = _mime_from_suffix(image_path.suffix)
-            content.append({
-                "type": "image",
-                "source": {
-                    "type": "base64",
-                    "media_type": img_type,
-                    "data": img_b64,
-                },
-            })
+            content.append(
+                {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": img_type,
+                        "data": img_b64,
+                    },
+                }
+            )
         content.append({"type": "text", "text": prompt})
 
         message = client.messages.create(

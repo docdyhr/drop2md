@@ -64,7 +64,14 @@ def test_image_converter_ocr_failure_adds_warning(tmp_path):
     mock_pil = MagicMock()
     mock_pil.Image = mock_pil_image_module
 
-    with patch.dict(sys.modules, {"pytesseract": mock_pytess, "PIL": mock_pil, "PIL.Image": mock_pil_image_module}):
+    with patch.dict(
+        sys.modules,
+        {
+            "pytesseract": mock_pytess,
+            "PIL": mock_pil,
+            "PIL.Image": mock_pil_image_module,
+        },
+    ):
         result = ImageConverter().convert(png, tmp_path)
 
     assert any("OCR failed" in w for w in result.warnings)
@@ -83,6 +90,7 @@ def test_image_converter_unavailable_adds_warning(tmp_path):
     """When pytesseract is not importable, warning is added to result."""
     png = tmp_path / "img.png"
     from PIL import Image
+
     Image.new("RGB", (10, 10), "white").save(str(png))
 
     with patch.object(ImageConverter, "is_available", return_value=False):

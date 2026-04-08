@@ -24,6 +24,7 @@ log = logging.getLogger(__name__)
 # Embedded image extraction (VEP-4)
 # ---------------------------------------------------------------------------
 
+
 def _extract_docx_images(path: Path, output_dir: Path) -> list[Path]:
     """Extract embedded images from a DOCX file using python-docx.
 
@@ -109,6 +110,7 @@ def _extract_office_images(path: Path, output_dir: Path) -> list[Path]:
 # Converters
 # ---------------------------------------------------------------------------
 
+
 class MarkItDownConverter(BaseConverter):
     """MarkItDown converter for Office formats (DOCX, PPTX, XLSX)."""
 
@@ -146,11 +148,14 @@ class PandocOfficeConverter(BaseConverter):
 
     @classmethod
     def is_available(cls) -> bool:
-        return subprocess.run(
-            ["pandoc", "--version"],
-            capture_output=True,
-            check=False,
-        ).returncode == 0
+        return (
+            subprocess.run(
+                ["pandoc", "--version"],
+                capture_output=True,
+                check=False,
+            ).returncode
+            == 0
+        )
 
     def convert(self, path: Path, output_dir: Path) -> ConverterResult:
         suffix = path.suffix.lower()
@@ -180,7 +185,10 @@ class OfficeConverter(BaseConverter):
     name = "office"
 
     def convert(self, path: Path, output_dir: Path) -> ConverterResult:
-        _converters: list[type[BaseConverter]] = [MarkItDownConverter, PandocOfficeConverter]
+        _converters: list[type[BaseConverter]] = [
+            MarkItDownConverter,
+            PandocOfficeConverter,
+        ]
         for ConverterClass in _converters:
             if not ConverterClass.is_available():
                 continue

@@ -78,6 +78,7 @@ def convert_document(
         if _cfg.ollama.enabled:
             try:
                 from drop2md.enhance import enhance
+
                 result = enhance(result, _cfg)
             except Exception as exc:
                 log.warning("Ollama enhancement failed: %s", exc)
@@ -138,6 +139,7 @@ def list_converted(limit: int = 20) -> str:
         stat = f.stat()
         size_kb = stat.st_size / 1024
         from datetime import datetime
+
         mtime = datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M")
         lines.append(f"| {f.name} | {size_kb:.1f} KB | {mtime} |")
 
@@ -194,11 +196,17 @@ def watch_status() -> str:
     if plist.exists():
         result = subprocess.run(
             ["launchctl", "list", "com.thomasdyhr.drop2md"],
-            capture_output=True, text=True, check=False,
+            capture_output=True,
+            text=True,
+            check=False,
         )
-        lines.append(f"launchd service installed. `launchctl` output:\n```\n{result.stdout.strip()}\n```")
+        lines.append(
+            f"launchd service installed. `launchctl` output:\n```\n{result.stdout.strip()}\n```"
+        )
     else:
-        lines.append("launchd service **not installed**. Run `drop2md install-service` to enable.")
+        lines.append(
+            "launchd service **not installed**. Run `drop2md install-service` to enable."
+        )
 
     return "\n".join(lines)
 

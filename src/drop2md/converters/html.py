@@ -54,11 +54,14 @@ class PandocHtmlConverter(BaseConverter):
 
     @classmethod
     def is_available(cls) -> bool:
-        return subprocess.run(
-            ["pandoc", "--version"],
-            capture_output=True,
-            check=False,
-        ).returncode == 0
+        return (
+            subprocess.run(
+                ["pandoc", "--version"],
+                capture_output=True,
+                check=False,
+            ).returncode
+            == 0
+        )
 
     def convert(self, path: Path, output_dir: Path) -> ConverterResult:
         result = subprocess.run(
@@ -81,7 +84,10 @@ class HtmlConverter(BaseConverter):
     name = "html"
 
     def convert(self, path: Path, output_dir: Path) -> ConverterResult:
-        _converters: list[type[BaseConverter]] = [Html2TextConverter, PandocHtmlConverter]
+        _converters: list[type[BaseConverter]] = [
+            Html2TextConverter,
+            PandocHtmlConverter,
+        ]
         for ConverterClass in _converters:
             if not ConverterClass.is_available():
                 continue

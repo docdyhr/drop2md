@@ -147,9 +147,13 @@ def test_enhance_calls_polish_when_enabled():
     corrected = "A document with an error."
     result = ConverterResult(markdown=md, converter_used="pdfplumber")
 
-    with patch("drop2md.enhance._polish_text", return_value=ConverterResult(
-        markdown=corrected, converter_used="pdfplumber",
-    )) as mock_polish:
+    with patch(
+        "drop2md.enhance._polish_text",
+        return_value=ConverterResult(
+            markdown=corrected,
+            converter_used="pdfplumber",
+        ),
+    ) as mock_polish:
         out = enhance(result, _cfg(polish_text=True))
 
     mock_polish.assert_called_once()

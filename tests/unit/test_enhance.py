@@ -36,6 +36,7 @@ def _mock_response(text: str) -> MagicMock:
 
 # ─── validate_table ──────────────────────────────────────────────────────────
 
+
 @pytest.mark.unit
 def test_validate_table_returns_fixed_table():
     table = "| A | B |\n|---|---|\n| 1 | 2 |"
@@ -56,6 +57,7 @@ def test_validate_table_falls_back_when_no_pipe_in_response():
 @pytest.mark.unit
 def test_validate_table_falls_back_on_timeout():
     import httpx
+
     table = "| A | B |\n|---|---|\n| 1 | 2 |"
     with patch("httpx.post", side_effect=httpx.TimeoutException("timed out")):
         result = validate_table(table, _cfg())
@@ -65,6 +67,7 @@ def test_validate_table_falls_back_on_timeout():
 @pytest.mark.unit
 def test_validate_table_falls_back_on_connection_error():
     import httpx
+
     table = "| A | B |\n|---|---|\n| 1 | 2 |"
     with patch("httpx.post", side_effect=httpx.ConnectError("refused")):
         result = validate_table(table, _cfg())
@@ -73,11 +76,14 @@ def test_validate_table_falls_back_on_connection_error():
 
 # ─── describe_image ───────────────────────────────────────────────────────────
 
+
 @pytest.mark.unit
 def test_describe_image_returns_alt_text(tmp_path):
     img = tmp_path / "chart.png"
     img.write_bytes(b"fake-png")
-    with patch("httpx.post", return_value=_mock_response("A bar chart showing Q1 sales.")):
+    with patch(
+        "httpx.post", return_value=_mock_response("A bar chart showing Q1 sales.")
+    ):
         result = describe_image(img, _cfg())
     assert result == "A bar chart showing Q1 sales."
 
@@ -85,6 +91,7 @@ def test_describe_image_returns_alt_text(tmp_path):
 @pytest.mark.unit
 def test_describe_image_returns_empty_on_error(tmp_path):
     import httpx
+
     img = tmp_path / "chart.png"
     img.write_bytes(b"fake-png")
     with patch("httpx.post", side_effect=httpx.ConnectError("refused")):
@@ -93,6 +100,7 @@ def test_describe_image_returns_empty_on_error(tmp_path):
 
 
 # ─── enhance ─────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.unit
 def test_enhance_disabled_config_returns_unchanged():
@@ -115,7 +123,9 @@ def test_enhance_calls_table_validation_when_tables_present():
 
 @pytest.mark.unit
 def test_enhance_skips_table_validation_when_no_tables():
-    result = ConverterResult(markdown="# Just prose\n\nNo tables here.", converter_used="test")
+    result = ConverterResult(
+        markdown="# Just prose\n\nNo tables here.", converter_used="test"
+    )
     with patch("httpx.post") as mock_post:
         out = enhance(result, _cfg())
     mock_post.assert_not_called()

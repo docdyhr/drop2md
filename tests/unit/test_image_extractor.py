@@ -12,6 +12,7 @@ from drop2md.utils.image_extractor import extract_pdf_images, inject_image_refer
 
 # ─── inject_image_references ─────────────────────────────────────────────────
 
+
 @pytest.mark.unit
 def test_inject_empty_list_is_noop():
     """No images → markdown is returned unchanged."""
@@ -69,6 +70,7 @@ def test_inject_image_outside_base_uses_fallback(tmp_path):
 
 # ─── extract_pdf_images — PyMuPDF unavailable ─────────────────────────────────
 
+
 @pytest.mark.unit
 def test_extract_returns_empty_when_pymupdf_missing(tmp_path):
     """Gracefully returns [] when PyMuPDF (fitz) is not installed."""
@@ -86,6 +88,7 @@ def test_extract_creates_images_dir(tmp_path):
 
 
 # ─── extract_pdf_images — PyMuPDF available ───────────────────────────────────
+
 
 @pytest.mark.unit
 def test_extract_saves_images_from_pdf(tmp_path):
@@ -119,7 +122,10 @@ def test_extract_skips_bad_image_xref(tmp_path):
     pdf.write_bytes(b"fake pdf")
 
     mock_page = MagicMock()
-    mock_page.get_images.return_value = [(1, 0, 0, 0, 0, "", ""), (2, 0, 0, 0, 0, "", "")]
+    mock_page.get_images.return_value = [
+        (1, 0, 0, 0, 0, "", ""),
+        (2, 0, 0, 0, 0, "", ""),
+    ]
 
     mock_doc = MagicMock()
     mock_doc.__iter__ = MagicMock(return_value=iter([mock_page]))

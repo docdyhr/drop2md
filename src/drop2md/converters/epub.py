@@ -18,11 +18,14 @@ class EpubConverter(BaseConverter):
 
     @classmethod
     def is_available(cls) -> bool:
-        return subprocess.run(
-            ["pandoc", "--version"],
-            capture_output=True,
-            check=False,
-        ).returncode == 0
+        return (
+            subprocess.run(
+                ["pandoc", "--version"],
+                capture_output=True,
+                check=False,
+            ).returncode
+            == 0
+        )
 
     def convert(self, path: Path, output_dir: Path) -> ConverterResult:
         img_dir = output_dir / "images"
@@ -31,8 +34,10 @@ class EpubConverter(BaseConverter):
         result = subprocess.run(
             [
                 "pandoc",
-                "-f", "epub",
-                "-t", "gfm",
+                "-f",
+                "epub",
+                "-t",
+                "gfm",
                 f"--extract-media={img_dir}",
                 str(path),
             ],

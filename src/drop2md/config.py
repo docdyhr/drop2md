@@ -16,8 +16,12 @@ DEFAULT_CONFIG_PATH = Path("config.toml")
 
 @dataclass
 class PathsConfig:
-    watch_dir: Path = field(default_factory=lambda: Path("~/Documents/drop-to-md").expanduser())
-    output_dir: Path = field(default_factory=lambda: Path("~/Documents/markdown-output").expanduser())
+    watch_dir: Path = field(
+        default_factory=lambda: Path("~/Documents/drop-to-md").expanduser()
+    )
+    output_dir: Path = field(
+        default_factory=lambda: Path("~/Documents/markdown-output").expanduser()
+    )
 
 
 @dataclass
@@ -44,10 +48,12 @@ class OllamaConfig:
     base_url: str = "http://localhost:11434"
     model: str = "llava-llama3:8b"
     timeout_seconds: int = 60
-    provider: str = "ollama"   # "ollama" | "claude" | "openai" | "hf"
-    api_key: str = ""          # blank → SDK reads env var (ANTHROPIC_API_KEY etc.)
-    validate_tables: bool = True  # set False with slow local models to skip table repair
-    polish_text: bool = False     # AI-assisted prose correction (OCR errors, spacing)
+    provider: str = "ollama"  # "ollama" | "claude" | "openai" | "hf"
+    api_key: str = ""  # blank → SDK reads env var (ANTHROPIC_API_KEY etc.)
+    validate_tables: bool = (
+        True  # set False with slow local models to skip table repair
+    )
+    polish_text: bool = False  # AI-assisted prose correction (OCR errors, spacing)
 
 
 @dataclass
@@ -96,7 +102,7 @@ class VisualConfig:
     classify: bool = True
     chart_description: bool = True
     diagram_to_mermaid: bool = False  # opt-in
-    formula_to_latex: bool = False    # opt-in
+    formula_to_latex: bool = False  # opt-in
     table_image_to_gfm: bool = True
     screenshot_description: bool = True
 
@@ -146,7 +152,9 @@ def load_config(path: Path | None = None) -> Config:
     cfg = Config(
         paths=PathsConfig(
             watch_dir=Path(paths_data.get("watch_dir", "~/Documents/drop-to-md")),
-            output_dir=Path(paths_data.get("output_dir", "~/Documents/markdown-output")),
+            output_dir=Path(
+                paths_data.get("output_dir", "~/Documents/markdown-output")
+            ),
         ),
         pdf=PdfConfig(**data.get("pdf", {})),
         office=OfficeConfig(**data.get("office", {})),

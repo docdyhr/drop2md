@@ -47,6 +47,7 @@ GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 def _ollama_model_available() -> bool:
     try:
         import httpx
+
         r = httpx.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=3)
         tags = r.json().get("models", [])
         return any(OLLAMA_MODEL in t.get("name", "") for t in tags)
@@ -59,9 +60,7 @@ def _openai_available() -> bool:
 
 
 def _gemini_available() -> bool:
-    return bool(
-        os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-    )
+    return bool(os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY"))
 
 
 skip_no_pdf = pytest.mark.skipif(
@@ -86,6 +85,7 @@ skip_no_gemini = pytest.mark.skipif(
 # Config builders — real Config dataclasses (not MagicMock)
 # ---------------------------------------------------------------------------
 
+
 def _ollama_config() -> object:
     from drop2md.config import (
         ClaudeConfig,
@@ -100,6 +100,7 @@ def _ollama_config() -> object:
         PdfConfig,
         VisualConfig,
     )
+
     return Config(
         paths=PathsConfig(),
         pdf=PdfConfig(use_marker=False, use_docling=False),
@@ -143,6 +144,7 @@ def _openai_config() -> object:
         PdfConfig,
         VisualConfig,
     )
+
     return Config(
         paths=PathsConfig(),
         pdf=PdfConfig(use_marker=False, use_docling=False),
@@ -187,6 +189,7 @@ def _gemini_config() -> object:
         PdfConfig,
         VisualConfig,
     )
+
     api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY", "")
     return Config(
         paths=PathsConfig(),
@@ -222,6 +225,7 @@ def _gemini_config() -> object:
 # Shared assertion helpers
 # ---------------------------------------------------------------------------
 
+
 def _assert_vep_applied(markdown: str, images: list[Path], label: str) -> None:
     """Assert that VEP produced non-empty alt-text for at least one image.
 
@@ -238,7 +242,7 @@ def _assert_vep_applied(markdown: str, images: list[Path], label: str) -> None:
         start = markdown.rfind("![", 0, idx)
         if start == -1:
             continue
-        ref_text = markdown[start + 2:idx - 2]  # between ![ and ](
+        ref_text = markdown[start + 2 : idx - 2]  # between ![ and ](
         if len(ref_text.strip()) > 5:
             found_meaningful = True
             break
@@ -253,6 +257,7 @@ def _assert_vep_applied(markdown: str, images: list[Path], label: str) -> None:
 # ===========================================================================
 # PDF smoke tests
 # ===========================================================================
+
 
 @pytest.mark.vep
 @pytest.mark.ollama
@@ -311,7 +316,9 @@ def _run_pdf_smoke(
     print(f"\n[{label}] PDF: extracted {len(result.images)} image(s) via PyMuPDF")
 
     if not result.images:
-        pytest.skip(f"[{label}] PDF fixture has no extractable images — VEP not exercised")
+        pytest.skip(
+            f"[{label}] PDF fixture has no extractable images — VEP not exercised"
+        )
 
     # Optionally cap images to keep slow local models within test timeout
     images = result.images[:max_images] if max_images else result.images
@@ -337,6 +344,7 @@ def _run_pdf_smoke(
 # ===========================================================================
 # PPTX smoke tests
 # ===========================================================================
+
 
 @pytest.mark.vep
 @pytest.mark.ollama
@@ -423,6 +431,7 @@ def _run_pptx_smoke(
 # Provider-level visual classification tests (fast, no full conversion)
 # ===========================================================================
 
+
 @pytest.mark.vep
 @pytest.mark.ollama
 @pytest.mark.timeout(120)
@@ -457,11 +466,13 @@ def _run_classifier_smoke(tmp_path: Path, config: object, label: str) -> None:
     # Use PPTX fixture if available, else fall back to PDF
     if PPTX_FIXTURE.exists():
         from drop2md.converters.office import _extract_pptx_images
+
         img_dir = tmp_path / "images"
         img_dir.mkdir()
         images = _extract_pptx_images(PPTX_FIXTURE, tmp_path)
     elif PDF_FIXTURE.exists():
         from drop2md.utils.image_extractor import extract_pdf_images
+
         images = extract_pdf_images(PDF_FIXTURE, tmp_path)
     else:
         pytest.skip("No fixture files available for classifier test")

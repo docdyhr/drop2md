@@ -27,4 +27,6 @@ def setup_logging(level: str = "INFO", log_file: str | None = None) -> None:
         file_handler.setFormatter(logging.Formatter(fmt, datefmt))
         handlers.append(file_handler)
 
-    logging.basicConfig(level=numeric_level, format=fmt, datefmt=datefmt, handlers=handlers)
+    logging.basicConfig(
+        level=numeric_level, format=fmt, datefmt=datefmt, handlers=handlers
+    )
