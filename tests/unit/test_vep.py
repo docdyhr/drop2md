@@ -812,6 +812,7 @@ def test_make_provider_gemini():
 @pytest.mark.unit
 def test_openai_compat_provider_reasoning_effort(tmp_path):
     """OpenAICompatProvider adds reasoning_effort to kwargs when set."""
+    pytest.importorskip("openai", reason="openai package not installed")
     from unittest.mock import MagicMock, patch
 
     from drop2md.enhance_providers import OpenAICompatProvider

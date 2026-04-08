@@ -162,6 +162,15 @@ jobs:
               --password "$APPLE_NOTARIZE_PASSWORD" \
               --team-id "$APPLE_TEAM_ID" 2>&1 || true
           fi
+          # Always fetch the full Apple log before checking status
+          if [ -n "$SUBMISSION_ID" ]; then
+            echo "=== Apple notarization log ==="
+            xcrun notarytool log "$SUBMISSION_ID" \
+              --apple-id "$APPLE_ID" \
+              --password "$APPLE_NOTARIZE_PASSWORD" \
+              --team-id "$APPLE_TEAM_ID" 2>&1
+            echo "=== End of Apple log ==="
+          fi
           # Fail if status was not Accepted
           echo "$SUBMIT_OUT" | grep -q "status: Accepted" || { echo "Notarization was not accepted"; exit 1; }
           xcrun stapler staple "drop2md-${{ env.VERSION }}-arm64.dmg"

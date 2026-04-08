@@ -513,10 +513,14 @@ def _fake_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.unit
 def test_status_watch_flag_in_help():
     """--watch flag appears in help text."""
+    import re
+
     result = runner.invoke(app, ["status", "--help"])
     assert result.exit_code == 0
-    assert "--watch" in result.output
-    assert "--interval" in result.output
+    # Strip ANSI escape codes before asserting (rich colorises output in CI)
+    plain = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+    assert "--watch" in plain
+    assert "--interval" in plain
 
 
 @pytest.mark.unit
