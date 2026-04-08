@@ -145,13 +145,25 @@ jobs:
           APPLE_NOTARIZE_PASSWORD: ${{ secrets.APPLE_NOTARIZE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          xcrun notarytool submit \
+          SUBMIT_OUT=$(xcrun notarytool submit \
             "drop2md-${{ env.VERSION }}-arm64.dmg" \
             --apple-id "$APPLE_ID" \
             --password "$APPLE_NOTARIZE_PASSWORD" \
             --team-id "$APPLE_TEAM_ID" \
             --wait \
-            --timeout 600
+            --timeout 600 2>&1)
+          echo "$SUBMIT_OUT"
+          # Extract submission ID and fetch the full log on any status
+          SUBMISSION_ID=$(echo "$SUBMIT_OUT" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1)
+          if [ -n "$SUBMISSION_ID" ]; then
+            echo "=== Notarization log (id: $SUBMISSION_ID) ==="
+            xcrun notarytool log "$SUBMISSION_ID" \
+              --apple-id "$APPLE_ID" \
+              --password "$APPLE_NOTARIZE_PASSWORD" \
+              --team-id "$APPLE_TEAM_ID" 2>&1 || true
+          fi
+          # Fail if status was not Accepted
+          echo "$SUBMIT_OUT" | grep -q "status: Accepted" || { echo "Notarization was not accepted"; exit 1; }
           xcrun stapler staple "drop2md-${{ env.VERSION }}-arm64.dmg"
           xcrun stapler validate "drop2md-${{ env.VERSION }}-arm64.dmg"
 
