@@ -125,7 +125,7 @@ include = ["drop2md*"]
 exclude = ["tests*"]
 
 [tool.setuptools.package-data]
-"drop2md" = ["services/*.template"]
+"drop2md" = ["services/*.template", "py.typed"]
 
 [tool.mypy]
 python_version = "3.11"
