@@ -153,28 +153,29 @@ jobs:
             --wait \
             --timeout 600 2>&1)
           echo "$SUBMIT_OUT"
-          # Extract submission ID and fetch the full log on any status
           SUBMISSION_ID=$(echo "$SUBMIT_OUT" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1)
+          # Always fetch and save the Apple log (contains rejection details)
           if [ -n "$SUBMISSION_ID" ]; then
-            echo "=== Notarization log (id: $SUBMISSION_ID) ==="
+            echo "=== Apple notarization log (id: $SUBMISSION_ID) ==="
             xcrun notarytool log "$SUBMISSION_ID" \
               --apple-id "$APPLE_ID" \
               --password "$APPLE_NOTARIZE_PASSWORD" \
-              --team-id "$APPLE_TEAM_ID" 2>&1 || true
-          fi
-          # Always fetch the full Apple log before checking status
-          if [ -n "$SUBMISSION_ID" ]; then
-            echo "=== Apple notarization log ==="
-            xcrun notarytool log "$SUBMISSION_ID" \
-              --apple-id "$APPLE_ID" \
-              --password "$APPLE_NOTARIZE_PASSWORD" \
-              --team-id "$APPLE_TEAM_ID" 2>&1
+              --team-id "$APPLE_TEAM_ID" \
+              --output-format json 2>&1 | tee notarization-log.json
             echo "=== End of Apple log ==="
           fi
           # Fail if status was not Accepted
           echo "$SUBMIT_OUT" | grep -q "status: Accepted" || { echo "Notarization was not accepted"; exit 1; }
           xcrun stapler staple "drop2md-${{ env.VERSION }}-arm64.dmg"
           xcrun stapler validate "drop2md-${{ env.VERSION }}-arm64.dmg"
+
+      - name: Upload notarization log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: notarization-log
+          path: notarization-log.json
+          if-no-files-found: ignore
 
       # ── SHA-256 for Homebrew formula ──────────────────────────────────────
       - name: Compute SHA-256
