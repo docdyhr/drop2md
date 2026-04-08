@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **D-1/D-3/D-6 macOS distribution pipeline** — PyInstaller onedir binary (pdf-light + office + ocr; no torch), GitHub Actions release workflow triggered on `v*` tags, code-signed with Developer ID Application + notarized via `xcrun notarytool`, stapled .dmg published as GitHub Release asset. Homebrew formula added to `docdyhr/homebrew-tap` (`brew install docdyhr/tap/drop2md`). SHA-256 placeholder in formula updated automatically from CI job summary after each release.
+
 ## [0.5.0] — 2026-04-07
 
 ### Added
