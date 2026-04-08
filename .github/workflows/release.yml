@@ -143,42 +143,57 @@ jobs:
       #   APPLE_ID                — your Apple ID email (e.g. docdyhr@me.com)
       #   APPLE_NOTARIZE_PASSWORD — app-specific password from appleid.apple.com
       #   APPLE_TEAM_ID           — 10-char Team ID from developer.apple.com
-      - name: Notarize and staple
+      - name: Notarize
+        id: notarize
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_NOTARIZE_PASSWORD: ${{ secrets.APPLE_NOTARIZE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          SUBMIT_OUT=$(xcrun notarytool submit \
+          xcrun notarytool submit \
             "drop2md-${{ env.VERSION }}-arm64.dmg" \
             --apple-id "$APPLE_ID" \
             --password "$APPLE_NOTARIZE_PASSWORD" \
             --team-id "$APPLE_TEAM_ID" \
             --wait \
-            --timeout 600 2>&1)
-          echo "$SUBMIT_OUT"
-          SUBMISSION_ID=$(echo "$SUBMIT_OUT" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1)
-          # Always fetch and save the Apple rejection log
+            --timeout 600 2>&1 | tee notarize-output.txt
+          # Save submission ID for the log fetch step
+          grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' notarize-output.txt \
+            | head -1 > submission-id.txt
+          cat submission-id.txt
+          # Fail if not accepted
+          grep -q "status: Accepted" notarize-output.txt
+
+      - name: Fetch Apple notarization log
+        if: always()
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_NOTARIZE_PASSWORD: ${{ secrets.APPLE_NOTARIZE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          SUBMISSION_ID=$(cat submission-id.txt 2>/dev/null || echo "")
           if [ -n "$SUBMISSION_ID" ]; then
-            echo "=== Apple notarization log (id: $SUBMISSION_ID) ==="
+            echo "Fetching log for submission $SUBMISSION_ID"
             xcrun notarytool log "$SUBMISSION_ID" \
               --apple-id "$APPLE_ID" \
               --password "$APPLE_NOTARIZE_PASSWORD" \
-              --team-id "$APPLE_TEAM_ID" 2>&1 | tee notarization-log.json
-            echo "=== End of Apple log ==="
+              --team-id "$APPLE_TEAM_ID" | tee notarization-log.json
+          else
+            echo "No submission ID found — skipping log fetch"
           fi
-          # Fail if status was not Accepted
-          echo "$SUBMIT_OUT" | grep -q "status: Accepted" || { echo "Notarization was not accepted"; exit 1; }
-          xcrun stapler staple "drop2md-${{ env.VERSION }}-arm64.dmg"
-          xcrun stapler validate "drop2md-${{ env.VERSION }}-arm64.dmg"
 
-      - name: Upload notarization log on failure
-        if: failure()
+      - name: Upload notarization log
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: notarization-log
           path: notarization-log.json
           if-no-files-found: ignore
+
+      - name: Staple notarization ticket
+        run: |
+          xcrun stapler staple "drop2md-${{ env.VERSION }}-arm64.dmg"
+          xcrun stapler validate "drop2md-${{ env.VERSION }}-arm64.dmg"
 
       # ── SHA-256 for Homebrew formula ──────────────────────────────────────
       - name: Compute SHA-256
