@@ -72,6 +72,10 @@ output/
 *.log
 *.lock
 .env
+# PyInstaller build artifacts (but keep the spec file itself)
+build/
+dist/
+!drop2md.spec
 
 # direnv
 .direnv/

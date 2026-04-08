@@ -152,8 +152,12 @@ def install_service(
     cfg = load_config(config_path)
     cfg.ensure_dirs()
 
-    # Locate the plist template
-    template_path = Path(__file__).parent.parent.parent / "launchd" / "com.thomasdyhr.drop2md.plist.template"
+    # Locate the plist template (PyInstaller-compatible path resolution)
+    if getattr(sys, "frozen", False):
+        _base = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
+    else:
+        _base = Path(__file__).parent.parent.parent
+    template_path = _base / "launchd" / "com.thomasdyhr.drop2md.plist.template"
     if not template_path.exists():
         typer.echo(f"Error: plist template not found at {template_path}", err=True)
         raise typer.Exit(1)

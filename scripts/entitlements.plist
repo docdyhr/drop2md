@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Required: allows loading bundled dylibs not signed with the same identity -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+    <!-- Required: allows Python interpreter's unsigned executable memory use -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <!-- Required: allows Python ctypes and some extension modules -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+</dict>
+</plist>
