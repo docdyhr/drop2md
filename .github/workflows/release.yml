@@ -84,14 +84,18 @@ jobs:
         env:
           CODESIGN_IDENTITY: ${{ secrets.CODESIGN_IDENTITY }}
         run: |
-          # Sign dylibs and .so files first (inside-out order required by codesign)
-          find dist/drop2md -name "*.so" -o -name "*.dylib" | while read -r f; do
-            codesign --force --verify --timestamp \
-              --options runtime \
-              --entitlements scripts/entitlements.plist \
-              --sign "$CODESIGN_IDENTITY" "$f"
+          # Sign ALL Mach-O binaries (not just .so/.dylib — PyInstaller produces
+          # extension modules with no extension and copies of the Python interpreter)
+          find dist/drop2md -type f | while read -r f; do
+            if file "$f" | grep -qE "Mach-O (64-bit )?executable|Mach-O (64-bit )?bundle|Mach-O (64-bit )?dynamically linked shared library"; then
+              codesign --force --verify --timestamp \
+                --options runtime \
+                --entitlements scripts/entitlements.plist \
+                --sign "$CODESIGN_IDENTITY" "$f"
+            fi
           done
-          # Sign the main executable last
+          # Sign the bundle directory last (codesign requires inside-out order;
+          # the directory seal is applied after all contents are signed)
           codesign --force --verify --timestamp \
             --options runtime \
             --entitlements scripts/entitlements.plist \
@@ -154,14 +158,13 @@ jobs:
             --timeout 600 2>&1)
           echo "$SUBMIT_OUT"
           SUBMISSION_ID=$(echo "$SUBMIT_OUT" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1)
-          # Always fetch and save the Apple log (contains rejection details)
+          # Always fetch and save the Apple rejection log
           if [ -n "$SUBMISSION_ID" ]; then
             echo "=== Apple notarization log (id: $SUBMISSION_ID) ==="
             xcrun notarytool log "$SUBMISSION_ID" \
               --apple-id "$APPLE_ID" \
               --password "$APPLE_NOTARIZE_PASSWORD" \
-              --team-id "$APPLE_TEAM_ID" \
-              --output-format json 2>&1 | tee notarization-log.json
+              --team-id "$APPLE_TEAM_ID" 2>&1 | tee notarization-log.json
             echo "=== End of Apple log ==="
           fi
           # Fail if status was not Accepted
