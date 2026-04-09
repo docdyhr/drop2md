@@ -1,6 +1,7 @@
 # drop2md
 
 [![CI](https://github.com/docdyhr/drop2md/actions/workflows/ci.yml/badge.svg)](https://github.com/docdyhr/drop2md/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/docdyhr/drop2md)](https://github.com/docdyhr/drop2md/releases/latest)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -26,35 +27,41 @@ frontmatter in seconds.
 
 ## Quick Start
 
-### Requirements
+### Homebrew (recommended — Apple Silicon, macOS 14+)
 
-- macOS 13 Ventura+ (Apple Silicon or Intel)
-- Python 3.11+
-- [Homebrew](https://brew.sh) (for pandoc, tesseract)
+```bash
+brew tap docdyhr/tap
+brew install drop2md
+
+# Interactive first-run wizard — sets up config, service, and Quick Action
+drop2md setup
+```
+
+### pip install (Python 3.11+, Intel or Apple Silicon)
 
 ```bash
 # Install system dependencies
 brew install pandoc tesseract
 
 # Install drop2md (core + office support)
-pip install -e ".[office]"
+pip install 'drop2md[pdf-light,office,ocr]'
+
+# Or install with best PDF quality (~2 GB, PyTorch + Marker)
+pip install 'drop2md[pdf-ml,office,ocr]'
 
 # Configure
 cp config.toml.example config.toml
 # Edit config.toml: set watch_dir and output_dir
+```
 
+### First run
+
+```bash
 # Start watching (foreground)
 drop2md watch
 
 # Or install as macOS background service
 drop2md install-service
-```
-
-### Install Full ML Support (Best PDF Quality)
-
-```bash
-# Requires ~2GB download (PyTorch + Marker)
-pip install -e ".[pdf-ml,office,ocr]"
 ```
 
 ### One-Shot Conversion

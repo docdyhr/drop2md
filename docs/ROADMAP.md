@@ -225,38 +225,40 @@ page-by-page Marker recovery remains future work (requires Marker internals).
 
 ---
 
-### v1.0 — Distribution & Onboarding
+### v1.0 — Distribution & Onboarding ✅ shipped 2026-04-09
 
 **Theme:** Install in 2 minutes, configured in 5, running in 10.
 
 v1.0 is a polish and distribution release — making the tool ready for users
 who did not write it.
 
-**D-1: Homebrew formula**
-Publish a Homebrew tap (`brew install docdyhr/tap/drop2md`). The formula
-handles Python venv, system dependencies (pandoc, tesseract), Quick Action
-install, and launchd registration. Target: zero terminal commands after
-`brew install` for a knowledge worker.
+**D-1: Homebrew formula** ✅
+`docdyhr/homebrew-tap` — `brew tap docdyhr/tap && brew install drop2md`.
+Installs the signed onedir bundle into `libexec/`, shell shim in `bin/`.
+Declares `tesseract` and `pandoc` dependencies.
 
-**D-2: `drop2md setup` interactive wizard**
-Guided command: config.toml creation, path selection, AI provider selection
-with connection test, Quick Action and service install. No manual TOML editing
-required for the standard path.
+**D-2: `drop2md setup` interactive wizard** ✅
+Guided first-run: prompts for watch/output/vault directories, AI provider
+(none/ollama/claude/openai/gemini), model and API key, optional VEP enable;
+offers to install the launchd service and Finder Quick Action; runs an Ollama
+connection test if that provider is chosen.
 
-**D-3: GitHub Releases with prebuilt binary**
-PyInstaller or Briefcase → macOS `.app` bundle and single-binary CLI. Users
-without Python/pip install from a GitHub Release dmg.
+**D-3: GitHub Releases with prebuilt binary** ✅
+PyInstaller onedir bundle (pdf-light + office + ocr; no torch) built on
+`macos-14` arm64 runner. `.dmg` published as GitHub Release asset.
+`drop2md-1.0.0-arm64.dmg` — Apple Silicon, macOS 14+.
 
-**D-4: Obsidian vault integration**
-`output.vault_dir` config option. Atomic-write output markdown directly into
-an Obsidian vault in addition to the standard output directory.
+**D-4: Obsidian vault integration** ✅
+`output.vault_dir` in `[output]` config (also `DROP2MD_VAULT_DIR` env var).
+Atomic-write to vault in addition to standard output directory.
 
-**D-5: Coverage ≥ 85%, mypy strict clean**
-v1.0 is a public release. The bar rises.
+**D-5: Coverage ≥ 85%, mypy strict clean** ✅
+CI enforces `mypy --package drop2md`, ruff format + lint, and pytest.
 
-**D-6: Signed and notarized macOS package**
-Apple Developer account required. Without notarization, macOS 13+ Gatekeeper
-blocks the dmg installer for Persona B (knowledge workers) entirely.
+**D-6: Signed and notarized macOS package** ✅
+Developer ID Application: Thomas Juul Dyhr (85U3MLZ978). All Mach-O binaries
+signed with hardened runtime + entitlements. `.dmg` notarized via
+`xcrun notarytool` and stapled. Gatekeeper passes on macOS 14+.
 
 ---
 

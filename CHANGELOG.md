@@ -7,11 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.0] — 2026-04-08
+## [1.0.0] — 2026-04-09
 
 ### Added
 
-- **D-1/D-3/D-6 macOS distribution pipeline** — PyInstaller onedir binary (pdf-light + office + ocr; no torch), GitHub Actions release workflow triggered on `v*` tags, code-signed with Developer ID Application + notarized via `xcrun notarytool`, stapled .dmg published as GitHub Release asset. Homebrew formula added to `docdyhr/homebrew-tap` (`brew install docdyhr/tap/drop2md`). SHA-256 placeholder in formula updated from CI job summary after each release.
+- **D-1/D-3/D-6 macOS distribution pipeline** — PyInstaller onedir binary (pdf-light + office + ocr; no torch) built on `macos-14` arm64 runner. All Mach-O binaries signed with Developer ID Application (Thomas Juul Dyhr, 85U3MLZ978), hardened runtime entitlements, and secure timestamp. `.dmg` notarized via `xcrun notarytool` and stapled. Published as `drop2md-1.0.0-arm64.dmg` GitHub Release asset. Homebrew formula added to `docdyhr/homebrew-tap` (`brew install docdyhr/tap/drop2md`).
+- **Markdown polish** — deterministic text correction in `postprocess.py`: `fix_hyphen_line_breaks`, `fix_sentence_spacing`, `fix_repeated_words`. Applied after every conversion at zero latency with no config required.
+- **`py.typed` PEP 561 marker** — drop2md is now a typed package; downstream type checkers pick up inline annotations automatically.
+
+### Fixed
+
+- Signing loop now uses `file` command to detect all Mach-O binaries regardless of extension (extension-less files like `_watchdog_fsevents`, embedded Python interpreter, etc. were previously unsigned causing Apple notarization rejection).
+- CI `mypy` invocation changed to `--package drop2md --ignore-missing-imports` to prevent "Source file found twice" error from `py.typed` + editable install interaction.
+- ANSI escape codes stripped in CLI help-text tests to avoid false failures on Linux CI runners.
+- Optional `openai` import guarded with `pytest.importorskip` in VEP tests.
 
 ## [0.5.0] — 2026-04-07
 
