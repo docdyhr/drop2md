@@ -61,7 +61,7 @@ office = [
 # Office embedded image extraction (DOCX + PPTX) — feeds VEP pipeline
 office-images = [
     "python-docx>=1.1.0",
-    "python-pptx>=1.0.0",
+    "python-pptx>=1.0.2",
 ]
 # OCR support
 ocr = [
@@ -95,7 +95,7 @@ all = [
     "pymupdf4llm>=0.0.17",
     "markitdown[docx]>=0.1.0",
     "python-docx>=1.1.0",
-    "python-pptx>=1.0.0",
+    "python-pptx>=1.0.2",
     "pytesseract>=0.3.13",
     "Pillow>=12.1.1",
     "anthropic>=0.40.0",
