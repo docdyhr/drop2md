@@ -70,7 +70,7 @@ ocr = [
 ]
 # Cloud AI providers for enhancement (optional alternatives to Ollama)
 claude = ["anthropic>=0.40.0"]
-openai = ["openai>=1.50.0"]
+openai = ["openai>=2.31.0"]
 # Development tools
 dev = [
     "ruff==0.11.2",
@@ -99,7 +99,7 @@ all = [
     "pytesseract>=0.3.13",
     "Pillow>=12.1.1",
     "anthropic>=0.40.0",
-    "openai>=1.50.0",
+    "openai>=2.31.0",
     "ruff==0.11.2",
     "mypy>=1.11.0",
     "pre-commit>=3.0.0",
