@@ -52,7 +52,7 @@ pdf-ml = [
 ]
 # Lightweight PDF alternative (no PyTorch)
 pdf-light = [
-    "pymupdf4llm>=0.0.17",
+    "pymupdf4llm>=1.27.2.2",
 ]
 # Office document support
 office = [
@@ -92,7 +92,7 @@ test = [
 all = [
     "marker-pdf>=1.6.0",
     "docling>=2.0.0",
-    "pymupdf4llm>=0.0.17",
+    "pymupdf4llm>=1.27.2.2",
     "markitdown[docx]>=0.1.0",
     "python-docx>=1.1.0",
     "python-pptx>=1.0.0",
