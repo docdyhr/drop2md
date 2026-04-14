@@ -347,7 +347,6 @@ def setup(
         typer.echo(f"  Unknown provider. Choose: {', '.join(sorted(valid_providers))}")
         provider = typer.prompt("AI provider", default="none").strip().lower()
 
-    api_key = ""
     ollama_model = "llava-llama3:8b"
     enable_vep = False
 
@@ -370,8 +369,7 @@ def setup(
             "gemini": "GEMINI_API_KEY",
             "hf": "HF_TOKEN",
         }.get(provider, "API_KEY")
-        typer.echo(f"  Leave blank to use {env_var} environment variable.")
-        api_key = typer.prompt("API key", default="", hide_input=True)
+        typer.echo(f"  Set {env_var} in your shell environment — keys are never stored in config.")
         enable_vep = typer.confirm(
             "Enable Visual Enhancement Pipeline (VEP)?", default=True
         )
@@ -397,7 +395,6 @@ overwrite = true{vault_line}
 enabled = {"true" if ai_enabled else "false"}
 provider = "{provider if provider != "none" else "ollama"}"
 model = "{ollama_model}"
-api_key = "{api_key}"
 timeout_seconds = 60
 
 [logging]
