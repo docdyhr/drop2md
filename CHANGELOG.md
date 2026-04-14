@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Never persist API keys to config** — `drop2md setup` no longer writes API keys to `config.toml`. The interactive wizard now instructs users to export the appropriate environment variable (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, etc.) instead of storing credentials on disk. Resolves CodeQL alert: clear-text storage of sensitive information in `cli.py`.
+
+### CI
+
+- **CodeQL SAST scanning** — GitHub CodeQL workflow added; runs Python security analysis (`security-extended` queries) on every push/PR to `main` and weekly on a schedule. Results surface in the GitHub Security tab.
+- **Dependabot** — weekly version-update PRs enabled for pip dependencies and GitHub Actions.
+
+### Dependencies
+
+- `codecov/codecov-action` 4 → 6
+- `actions/upload-artifact` 4 → 7
+- `actions/setup-python` 5 → 6
+- `softprops/action-gh-release` 2 → 3
+- `github/codeql-action` 3 → 4
+- `mcp` ≥ 1.27.0
+- `openai` ≥ 2.31.0
+- `pymupdf4llm` ≥ 1.27.2.2
+- `pytest-mock` ≥ 3.15.1
+- `python-pptx` ≥ 1.0.2
+
 ## [1.0.0] — 2026-04-09
 
 ### Added
