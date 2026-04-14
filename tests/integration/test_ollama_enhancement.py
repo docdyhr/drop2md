@@ -14,7 +14,7 @@ from unittest.mock import MagicMock
 import pytest
 
 OLLAMA_BASE_URL = "http://localhost:11434"
-MODEL = "qwen3-vl:8b"
+MODEL = "qwen3-vl:32b-instruct-q4_K_M"
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 
 
