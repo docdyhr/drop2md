@@ -369,7 +369,9 @@ def setup(
             "gemini": "GEMINI_API_KEY",
             "hf": "HF_TOKEN",
         }.get(provider, "API_KEY")
-        typer.echo(f"  Set {env_var} in your shell environment — keys are never stored in config.")
+        typer.echo(
+            f"  Set {env_var} in your shell environment — keys are never stored in config."
+        )
         enable_vep = typer.confirm(
             "Enable Visual Enhancement Pipeline (VEP)?", default=True
         )
