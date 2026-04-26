@@ -73,7 +73,7 @@ claude = ["anthropic>=0.40.0"]
 openai = ["openai>=2.31.0"]
 # Development tools
 dev = [
-    "ruff==0.11.2",
+    "ruff==0.15.12",
     "mypy>=1.11.0",
     "pre-commit>=3.0.0",
     "bandit[toml]>=1.7.5",
@@ -100,7 +100,7 @@ all = [
     "Pillow>=12.1.1",
     "anthropic>=0.40.0",
     "openai>=2.31.0",
-    "ruff==0.11.2",
+    "ruff==0.15.12",
     "mypy>=1.11.0",
     "pre-commit>=3.0.0",
     "bandit[toml]>=1.7.5",
