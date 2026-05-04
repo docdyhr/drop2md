@@ -4,6 +4,7 @@ PyInstaller runs this before any application code. We patch magic.loader so that
 the bundled libmagic.1.dylib is tried first, before ctypes.util.find_library
 searches the host system (where libmagic is almost certainly not installed).
 """
+
 import os
 import sys
 
@@ -13,6 +14,7 @@ _base = getattr(sys, "_MEIPASS", os.path.dirname(sys.executable))
 def _patch_magic_loader() -> None:
     try:
         import ctypes
+
         import magic.loader as _ml
 
         _bundled_lib = os.path.join(_base, "libmagic.1.dylib")

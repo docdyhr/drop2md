@@ -8,9 +8,9 @@ Usage:
     python pdf_to_markdown.py *.pdf          # batch convert
 """
 
-import sys
-import re
 import argparse
+import re
+import sys
 from pathlib import Path
 
 try:
@@ -22,17 +22,19 @@ except ImportError:
 def clean_text(text: str) -> str:
     """Clean up extracted text artifacts."""
     # Replace CID glyph placeholders (e.g. bullet chars encoded as CID)
-    text = re.sub(r'\(cid:\d+\)', '•', text)
+    text = re.sub(r"\(cid:\d+\)", "•", text)
     # Normalize whitespace within lines
-    text = re.sub(r'[ \t]+', ' ', text)
+    text = re.sub(r"[ \t]+", " ", text)
     # Collapse 3+ blank lines to 2
-    text = re.sub(r'\n{3,}', '\n\n', text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
     # Strip trailing whitespace per line
     lines = [line.rstrip() for line in text.splitlines()]
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
-def is_heading(line: str, font_sizes: list[float] | None, avg_size: float) -> tuple[bool, int]:
+def is_heading(
+    line: str, font_sizes: list[float] | None, avg_size: float
+) -> tuple[bool, int]:
     """Heuristic: detect headings by font size or ALL CAPS short lines."""
     stripped = line.strip()
     if not stripped:
@@ -59,20 +61,20 @@ def table_to_markdown(table: list[list]) -> str:
         return ""
 
     # Replace None with empty string
-    rows = [[str(cell or '').strip() for cell in row] for row in table]
+    rows = [[str(cell or "").strip() for cell in row] for row in table]
     col_count = max(len(row) for row in rows)
 
     # Pad rows to same width
-    rows = [row + [''] * (col_count - len(row)) for row in rows]
+    rows = [row + [""] * (col_count - len(row)) for row in rows]
 
     lines = []
     header = rows[0]
-    lines.append('| ' + ' | '.join(header) + ' |')
-    lines.append('| ' + ' | '.join(['---'] * col_count) + ' |')
+    lines.append("| " + " | ".join(header) + " |")
+    lines.append("| " + " | ".join(["---"] * col_count) + " |")
     for row in rows[1:]:
-        lines.append('| ' + ' | '.join(row) + ' |')
+        lines.append("| " + " | ".join(row) + " |")
 
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 def pdf_to_markdown(pdf_path: Path) -> str:
@@ -83,13 +85,13 @@ def pdf_to_markdown(pdf_path: Path) -> str:
         # Gather global font size stats for heading detection
         all_sizes = []
         for page in pdf.pages:
-            for char in (page.chars or []):
-                if char.get('size'):
-                    all_sizes.append(char['size'])
+            for char in page.chars or []:
+                if char.get("size"):
+                    all_sizes.append(char["size"])
         avg_size = sum(all_sizes) / len(all_sizes) if all_sizes else 12.0
 
         for page_num, page in enumerate(pdf.pages, 1):
-            md_parts.append(f'\n\n---\n<!-- Page {page_num} -->\n')
+            md_parts.append(f"\n\n---\n<!-- Page {page_num} -->\n")
 
             # Extract tables first (to avoid double-processing their text)
             tables = page.extract_tables() or []
@@ -99,7 +101,7 @@ def pdf_to_markdown(pdf_path: Path) -> str:
 
             if tables:
                 for table in tables:
-                    md_parts.append('\n' + table_to_markdown(table) + '\n')
+                    md_parts.append("\n" + table_to_markdown(table) + "\n")
 
             # Extract text (excluding table regions if possible)
             text = page.extract_text(x_tolerance=3, y_tolerance=3)
@@ -114,50 +116,52 @@ def pdf_to_markdown(pdf_path: Path) -> str:
                 if not stripped:
                     if in_list:
                         in_list = False
-                    md_parts.append('')
+                    md_parts.append("")
                     continue
 
                 # Detect bullet lists
-                if re.match(r'^[•·▪▸\-\*]\s+', stripped):
-                    bullet_text = re.sub(r'^[•·▪▸\-\*]\s+', '', stripped)
-                    md_parts.append(f'- {bullet_text}')
+                if re.match(r"^[•·▪▸\-\*]\s+", stripped):
+                    bullet_text = re.sub(r"^[•·▪▸\-\*]\s+", "", stripped)
+                    md_parts.append(f"- {bullet_text}")
                     in_list = True
                     continue
 
                 # Detect numbered lists
-                if re.match(r'^\d+[\.\)]\s+', stripped):
-                    num_text = re.sub(r'^\d+[\.\)]\s+', '', stripped)
-                    num = re.match(r'^(\d+)', stripped).group(1)
-                    md_parts.append(f'{num}. {num_text}')
+                if re.match(r"^\d+[\.\)]\s+", stripped):
+                    num_text = re.sub(r"^\d+[\.\)]\s+", "", stripped)
+                    num = re.match(r"^(\d+)", stripped).group(1)
+                    md_parts.append(f"{num}. {num_text}")
                     in_list = True
                     continue
 
                 # Heading detection
                 is_head, level = is_heading(stripped, None, avg_size)
                 if is_head:
-                    prefix = '#' * level
-                    md_parts.append(f'\n{prefix} {stripped}\n')
+                    prefix = "#" * level
+                    md_parts.append(f"\n{prefix} {stripped}\n")
                     continue
 
                 md_parts.append(stripped)
 
-    return clean_text('\n'.join(md_parts))
+    return clean_text("\n".join(md_parts))
 
 
 def convert(input_path: Path, output_path: Path | None = None) -> Path:
-    print(f"Converting: {input_path.name}", end=' ... ', flush=True)
+    print(f"Converting: {input_path.name}", end=" ... ", flush=True)
     md_content = pdf_to_markdown(input_path)
 
-    out = output_path or input_path.with_suffix('.md')
-    out.write_text(md_content, encoding='utf-8')
+    out = output_path or input_path.with_suffix(".md")
+    out.write_text(md_content, encoding="utf-8")
     print(f"→ {out.name}")
     return out
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Convert PDF to Markdown')
-    parser.add_argument('files', nargs='+', type=Path, help='PDF file(s) to convert')
-    parser.add_argument('-o', '--output', type=Path, help='Output .md file (single file only)')
+    parser = argparse.ArgumentParser(description="Convert PDF to Markdown")
+    parser.add_argument("files", nargs="+", type=Path, help="PDF file(s) to convert")
+    parser.add_argument(
+        "-o", "--output", type=Path, help="Output .md file (single file only)"
+    )
     args = parser.parse_args()
 
     if args.output and len(args.files) > 1:
@@ -167,11 +171,11 @@ def main():
         if not pdf_path.exists():
             print(f"Warning: {pdf_path} not found, skipping.")
             continue
-        if pdf_path.suffix.lower() != '.pdf':
+        if pdf_path.suffix.lower() != ".pdf":
             print(f"Warning: {pdf_path} is not a .pdf, skipping.")
             continue
         convert(pdf_path, args.output if len(args.files) == 1 else None)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
