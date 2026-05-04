@@ -408,7 +408,7 @@ def test_check_ollama_model_not_pulled(tmp_path):
 
 
 @pytest.mark.unit
-@pytest.mark.skipif(os.sys.platform != "darwin", reason="Service section macOS only")
+@pytest.mark.skipif(sys.platform != "darwin", reason="Service section macOS only")
 def test_check_service_not_installed(tmp_path, monkeypatch):
     """Service plist absent → warning, exit 0."""
     # Redirect HOME so plist path doesn't exist
@@ -430,7 +430,7 @@ def test_check_service_not_installed(tmp_path, monkeypatch):
 
 
 @pytest.mark.unit
-@pytest.mark.skipif(os.sys.platform != "darwin", reason="Service section macOS only")
+@pytest.mark.skipif(sys.platform != "darwin", reason="Service section macOS only")
 def test_check_service_running(tmp_path, monkeypatch):
     """Service plist present and PID found → shown as running."""
     fake_home = tmp_path / "fake_home"
@@ -453,7 +453,7 @@ def test_check_service_running(tmp_path, monkeypatch):
 
 
 @pytest.mark.unit
-@pytest.mark.skipif(os.sys.platform != "darwin", reason="Service section macOS only")
+@pytest.mark.skipif(sys.platform != "darwin", reason="Service section macOS only")
 def test_check_service_stopped(tmp_path, monkeypatch):
     """Service plist present but no PID → shown as stopped (warning)."""
     fake_home = tmp_path / "fake_home"

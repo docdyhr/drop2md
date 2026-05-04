@@ -127,10 +127,8 @@ def pdf_to_markdown(pdf_path: Path) -> str:
                     continue
 
                 # Detect numbered lists
-                if re.match(r"^\d+[\.\)]\s+", stripped):
-                    num_text = re.sub(r"^\d+[\.\)]\s+", "", stripped)
-                    num = re.match(r"^(\d+)", stripped).group(1)
-                    md_parts.append(f"{num}. {num_text}")
+                if m := re.match(r"^(\d+)[\.\)]\s+(.*)", stripped):
+                    md_parts.append(f"{m.group(1)}. {m.group(2)}")
                     in_list = True
                     continue
 
