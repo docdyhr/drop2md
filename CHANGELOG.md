@@ -7,9 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Replaced `os.sys.platform` with `sys.platform` in three test helpers in `test_cli.py` — `os.sys` is not an officially exported attribute and is flagged by mypy on Python 3.13+.
+- Eliminated unguarded `Match[str] | None → .group()` call in `scripts/pdf_to_markdown.py`; the numbered-list branch now uses a single walrus-operator match that captures the digit group directly, removing the potential `AttributeError` if the regex did not match.
+
 ### Security
 
 - **Never persist API keys to config** — `drop2md setup` no longer writes API keys to `config.toml`. The interactive wizard now instructs users to export the appropriate environment variable (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, etc.) instead of storing credentials on disk. Resolves CodeQL alert: clear-text storage of sensitive information in `cli.py`.
+- `pytest` floor bumped to ≥ 9.0.3 (CVE-2025-71176).
 
 ### CI
 
@@ -21,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `codecov/codecov-action` 4 → 6
 - `actions/upload-artifact` 4 → 7
 - `actions/setup-python` 5 → 6
+- `actions/checkout` 4 → 6
 - `softprops/action-gh-release` 2 → 3
 - `github/codeql-action` 3 → 4
 - `mcp` ≥ 1.27.0
@@ -28,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `pymupdf4llm` ≥ 1.27.2.2
 - `pytest-mock` ≥ 3.15.1
 - `python-pptx` ≥ 1.0.2
+- `ruff` 0.11.2 → 0.15.12; pre-commit hooks updated to match (`pre-commit-hooks` v6.0.0, `mirrors-mypy` v1.20.2)
+- Floor bumps reflecting tested versions: `typer` ≥ 0.21.0, `anthropic` ≥ 0.46.0, `mypy` ≥ 1.20.0, `docling` ≥ 2.84.0
 
 ## [1.0.0] — 2026-04-09
 
@@ -157,6 +166,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Enhancement pipeline routes through `make_provider()` based on `ollama.provider` config field (default: `"ollama"`, backward compatible)
 
-[Unreleased]: https://github.com/docdyhr/drop2md/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/docdyhr/drop2md/compare/v1.0.0...HEAD
 [0.2.0]: https://github.com/docdyhr/drop2md/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/docdyhr/drop2md/releases/tag/v0.1.0
