@@ -28,13 +28,27 @@ def _ollama_available() -> bool:
         return False
 
 
-def _model_available() -> bool:
+def _model_working() -> bool:
+    """Return True only if the model can actually generate a response.
+
+    Listing the model in /api/tags is insufficient — a pulled model may still
+    return 500 (corrupt weights, OOM, version mismatch).  A minimal 1-token
+    generate call catches this at collection time.
+    """
     try:
         import httpx
 
-        r = httpx.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=3)
-        tags = r.json().get("models", [])
-        return any(MODEL in t.get("name", "") for t in tags)
+        r = httpx.post(
+            f"{OLLAMA_BASE_URL}/api/generate",
+            json={
+                "model": MODEL,
+                "prompt": "/no_think test",
+                "stream": False,
+                "options": {"think": False, "num_predict": 1},
+            },
+            timeout=10,
+        )
+        return r.status_code == 200
     except Exception:
         return False
 
@@ -45,8 +59,8 @@ requires_ollama = pytest.mark.skipif(
 )
 
 requires_model = pytest.mark.skipif(
-    not _model_available(),
-    reason=f"Model {MODEL!r} not pulled in Ollama",
+    not _model_working(),
+    reason=f"Model {MODEL!r} not generating (pulled but may be broken — try: ollama pull {MODEL})",
 )
 
 

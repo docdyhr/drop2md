@@ -10,6 +10,30 @@ import pytest
 from drop2md.converters.image import ImageConverter
 
 
+def _tesseract_working() -> bool:
+    """Return True only if the tesseract binary is reachable from subprocesses.
+
+    pytesseract.importorskip() only confirms the Python package is installed;
+    in sandboxed environments (e.g. CI, Claude Code) the tesseract subprocess
+    may be unable to read files from the restricted temp directory.
+    """
+    try:
+        import pytesseract
+        from PIL import Image
+
+        img = Image.new("RGB", (10, 10), color="white")
+        pytesseract.image_to_string(img)
+        return True
+    except Exception:
+        return False
+
+
+requires_tesseract = pytest.mark.skipif(
+    not _tesseract_working(),
+    reason="tesseract OCR not working in this environment (subprocess temp-dir restriction)",
+)
+
+
 @pytest.mark.unit
 def test_image_converter_is_available():
     # pytesseract + Pillow are installed via [ocr] extra
@@ -18,9 +42,9 @@ def test_image_converter_is_available():
 
 
 @pytest.mark.unit
+@requires_tesseract
 def test_image_converter_extracts_ocr_text(sample_png, tmp_path):
     """Real OCR on sample.png should find known text."""
-    pytest.importorskip("pytesseract")
     result = ImageConverter().convert(sample_png, tmp_path)
     assert result.converter_used == "image-ocr"
     # sample.png contains "drop2md Image OCR Test" — tesseract should find it
