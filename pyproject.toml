@@ -156,6 +156,7 @@ module = [
     "anthropic", "anthropic.*",
     "openai", "openai.*",
     "psutil",
+    "numpy", "numpy.*",
 ]
 ignore_missing_imports = true
 follow_imports = "silent"
