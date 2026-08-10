@@ -12,7 +12,7 @@ dependencies = [
     "python-magic>=0.4.27",
     "httpx>=0.27.0",
     "pdfplumber>=0.11.0",
-    "mcp[cli]>=1.27.0,<2.0.0",
+    "mcp[cli]>=2.0.0",
     "psutil>=6.0.0",
 ]
 
@@ -152,7 +152,6 @@ module = [
     "watchdog", "watchdog.*",
     "typer", "typer.*",
     "html2text",
-    "mcp", "mcp.*",
     "anthropic", "anthropic.*",
     "openai", "openai.*",
     "psutil",

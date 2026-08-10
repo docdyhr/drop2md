@@ -18,7 +18,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
 from drop2md.config import load_config
 from drop2md.converters import ConversionError
@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 # Load config once at startup (reads config.toml or defaults)
 _cfg = load_config()
 
-mcp = FastMCP(
+mcp = MCPServer(
     "drop2md",
     instructions=(
         "drop2md converts documents (PDF, DOCX, PPTX, XLSX, HTML, EPUB, images) "
