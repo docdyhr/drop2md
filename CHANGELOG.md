@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Migrated MCP server to `mcp` 2.0.0** — `mcp.server.fastmcp.FastMCP` was removed and replaced with `mcp.server.mcpserver.MCPServer` in `mcp` 2.0.0. `src/drop2md/mcp_server.py` now imports `MCPServer`; tool/resource registration and `.run(transport="stdio")` are unchanged since the new class is API-compatible for the subset drop2md uses. Removes the temporary `mcp<2.0.0` pin.
+
+### Dependencies
+
+- `mcp[cli]` ≥ 1.27.0,<2.0.0 → ≥ 2.0.0
+
 ## [1.0.1] — 2026-05-04
 
 ### Fixed
