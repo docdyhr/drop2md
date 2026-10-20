@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Vendored agent skills**: `.claude/skills/` carries 4 skills from github/awesome-copilot at commit `cb64ad1` (`dependabot`, `docs-sync-audit`, `github-actions-hardening`, `test-gap-audit`), byte-identical to upstream with its MIT license, for Claude Code and GitHub Copilot. Repo rules take precedence over them (no PR merges or auto-merge, no installs, report-only audits).
+
 ### Changed
 
 - **Migrated MCP server to `mcp` 2.0.0** — `mcp.server.fastmcp.FastMCP` was removed and replaced with `mcp.server.mcpserver.MCPServer` in `mcp` 2.0.0. `src/drop2md/mcp_server.py` now imports `MCPServer`; tool/resource registration and `.run(transport="stdio")` are unchanged since the new class is API-compatible for the subset drop2md uses. Removes the temporary `mcp<2.0.0` pin.

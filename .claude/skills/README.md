@@ -1,13 +1,23 @@
 # Agent skills
 
-Installed from [github/awesome-copilot](https://github.com/github/awesome-copilot) (MIT License, see [`LICENSE`](LICENSE)) at commit `cb64ad12e32737ae764becd6885462e9b4c7cb00`.
-Lives in `.claude/skills/`, which Claude Code loads as project skills and GitHub Copilot (cloud agent, CLI, VS Code agent mode) also reads.
-`github-release` and `conventional-commit` were deliberately left out: they conflict with this repo's release and commit conventions.
+Vendored from [github/awesome-copilot](https://github.com/github/awesome-copilot) at commit
+`cb64ad12e32737ae764becd6885462e9b4c7cb00` (MIT License, see [`LICENSE`](LICENSE)). Every file
+except this README is byte-identical to upstream `skills/<name>/` (and `LICENSE`). Do not edit them
+here; refresh from upstream instead.
 
-| Skill | Purpose |
-|---|---|
-| `github-actions-hardening` | Security hardening reviewer for GitHub Actions workflow files (.github/workflows/*.yml). Reasons about the Act… |
-| `dependabot` | Comprehensive guide for configuring and managing GitHub Dependabot. Use this skill when users ask about … |
-| `test-gap-audit` | Run a read-only audit for missing, weak, stale, or mis-scoped test coverage. If the user does not name a scope… |
-| `docs-sync-audit` | Run a read-only documentation drift audit for a feature, PR, branch, release, API, configuration change, workf… |
-| `pytest-coverage` | Run pytest tests with coverage, discover lines missing coverage, and increase coverage to 100%. The goal is f… |
+Claude Code loads `.claude/skills/` as project skills, and GitHub Copilot (cloud agent, CLI, VS Code
+agent mode) reads it too. Where a skill disagrees with `CLAUDE.md` ("Vendored Agent Skills"), the
+repo's rules win.
+
+Not vendored:
+
+- `github-release` and `conventional-commit`: they conflict with this repo's release and commit
+  conventions.
+- `pytest-coverage`: its fixed 100% target and loop conflict with this repo's own coverage settings.
+
+| Skill                      | Purpose                                                            |
+| -------------------------- | ------------------------------------------------------------------ |
+| `dependabot`               | Configuring `dependabot.yml` and working with Dependabot PRs       |
+| `docs-sync-audit`          | Read-only audit of documentation drift against the code            |
+| `github-actions-hardening` | Security review of `.github/workflows/*.yml`; reports, never edits |
+| `test-gap-audit`           | Read-only audit of missing or weak tests                           |

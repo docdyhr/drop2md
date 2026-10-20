@@ -84,6 +84,6 @@ dist/
 private*
 
 # Claude Code local memory / session data
-.claude/*
-# Shared agent skills are versioned
-!.claude/skills/
+**/.claude/*
+# Shared agent skills are versioned (root only)
+!/.claude/skills/
