@@ -9,7 +9,7 @@ from __future__ import annotations
 import base64
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, NoReturn, Protocol
 
 if TYPE_CHECKING:
     from drop2md.config import Config
@@ -143,8 +143,9 @@ def make_provider(config: Config) -> AIProvider:
         )
 
     if provider_name == "claude":
-        raise ValueError(
-            "The 'claude' provider was removed (it required an Anthropic API key). Use 'ollama', 'openai', 'gemini' or 'hf'."
+        _raise_provider_error(
+            "The 'claude' provider was removed (it required an Anthropic API key). "
+            "Use 'ollama', 'openai', 'gemini' or 'hf'."
         )
 
     if provider_name == "openai":
@@ -182,10 +183,25 @@ def make_provider(config: Config) -> AIProvider:
             timeout=config.openai.timeout_seconds,
         )
 
-    raise ValueError(
+    _raise_provider_error(
         f"Unknown enhance provider: {provider_name!r}. "
-        "Valid values: 'ollama', 'claude', 'openai', 'gemini', 'hf'."
+        "Valid values: 'ollama', 'openai', 'gemini', 'hf'."
     )
+
+
+_warned_provider_errors: set[str] = set()
+
+
+def _raise_provider_error(message: str) -> NoReturn:
+    """Raise ValueError, logging a warning once per message per process.
+
+    Every caller in enhance.py catches exceptions and logs at debug level, so
+    without the warning a misconfigured provider silently skips enhancement.
+    """
+    if message not in _warned_provider_errors:
+        _warned_provider_errors.add(message)
+        log.warning("AI enhancement disabled: %s", message)
+    raise ValueError(message)
 
 
 def _mime_from_suffix(suffix: str) -> str:

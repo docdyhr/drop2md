@@ -164,6 +164,29 @@ def test_make_provider_claude_removed():
 
 
 @pytest.mark.unit
+def test_removed_provider_warns_once(caplog):
+    """Callers swallow the ValueError at debug level, so it must also warn — once."""
+    import drop2md.enhance_providers as ep
+
+    ep._warned_provider_errors.clear()
+    with caplog.at_level("WARNING", logger="drop2md.enhance_providers"):
+        for _ in range(3):
+            with pytest.raises(ValueError):
+                make_provider(_cfg(provider="claude"))
+    warnings = [
+        r for r in caplog.records if "AI enhancement disabled" in r.getMessage()
+    ]
+    assert len(warnings) == 1
+
+
+@pytest.mark.unit
+def test_unknown_provider_message_omits_claude():
+    with pytest.raises(ValueError) as exc:
+        make_provider(_cfg(provider="nope"))
+    assert "'claude'" not in str(exc.value)
+
+
+@pytest.mark.unit
 def test_make_provider_returns_openai():
     from drop2md.enhance_providers import OpenAICompatProvider
 
