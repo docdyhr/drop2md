@@ -48,8 +48,8 @@ class OllamaConfig:
     base_url: str = "http://localhost:11434"
     model: str = "llava-llama3:8b"
     timeout_seconds: int = 60
-    provider: str = "ollama"  # "ollama" | "claude" | "openai" | "hf"
-    api_key: str = ""  # blank → SDK reads env var (ANTHROPIC_API_KEY etc.)
+    provider: str = "ollama"  # "ollama" | "openai" | "gemini" | "hf"
+    api_key: str = ""  # blank → SDK reads env var (OPENAI_API_KEY etc.)
     validate_tables: bool = (
         True  # set False with slow local models to skip table repair
     )
@@ -62,12 +62,6 @@ class OpenAIConfig:
     base_url: str = "https://api.openai.com/v1"  # override for HF router
     timeout_seconds: int = 30
     reasoning_effort: str = ""  # "low" | "medium" | "high" — only for reasoning models
-
-
-@dataclass
-class ClaudeConfig:
-    model: str = "claude-haiku-4-5-20251001"
-    timeout_seconds: int = 30
 
 
 @dataclass
@@ -115,7 +109,6 @@ class Config:
     ocr: OcrConfig = field(default_factory=OcrConfig)
     ollama: OllamaConfig = field(default_factory=OllamaConfig)
     openai: OpenAIConfig = field(default_factory=OpenAIConfig)
-    claude: ClaudeConfig = field(default_factory=ClaudeConfig)
     output: OutputConfig = field(default_factory=OutputConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
     visual: VisualConfig = field(default_factory=VisualConfig)
@@ -161,7 +154,6 @@ def load_config(path: Path | None = None) -> Config:
         ocr=OcrConfig(**data.get("ocr", {})),
         ollama=OllamaConfig(**data.get("ollama", {})),
         openai=OpenAIConfig(**data.get("openai", {})),
-        claude=ClaudeConfig(**data.get("claude", {})),
         output=OutputConfig(**data.get("output", {})),
         logging=LoggingConfig(**data.get("logging", {})),
         visual=VisualConfig(**data.get("visual", {})),

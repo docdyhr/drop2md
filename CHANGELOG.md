@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **BREAKING: the `claude` enhance provider** (`ClaudeProvider`, the `[claude]` config section and the `drop2md[claude]` extra). It could only authenticate with an Anthropic API key (`ANTHROPIC_API_KEY`). A config with `provider = "claude"` now fails with a message naming the remaining providers (`ollama`, `openai`, `gemini`, `hf`); a leftover `[claude]` section is ignored. `drop2md setup` and `drop2md doctor` no longer offer it.
+
 ### Changed
 
 - **Migrated MCP server to `mcp` 2.0.0** — `mcp.server.fastmcp.FastMCP` was removed and replaced with `mcp.server.mcpserver.MCPServer` in `mcp` 2.0.0. `src/drop2md/mcp_server.py` now imports `MCPServer`; tool/resource registration and `.run(transport="stdio")` are unchanged since the new class is API-compatible for the subset drop2md uses. Removes the temporary `mcp<2.0.0` pin.

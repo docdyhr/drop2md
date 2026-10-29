@@ -340,9 +340,9 @@ def setup(
 
     # ── AI Enhancement ───────────────────────────────────────────────────────
     typer.echo("── AI Enhancement ────────────────────────")
-    typer.echo("Providers: none | ollama | claude | openai | gemini")
+    typer.echo("Providers: none | ollama | openai | gemini | hf")
     provider = typer.prompt("AI provider", default="none").strip().lower()
-    valid_providers = {"none", "ollama", "claude", "openai", "gemini", "hf"}
+    valid_providers = {"none", "ollama", "openai", "gemini", "hf"}
     while provider not in valid_providers:
         typer.echo(f"  Unknown provider. Choose: {', '.join(sorted(valid_providers))}")
         provider = typer.prompt("AI provider", default="none").strip().lower()
@@ -364,7 +364,6 @@ def setup(
     else:
         ai_enabled = True
         env_var = {
-            "claude": "ANTHROPIC_API_KEY",
             "openai": "OPENAI_API_KEY",
             "gemini": "GEMINI_API_KEY",
             "hf": "HF_TOKEN",
@@ -691,22 +690,10 @@ def check(
                 )
 
         elif provider == "claude":
-            try:
-                import anthropic  # noqa: F401
-
-                _ok("anthropic    (package installed)")
-            except ImportError:
-                _fail("anthropic    (not installed)", "pip install drop2md[claude]")
-            api_key = getattr(cfg.ollama, "api_key", "") or os.environ.get(
-                "ANTHROPIC_API_KEY", ""
+            _fail(
+                "claude       (provider removed)",
+                'set provider = "ollama", "openai", "gemini" or "hf" in [ollama]',
             )
-            if api_key:
-                _ok(f"API key      (set — model: {cfg.claude.model})")
-            else:
-                _fail(
-                    "API key      (ANTHROPIC_API_KEY not set)",
-                    "export ANTHROPIC_API_KEY=sk-ant-...",
-                )
 
         elif provider in ("openai", "gemini"):
             try:

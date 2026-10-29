@@ -35,10 +35,6 @@ language = "eng"
 #               DO NOT use text-only models (qwen3.5, llama3, etc.) — VEP will
 #               silently fall back to empty alt-text for every image.
 #
-#   "claude"  — Best output quality. Requires ANTHROPIC_API_KEY.
-#               Recommended model: claude-haiku-4-5-20251001 (~$0.001/image)
-#               High quality: claude-sonnet-4-6  (slower, ~10x cost)
-#
 #   "openai"  — Best speed + cost. Requires OPENAI_API_KEY.
 #               Recommended model: gpt-4o-mini (~$0.0001/image, 2–5s/call)
 #
@@ -49,10 +45,9 @@ language = "eng"
 [ollama]
 # Enable AI enhancement (image captions, table validation, VEP)
 enabled = false
-# Provider: "ollama" | "claude" | "openai" | "gemini" | "hf"
+# Provider: "ollama" | "openai" | "gemini" | "hf"
 provider = "ollama"
 # API key — blank means the SDK reads the env var automatically:
-#   claude  → ANTHROPIC_API_KEY
 #   openai  → OPENAI_API_KEY
 #   gemini  → GEMINI_API_KEY or GOOGLE_API_KEY
 #   hf      → HF_TOKEN
@@ -74,11 +69,6 @@ polish_text = false
 # base_url = "https://api.openai.com/v1"   # override for HF router or Gemini
 # timeout_seconds = 30
 # reasoning_effort = ""                    # "low" | "medium" | "high" — o-series only
-
-# Claude settings — used when provider = "claude"
-# [claude]
-# model = "claude-haiku-4-5-20251001"
-# timeout_seconds = 30
 
 # ── Visual Enhancement Pipeline (VEP) — v0.3 ─────────────────────────────────
 #
@@ -114,18 +104,6 @@ polish_text = false
 # [visual]
 # enabled = true
 
-# ── Claude (best quality) ────────────────────────────────────────────────────
-# [ollama]
-# enabled = true
-# provider = "claude"
-# api_key = ""                     # or set ANTHROPIC_API_KEY env var
-#
-# [claude]
-# model = "claude-haiku-4-5-20251001"
-# timeout_seconds = 30
-#
-# [visual]
-# enabled = true
 
 # ── OpenAI (best speed/cost) ─────────────────────────────────────────────────
 # [ollama]

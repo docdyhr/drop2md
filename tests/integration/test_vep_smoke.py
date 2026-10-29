@@ -88,7 +88,6 @@ skip_no_gemini = pytest.mark.skipif(
 
 def _ollama_config() -> object:
     from drop2md.config import (
-        ClaudeConfig,
         Config,
         LoggingConfig,
         OcrConfig,
@@ -115,7 +114,6 @@ def _ollama_config() -> object:
             validate_tables=False,  # qwen3-vl:8b is slow; table tests covered separately
         ),
         openai=OpenAIConfig(),
-        claude=ClaudeConfig(),
         output=OutputConfig(add_frontmatter=False),
         logging=LoggingConfig(level="WARNING"),
         visual=VisualConfig(
@@ -132,7 +130,6 @@ def _ollama_config() -> object:
 
 def _openai_config() -> object:
     from drop2md.config import (
-        ClaudeConfig,
         Config,
         LoggingConfig,
         OcrConfig,
@@ -160,7 +157,6 @@ def _openai_config() -> object:
             base_url=OPENAI_BASE_URL,
             timeout_seconds=60,
         ),
-        claude=ClaudeConfig(),
         output=OutputConfig(add_frontmatter=False),
         logging=LoggingConfig(level="WARNING"),
         visual=VisualConfig(
@@ -177,7 +173,6 @@ def _openai_config() -> object:
 
 def _gemini_config() -> object:
     from drop2md.config import (
-        ClaudeConfig,
         Config,
         LoggingConfig,
         OcrConfig,
@@ -206,7 +201,6 @@ def _gemini_config() -> object:
             base_url=GEMINI_BASE_URL,
             timeout_seconds=60,
         ),
-        claude=ClaudeConfig(),
         output=OutputConfig(add_frontmatter=False),
         logging=LoggingConfig(level="WARNING"),
         visual=VisualConfig(

@@ -97,7 +97,7 @@ marker_device = "mps"   # Apple Silicon
 
 [ollama]
 enabled  = false          # set true to enable AI enhancement
-provider = "ollama"       # "ollama" | "claude" | "openai" | "hf"
+provider = "ollama"       # "ollama" | "openai" | "gemini" | "hf"
 model    = "qwen3.5:latest"
 ```
 
@@ -197,19 +197,18 @@ When `[ollama] enabled = true`, drop2md runs an optional post-processing pass:
 
 **A vision-capable model is required for VEP.** The default `llava-llama3:8b` works out of the box with Ollama. Text-only models (e.g. `llama3`, `qwen3.5`) silently skip image classification.
 
-Four providers are supported:
+Four providers are supported (the API-key-only `claude` provider was removed):
 
 | Provider | Model | API key env var | Notes |
 |---|---|---|---|
 | `ollama` | `llava-llama3:8b` (default) | — | Free, local, private |
-| `claude` | `claude-haiku-4-5-20251001` | `ANTHROPIC_API_KEY` | Best output quality |
 | `openai` | `gpt-4o-mini` | `OPENAI_API_KEY` | Best speed and cost |
 | `gemini` | `gemini-2.5-flash` | `GEMINI_API_KEY` | Free tier available |
 
 ```toml
 [ollama]
 enabled  = true
-provider = "ollama"          # "ollama" | "claude" | "openai" | "gemini" | "hf"
+provider = "ollama"          # "ollama" | "openai" | "gemini" | "hf"
 model    = "llava-llama3:8b" # ollama pull llava-llama3:8b
 
 [visual]
