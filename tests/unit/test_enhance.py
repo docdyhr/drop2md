@@ -22,8 +22,6 @@ def _cfg(enabled: bool = True, timeout: int = 5, provider: str = "ollama") -> Ma
     cfg.openai.model = "gpt-4o-mini"
     cfg.openai.base_url = "https://api.openai.com/v1"
     cfg.openai.timeout_seconds = timeout
-    cfg.claude.model = "claude-haiku-4-5-20251001"
-    cfg.claude.timeout_seconds = timeout
     return cfg
 
 
