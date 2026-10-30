@@ -72,7 +72,7 @@ ocr = [
 openai = ["openai>=2.31.0"]
 # Development tools
 dev = [
-    "ruff==0.17.0",
+    "ruff==0.17.2",
     "mypy>=1.20.0",
     "pre-commit>=3.0.0",
     "bandit[toml]>=1.7.5",
@@ -98,7 +98,7 @@ all = [
     "pytesseract>=0.3.13",
     "Pillow>=12.1.1",
     "openai>=2.31.0",
-    "ruff==0.17.0",
+    "ruff==0.17.2",
     "mypy>=1.20.0",
     "pre-commit>=3.0.0",
     "bandit[toml]>=1.7.5",
