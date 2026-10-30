@@ -15,9 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Migrated MCP server to `mcp` 2.0.0** — `mcp.server.fastmcp.FastMCP` was removed and replaced with `mcp.server.mcpserver.MCPServer` in `mcp` 2.0.0. `src/drop2md/mcp_server.py` now imports `MCPServer`; tool/resource registration and `.run(transport="stdio")` are unchanged since the new class is API-compatible for the subset drop2md uses. Removes the temporary `mcp<2.0.0` pin.
 
+### CI
+
+- **PyPI publishing** — `publish.yml` builds the package and publishes it to PyPI with trusted publishing (OIDC, GitHub environment `pypi`) on every `vX.Y.Z` tag. It was added after 1.0.1, so the next release tag is its first run.
+
 ### Dependencies
 
 - `mcp[cli]` ≥ 1.27.0,<2.0.0 → ≥ 2.0.0
+- `ruff` 0.15.12 → 0.17.2; the `ruff-pre-commit` hook `rev` updated to match (it had stayed at v0.15.12, so local commits were linted and formatted by an older ruff than CI). At this `rev` the `ruff-format` hook also formats Python code blocks in Markdown files (a ruff ≥ 0.16 default), and the lint hook uses its current id, `ruff-check`.
+- GitHub Actions: `actions/checkout` 6 → 7, `actions/setup-python` 6 → 7, `codecov/codecov-action` 6 → 7, `github/codeql-action` v4 → v4.39.1
 
 ## [1.0.1] — 2026-05-04
 
