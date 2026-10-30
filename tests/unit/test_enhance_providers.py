@@ -8,7 +8,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from drop2md.enhance_providers import (
-    ClaudeProvider,
     OllamaProvider,
     OpenAICompatProvider,
     make_provider,
@@ -27,8 +26,6 @@ def _cfg(provider: str = "ollama", api_key: str = "") -> MagicMock:
     cfg.openai.model = "gpt-4o-mini"
     cfg.openai.base_url = "https://api.openai.com/v1"
     cfg.openai.timeout_seconds = 5
-    cfg.claude.model = "claude-haiku-4-5-20251001"
-    cfg.claude.timeout_seconds = 5
     return cfg
 
 
@@ -148,69 +145,6 @@ def test_openai_provider_import_error():
         provider.generate("Hello")
 
 
-# ─── ClaudeProvider ──────────────────────────────────────────────────────────
-
-
-@pytest.mark.unit
-def test_claude_provider_text_prompt():
-    mock_client = MagicMock()
-    mock_message = MagicMock()
-    mock_block = MagicMock()
-    mock_block.text = "Hello from Claude"
-    mock_message.content = [mock_block]
-    mock_client.messages.create.return_value = mock_message
-
-    mock_anthropic = MagicMock()
-    mock_anthropic.Anthropic.return_value = mock_client
-
-    provider = ClaudeProvider("claude-haiku-4-5-20251001", "", timeout=5)
-    with patch.dict(sys.modules, {"anthropic": mock_anthropic}):
-        result = provider.generate("Say hello")
-
-    assert result == "Hello from Claude"
-    mock_client.messages.create.assert_called_once()
-
-
-@pytest.mark.unit
-def test_claude_provider_sends_image(tmp_path):
-    img = tmp_path / "chart.png"
-    img.write_bytes(b"\x89PNG")
-
-    mock_client = MagicMock()
-    mock_message = MagicMock()
-    mock_block = MagicMock()
-    mock_block.text = "A chart"
-    mock_message.content = [mock_block]
-    mock_client.messages.create.return_value = mock_message
-
-    mock_anthropic = MagicMock()
-    mock_anthropic.Anthropic.return_value = mock_client
-
-    provider = ClaudeProvider("claude-haiku-4-5-20251001", "", timeout=5)
-    with patch.dict(sys.modules, {"anthropic": mock_anthropic}):
-        result = provider.generate("Describe", image_path=img)
-
-    assert result == "A chart"
-    call_args = mock_client.messages.create.call_args
-    messages = call_args.kwargs["messages"]
-    content = messages[0]["content"]
-    content_types = {block["type"] for block in content}
-    assert "image" in content_types
-
-
-@pytest.mark.unit
-def test_claude_provider_import_error():
-    provider = ClaudeProvider("claude-haiku-4-5-20251001", "", timeout=5)
-    with (
-        patch(
-            "builtins.__import__",
-            side_effect=ImportError("No module named 'anthropic'"),
-        ),
-        pytest.raises(ImportError, match="anthropic package"),
-    ):
-        provider.generate("Hello")
-
-
 # ─── make_provider factory ───────────────────────────────────────────────────
 
 
@@ -223,11 +157,33 @@ def test_make_provider_returns_ollama():
 
 
 @pytest.mark.unit
-def test_make_provider_returns_claude():
-    from drop2md.enhance_providers import ClaudeProvider
+def test_make_provider_claude_removed():
+    """The API-key-only 'claude' provider is gone; configs naming it fail with a pointer."""
+    with pytest.raises(ValueError, match="provider was removed"):
+        make_provider(_cfg(provider="claude"))
 
-    provider = make_provider(_cfg(provider="claude"))
-    assert isinstance(provider, ClaudeProvider)
+
+@pytest.mark.unit
+def test_removed_provider_warns_once(caplog):
+    """Callers swallow the ValueError at debug level, so it must also warn — once."""
+    import drop2md.enhance_providers as ep
+
+    ep._warned_provider_errors.clear()
+    with caplog.at_level("WARNING", logger="drop2md.enhance_providers"):
+        for _ in range(3):
+            with pytest.raises(ValueError):
+                make_provider(_cfg(provider="claude"))
+    warnings = [
+        r for r in caplog.records if "AI enhancement disabled" in r.getMessage()
+    ]
+    assert len(warnings) == 1
+
+
+@pytest.mark.unit
+def test_unknown_provider_message_omits_claude():
+    with pytest.raises(ValueError) as exc:
+        make_provider(_cfg(provider="nope"))
+    assert "'claude'" not in str(exc.value)
 
 
 @pytest.mark.unit

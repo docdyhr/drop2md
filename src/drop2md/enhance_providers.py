@@ -1,6 +1,6 @@
 """AI provider abstraction for drop2md enhancement pipeline.
 
-Supports Ollama (local), OpenAI-compatible APIs (OpenAI, HuggingFace), and Anthropic Claude.
+Supports Ollama (local) and OpenAI-compatible APIs (OpenAI, Gemini, HuggingFace).
 All providers share the same AIProvider protocol.
 """
 
@@ -9,7 +9,7 @@ from __future__ import annotations
 import base64
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, NoReturn, Protocol
 
 if TYPE_CHECKING:
     from drop2md.config import Config
@@ -123,60 +123,10 @@ class OpenAICompatProvider:
         return (response.choices[0].message.content or "").strip()
 
 
-class ClaudeProvider:
-    """Anthropic Claude API provider with native base64 image vision.
-
-    Requires ``anthropic`` package (``pip install drop2md[claude]``).
-    """
-
-    def __init__(self, model: str, api_key: str, timeout: int) -> None:
-        self._model = model
-        self._api_key = api_key
-        self._timeout = timeout
-
-    def generate(self, prompt: str, image_path: Path | None = None) -> str:
-        try:
-            import anthropic
-        except ImportError as exc:
-            raise ImportError(
-                "anthropic package is required for the Claude provider. "
-                "Install it with: pip install drop2md[claude]"
-            ) from exc
-
-        client = anthropic.Anthropic(
-            api_key=self._api_key or None,
-            timeout=self._timeout,
-        )
-
-        content: list[dict] = []
-        if image_path and image_path.exists():
-            img_b64 = base64.b64encode(image_path.read_bytes()).decode()
-            img_type = _mime_from_suffix(image_path.suffix)
-            content.append(
-                {
-                    "type": "image",
-                    "source": {
-                        "type": "base64",
-                        "media_type": img_type,
-                        "data": img_b64,
-                    },
-                }
-            )
-        content.append({"type": "text", "text": prompt})
-
-        message = client.messages.create(
-            model=self._model,
-            max_tokens=1024,
-            messages=[{"role": "user", "content": content}],  # type: ignore[typeddict-item]
-        )
-        block = message.content[0]
-        return (block.text if hasattr(block, "text") else "").strip()
-
-
 def make_provider(config: Config) -> AIProvider:
     """Factory: create the correct provider based on ``config.ollama.provider``.
 
-    Supported values: ``"ollama"`` (default), ``"claude"``, ``"openai"``, ``"hf"``.
+    Supported values: ``"ollama"`` (default), ``"openai"``, ``"gemini"``, ``"hf"``.
     ``"hf"`` uses OpenAICompatProvider with ``config.openai.base_url`` pointing at
     the HuggingFace Inference Router.
     """
@@ -193,12 +143,9 @@ def make_provider(config: Config) -> AIProvider:
         )
 
     if provider_name == "claude":
-        # Fall back to ANTHROPIC_API_KEY; passing None lets the SDK read it
-        resolved_key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
-        return ClaudeProvider(
-            model=config.claude.model,
-            api_key=resolved_key,
-            timeout=config.claude.timeout_seconds,
+        _raise_provider_error(
+            "The 'claude' provider was removed (it required an Anthropic API key). "
+            "Use 'ollama', 'openai', 'gemini' or 'hf'."
         )
 
     if provider_name == "openai":
@@ -236,10 +183,25 @@ def make_provider(config: Config) -> AIProvider:
             timeout=config.openai.timeout_seconds,
         )
 
-    raise ValueError(
+    _raise_provider_error(
         f"Unknown enhance provider: {provider_name!r}. "
-        "Valid values: 'ollama', 'claude', 'openai', 'gemini', 'hf'."
+        "Valid values: 'ollama', 'openai', 'gemini', 'hf'."
     )
+
+
+_warned_provider_errors: set[str] = set()
+
+
+def _raise_provider_error(message: str) -> NoReturn:
+    """Raise ValueError, logging a warning once per message per process.
+
+    Every caller in enhance.py catches exceptions and logs at debug level, so
+    without the warning a misconfigured provider silently skips enhancement.
+    """
+    if message not in _warned_provider_errors:
+        _warned_provider_errors.add(message)
+        log.warning("AI enhancement disabled: %s", message)
+    raise ValueError(message)
 
 
 def _mime_from_suffix(suffix: str) -> str:

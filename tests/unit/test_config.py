@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from drop2md.config import ClaudeConfig, Config, OpenAIConfig, load_config
+from drop2md.config import Config, OpenAIConfig, load_config
 
 
 @pytest.mark.unit
@@ -64,9 +64,9 @@ def test_ollama_provider_defaults_to_ollama(tmp_path):
 @pytest.mark.unit
 def test_env_override_enhance_provider(monkeypatch, tmp_path):
     """DROP2MD_ENHANCE_PROVIDER env var sets cfg.ollama.provider."""
-    monkeypatch.setenv("DROP2MD_ENHANCE_PROVIDER", "claude")
+    monkeypatch.setenv("DROP2MD_ENHANCE_PROVIDER", "gemini")
     cfg = load_config(tmp_path / "missing.toml")
-    assert cfg.ollama.provider == "claude"
+    assert cfg.ollama.provider == "gemini"
 
 
 @pytest.mark.unit
@@ -80,21 +80,20 @@ def test_openai_toml_section_parsed(tmp_path):
 
 
 @pytest.mark.unit
-def test_claude_toml_section_parsed(tmp_path):
-    """[claude] TOML section is parsed into cfg.claude."""
+def test_legacy_claude_toml_section_ignored(tmp_path):
+    """A legacy [claude] section (provider removed) still loads, and is ignored."""
     toml = tmp_path / "test.toml"
     toml.write_text('[claude]\nmodel = "claude-opus-4-6"\ntimeout_seconds = 60\n')
     cfg = load_config(toml)
-    assert cfg.claude.model == "claude-opus-4-6"
-    assert cfg.claude.timeout_seconds == 60
+    assert not hasattr(cfg, "claude")
+    assert cfg.ollama.provider == "ollama"
 
 
 @pytest.mark.unit
 def test_backward_compat_no_new_sections(tmp_path):
-    """Existing config.toml with no [openai]/[claude] sections loads without error."""
+    """Existing config.toml with no [openai] section loads without error."""
     toml = tmp_path / "test.toml"
     toml.write_text('[ollama]\nenabled = false\nmodel = "qwen3.5:latest"\n')
     cfg = load_config(toml)
     assert isinstance(cfg.openai, OpenAIConfig)
-    assert isinstance(cfg.claude, ClaudeConfig)
     assert cfg.ollama.provider == "ollama"  # default applied

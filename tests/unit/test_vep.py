@@ -50,8 +50,6 @@ def _cfg(
     cfg.openai.model = "gpt-4o-mini"
     cfg.openai.base_url = "https://api.openai.com/v1"
     cfg.openai.timeout_seconds = 5
-    cfg.claude.model = "claude-haiku-4-5-20251001"
-    cfg.claude.timeout_seconds = 5
     cfg.visual.enabled = visual_enabled
     cfg.visual.classify = classify
     cfg.visual.chart_description = chart_description

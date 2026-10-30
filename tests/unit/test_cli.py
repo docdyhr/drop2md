@@ -810,21 +810,20 @@ def test_setup_with_ollama_provider(tmp_path: Path) -> None:
 
 
 @pytest.mark.unit
-def test_setup_with_claude_provider(tmp_path: Path) -> None:
-    """setup writes enabled=true and provider=claude when claude is chosen."""
+def test_setup_rejects_removed_claude_provider(tmp_path: Path) -> None:
+    """setup no longer offers the removed 'claude' provider: it re-prompts."""
     config_file = tmp_path / "config.toml"
-    # Inputs: watch, output, vault, provider=claude, api_key=sk-test, VEP=yes, no-service, no-qa
-    user_input = "\n\n\nclaude\nsk-test\ny\nn\nn\n"
+    # Inputs: watch, output, vault, provider=claude (rejected), then none, no-service, no-qa
+    user_input = "\n\n\nclaude\nnone\nn\nn\n"
     result = runner.invoke(
         app,
         ["setup", "--config", str(config_file)],
         input=user_input,
     )
     assert result.exit_code == 0, result.output
+    assert "Unknown provider" in result.output
     content = config_file.read_text()
-    assert "enabled = true" in content
-    assert 'provider = "claude"' in content
-    assert "[visual]" in content
+    assert 'provider = "claude"' not in content
 
 
 @pytest.mark.unit

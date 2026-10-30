@@ -329,7 +329,6 @@ MCP calls are logged to: `~/Library/Logs/drop2md/drop2md.log` (if `[logging] fil
 | Provider | Privacy | Speed | Cost | Setup |
 |---|---|---|---|---|
 | Ollama (llava-llama3:8b) | Local | ~5s/img | Free | `ollama pull llava-llama3:8b` |
-| Claude (haiku-4-5) | Cloud | ~2s/img | ~$0.001/img | `ANTHROPIC_API_KEY` |
 | OpenAI (gpt-4o-mini) | Cloud | ~3s/img | ~$0.0001/img | `OPENAI_API_KEY` |
 | Gemini (gemini-2.5-flash) | Cloud | ~5s/img | Free tier | `GEMINI_API_KEY` |
 
@@ -348,18 +347,6 @@ curl -s http://localhost:11434/api/tags | python -m json.tool | grep name
 # Convert with VEP enabled (config.toml must have visual.enabled = true)
 DROP2MD_OLLAMA_ENABLED=true \
   drop2md convert tests/fixtures/sample.pdf --config config.toml
-```
-
-### Claude (Anthropic)
-
-```bash
-# Requires: pip install drop2md[claude]
-pip install -e ".[claude]"
-
-DROP2MD_ENHANCE_PROVIDER=claude \
-DROP2MD_OLLAMA_ENABLED=true \
-ANTHROPIC_API_KEY=sk-ant-... \
-  drop2md convert tests/fixtures/sample.pdf
 ```
 
 ### OpenAI
@@ -427,7 +414,7 @@ block CI.
 For each provider, keys are resolved in this order:
 1. `api_key` field in `[ollama]` section of `config.toml`
 2. `DROP2MD_ENHANCE_API_KEY` environment variable
-3. Provider native env var: `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` / `HF_TOKEN`
+3. Provider native env var: `OPENAI_API_KEY` / `GEMINI_API_KEY` / `HF_TOKEN`
 
 ---
 
