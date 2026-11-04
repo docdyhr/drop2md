@@ -108,7 +108,12 @@ def _conflict(found: str, pin: str | None, sites: Sites) -> str | None:
     """Say why the version ``found`` elsewhere disagrees with pyproject.toml."""
     version = _version(found)
     if version is None:
-        return f"which is not a version, so it cannot be compared with {pin or sites}"
+        wanted = (
+            f"pyproject.toml pins {pin}"
+            if pin is not None
+            else "; ".join(f"{where} requires {spec}" for where, spec in sites)
+        )
+        return f"which is not a version, so it cannot be compared with {wanted}"
     if pin is not None:
         return None if version == Version(pin) else f"pyproject.toml pins {pin}"
     unmet = [f"{where} requires {spec}" for where, spec in sites if version not in spec]
@@ -131,17 +136,17 @@ def pin_problems(root: Path) -> list[str]:
             )
             continue
 
-        pinned = {where: pin for where, spec in sites if (pin := _exact_pin(spec))}
-        if len(set(pinned.values())) > 1:
+        pinned = [(where, pin) for where, spec in sites if (pin := _exact_pin(spec))]
+        if len({pin for _, pin in pinned}) > 1:
             disagreeing = ", ".join(
-                f"{where} pins {pin}" for where, pin in sorted(pinned.items())
+                f"{where} pins {pin}" for where, pin in sorted(pinned)
             )
             problems.append(
                 f"pyproject.toml: {tool} is pinned to more than one version — "
                 f"{disagreeing}"
             )
             continue
-        pin = next(iter(pinned.values()), None)
+        pin = pinned[0][1] if pinned else None
 
         rev = revs.get(hook_repo)
         if rev is None:
@@ -158,7 +163,7 @@ def pin_problems(root: Path) -> list[str]:
         for workflow in workflows:
             lines = workflow.read_text().splitlines()
             for number, line in enumerate(lines, start=1):
-                pattern = rf"\b{re.escape(tool)}==([0-9][^\s\"';,)\]]*)"
+                pattern = rf"(?<![\w.-]){re.escape(tool)}==([0-9][^\s\"';,)\]]*)"
                 for found in re.findall(pattern, line):
                     if reason := _conflict(found, pin, sites):
                         problems.append(
@@ -173,6 +178,7 @@ def _write_repo(
     *,
     ruff_rev: str = "v0.17.3",
     dev_ruff: str = "0.17.3",
+    stale_dev_ruff: str = "",
     all_ruff: str = "0.17.3",
     mypy_rev: str = "v1.20.2",
     mypy_spec: str = ">=1.20.0",
@@ -180,12 +186,13 @@ def _write_repo(
 ) -> Path:
     """Write a minimal repo whose pins agree unless an argument says otherwise."""
     (root / ".github" / "workflows").mkdir(parents=True)
+    stale = f'"ruff=={stale_dev_ruff}", ' if stale_dev_ruff else ""
     (root / "pyproject.toml").write_text(
         "[project]\n"
         'name = "drop2md"\n'
         'dependencies = ["typer>=0.12.0"]\n'
         "[project.optional-dependencies]\n"
-        f'dev = ["ruff=={dev_ruff}", "mypy{mypy_spec}"]\n'
+        f'dev = [{stale}"ruff=={dev_ruff}", "mypy{mypy_spec}"]\n'
         f'all = ["ruff=={all_ruff}", "mypy{mypy_spec}"]\n'
     )
     hooks = (
@@ -290,3 +297,36 @@ def test_detects_an_unparseable_hook_rev(tmp_path):
         f".pre-commit-config.yaml: {HOOK_REPOS['ruff']} rev is main, "
     )
     assert "not a version" in problems[0]
+
+
+def test_ignores_a_different_package_ending_in_the_tool_name(tmp_path):
+    """`pytest-ruff==1.0.2` is not a ruff pin: a word boundary matches after `-`."""
+    root = _write_repo(
+        tmp_path, workflow_line="run: pip install pytest-ruff==1.0.2 build"
+    )
+
+    assert pin_problems(root) == []
+
+
+def test_detects_a_stale_duplicate_pin_in_one_group(tmp_path):
+    """Two pins in one extra must both be compared, not collapse to the last."""
+    problems = pin_problems(_write_repo(tmp_path, stale_dev_ruff="0.16.0"))
+
+    assert problems == [
+        "pyproject.toml: ruff is pinned to more than one version — "
+        "project.optional-dependencies.all pins 0.17.3, "
+        "project.optional-dependencies.dev pins 0.16.0, "
+        "project.optional-dependencies.dev pins 0.17.3"
+    ]
+
+
+def test_unparseable_rev_names_the_requirement_not_its_repr(tmp_path):
+    """The message a red check sends a developer to must be readable."""
+    problems = pin_problems(_write_repo(tmp_path, mypy_rev="master"))
+
+    assert problems == [
+        f".pre-commit-config.yaml: {HOOK_REPOS['mypy']} rev is master, which is not "
+        "a version, so it cannot be compared with "
+        "project.optional-dependencies.dev requires >=1.20.0; "
+        "project.optional-dependencies.all requires >=1.20.0"
+    ]
