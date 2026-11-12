@@ -215,7 +215,7 @@ model    = "llava-llama3:8b" # ollama pull llava-llama3:8b
 enabled = true               # enable the Visual Enhancement Pipeline
 ```
 
-API keys are resolved in order: `api_key` field in config → `DROP2MD_ENHANCE_API_KEY` env var → provider-native env var.
+API keys are resolved in order: `DROP2MD_ENHANCE_API_KEY` env var → `api_key` field in config → provider-native env var.
 
 All providers fall back gracefully — a missing key or offline service never blocks conversion.
 

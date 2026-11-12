@@ -412,9 +412,9 @@ block CI.
 ### API key resolution order
 
 For each provider, keys are resolved in this order:
-1. `api_key` field in `[ollama]` section of `config.toml`
-2. `DROP2MD_ENHANCE_API_KEY` environment variable
-3. Provider native env var: `OPENAI_API_KEY` / `GEMINI_API_KEY` / `HF_TOKEN`
+1. `DROP2MD_ENHANCE_API_KEY` environment variable (it overrides the config field)
+2. `api_key` field in `[ollama]` section of `config.toml`
+3. Provider native env var: `OPENAI_API_KEY`, then `GEMINI_API_KEY` (`openai`); `GEMINI_API_KEY` (`gemini`); `HF_TOKEN` (`hf`)
 
 ---
 
