@@ -802,7 +802,9 @@ def test_make_provider_gemini():
     from drop2md.enhance_providers import OpenAICompatProvider, make_provider
 
     cfg = _cfg(provider="gemini")
-    cfg.ollama.api_key = ""
+    cfg.ollama.api_key = "gemini-key"
+    # gemini refuses OpenAI's endpoint (the helper's default), so name Google's.
+    cfg.openai.base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
     provider = make_provider(cfg)
     assert isinstance(provider, OpenAICompatProvider)
 
