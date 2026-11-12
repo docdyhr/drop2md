@@ -168,6 +168,8 @@ def make_provider(config: Config) -> AIProvider:
         # At Google's or Hugging Face's endpoint that vendor's own variable
         # (GEMINI_API_KEY / HF_TOKEN) comes before OPENAI_API_KEY; elsewhere only
         # OPENAI_API_KEY is read.
+        if problem := _endpoint_refusal(config.openai.base_url, provider_name):
+            _raise_provider_error(problem)
         resolved_key = api_key
         own_var = _VENDOR_KEY_VARS.get(_endpoint_vendor(config.openai.base_url))
         if not resolved_key and own_var:
@@ -210,8 +212,18 @@ def make_provider(config: Config) -> AIProvider:
     )
 
 
+def _endpoint_scheme(base_url: str) -> str:
+    """Return the lower-cased URL scheme of *base_url* ('' when it has none)."""
+    try:
+        return urlparse(str(base_url).strip()).scheme.lower()
+    except ValueError:
+        return ""
+
+
 def _endpoint_host(base_url: str) -> str:
-    """Return the normalised host of *base_url*, or '' when it has none."""
+    """Return the normalised host of an http(s) *base_url*, or '' when it has none."""
+    if _endpoint_scheme(base_url) not in ("http", "https"):
+        return ""  # no scheme, protocol-relative, or one the openai client cannot use
     try:
         host = urlparse(str(base_url).strip()).hostname or ""
     except ValueError:  # e.g. an unbalanced IPv6 bracket
@@ -234,6 +246,37 @@ def _endpoint_vendor(base_url: str) -> str:
     return ""
 
 
+def _endpoint_refusal(base_url: str, provider_name: str) -> str:
+    """Return why *base_url* must not receive *provider_name*'s key, or '' if it may.
+
+    Every provider refuses a base_url with no http(s) host and plain http:// to a
+    known vendor's domain (the key would travel unencrypted). gemini and hf also
+    refuse another vendor's domain. The message carries no key and no base_url.
+    """
+    own_url = _PROVIDER_BASE_URLS.get(provider_name, "")
+    example = f", e.g. {own_url}" if own_url else ""
+    if not _endpoint_host(base_url):
+        return (
+            f"provider {provider_name!r} needs [openai] base_url set to the full URL "
+            f"(with https://) of its OpenAI-compatible endpoint{example}"
+        )
+    vendor = _endpoint_vendor(base_url)
+    if vendor and _endpoint_scheme(base_url) != "https":
+        return (
+            f"provider {provider_name!r}: [openai] base_url points at a "
+            f"{_VENDOR_NAMES[vendor]} host over plain http://, which would send the "
+            "key unencrypted; use https://"
+        )
+    if provider_name in _VENDOR_KEY_VARS and vendor and vendor != provider_name:
+        return (
+            f"provider {provider_name!r} needs [openai] base_url set to its own "
+            f"OpenAI-compatible endpoint, but its host belongs to "
+            f"{_VENDOR_NAMES[vendor]}, so {_VENDOR_KEY_VARS[provider_name]} would be "
+            f"sent to {_VENDOR_NAMES[vendor]}. Use e.g. {own_url}"
+        )
+    return ""
+
+
 def _own_endpoint_key(
     config: Config, provider_name: str, key_var: str, api_key: str
 ) -> str:
@@ -243,28 +286,15 @@ def _own_endpoint_key(
     without an override their key would go to OpenAI, and a base_url left over
     from the other provider would send it to that vendor. A self-hosted or proxy
     endpoint (no known vendor domain) is allowed; only these four domains are
-    recognised, so another hosted API counts as self-hosted. A base_url with no
-    host (no scheme, or unparseable) is refused. With no key at all,
+    recognised, so another hosted API counts as self-hosted. See
+    `_endpoint_refusal` for the endpoint rules. With no key at all,
     ``OpenAICompatProvider`` would pass ``api_key=None``, which makes the openai
     SDK read ``OPENAI_API_KEY`` and send that instead, so a missing key is refused.
     """
     import os
 
-    base_url = config.openai.base_url
-    own_url = _PROVIDER_BASE_URLS[provider_name]
-    if not _endpoint_host(base_url):
-        _raise_provider_error(
-            f"provider {provider_name!r} needs [openai] base_url set to the full URL "
-            f"(with https://) of its OpenAI-compatible endpoint, e.g. {own_url}"
-        )
-    vendor = _endpoint_vendor(base_url)
-    if vendor and vendor != provider_name:
-        _raise_provider_error(
-            f"provider {provider_name!r} needs [openai] base_url set to its own "
-            f"OpenAI-compatible endpoint, but its host belongs to "
-            f"{_VENDOR_NAMES[vendor]}, so {key_var} would be sent to "
-            f"{_VENDOR_NAMES[vendor]}. Use e.g. {own_url}"
-        )
+    if problem := _endpoint_refusal(config.openai.base_url, provider_name):
+        _raise_provider_error(problem)
     resolved_key = api_key or os.environ.get(key_var, "")
     if not resolved_key:
         _raise_provider_error(

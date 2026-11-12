@@ -321,6 +321,7 @@ def test_gemini_and_hf_refuse_the_other_vendors_endpoint(
         ("hf", "HF_TOKEN", "http://localhost:8080/v1"),  # self-hosted server
         ("hf", "HF_TOKEN", "https://router.huggingface.co/v1"),
         ("gemini", "GEMINI_API_KEY", "https://llm-gateway.internal.example/v1"),
+        ("gemini", "GEMINI_API_KEY", "http://10.0.0.5:8000/v1"),  # plain http, private
     ],
 )
 def test_gemini_and_hf_allow_own_and_self_hosted_endpoints(
@@ -342,6 +343,8 @@ def test_gemini_and_hf_allow_own_and_self_hosted_endpoints(
     [
         "https://[bad/v1",  # unparseable
         "generativelanguage.googleapis.com/v1beta/openai/",  # no scheme
+        "//generativelanguage.googleapis.com/v1beta/openai/",  # protocol-relative
+        "ftp://router.huggingface.co/v1",  # a scheme the openai client cannot use
         "",
     ],
 )
@@ -350,6 +353,36 @@ def test_gemini_and_hf_refuse_a_base_url_without_a_host(provider_name, base_url)
     cfg = _cfg(provider=provider_name, api_key="provider-secret")
     cfg.openai.base_url = base_url
     with pytest.raises(ValueError, match="full URL") as exc:
+        make_provider(cfg)
+    assert "provider-secret" not in str(exc.value)
+
+
+@pytest.mark.unit
+@pytest.mark.usefixtures("no_key_env")
+@pytest.mark.parametrize("base_url", ["//api.openai.com/v1", "ftp://example.com/v1"])
+def test_openai_provider_refuses_a_base_url_without_a_host(base_url):
+    cfg = _cfg(provider="openai", api_key="provider-secret")
+    cfg.openai.base_url = base_url
+    with pytest.raises(ValueError, match="full URL") as exc:
+        make_provider(cfg)
+    assert "provider-secret" not in str(exc.value)
+
+
+@pytest.mark.unit
+@pytest.mark.usefixtures("no_key_env")
+@pytest.mark.parametrize(
+    ("provider_name", "base_url"),
+    [
+        ("gemini", "http://generativelanguage.googleapis.com/v1beta/openai/"),
+        ("hf", "http://router.huggingface.co/v1"),
+        ("openai", "http://api.openai.com/v1"),
+    ],
+)
+def test_known_vendor_hosts_refuse_plain_http(provider_name, base_url):
+    # The key would travel unencrypted to a host that only serves it over https.
+    cfg = _cfg(provider=provider_name, api_key="provider-secret")
+    cfg.openai.base_url = base_url
+    with pytest.raises(ValueError, match="unencrypted") as exc:
         make_provider(cfg)
     assert "provider-secret" not in str(exc.value)
 

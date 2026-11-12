@@ -461,15 +461,25 @@ file = "~/Library/Logs/drop2md/drop2md.log"
 
 
 def _check_provider_endpoint(
-    cfg: Config, ok: Callable[..., None], fail: Callable[..., None]
+    cfg: Config,
+    ok: Callable[..., None],
+    fail: Callable[..., None],
+    key_present: bool = True,
 ) -> None:
     """Report whether make_provider accepts the configured endpoint and key.
 
     Uses the same rules as conversion, so `check` cannot pass a setup that
-    enhancement then refuses. The refusal messages carry no key or base_url.
+    enhancement then refuses. With no key (already reported), only the endpoint
+    rules run, so a refused endpoint is not hidden behind the missing key. The
+    refusal messages carry no key or base_url.
     """
-    from drop2md.enhance_providers import make_provider
+    from drop2md.enhance_providers import _endpoint_refusal, make_provider
 
+    if not key_present:
+        provider = getattr(cfg.ollama, "provider", "ollama")
+        if problem := _endpoint_refusal(cfg.openai.base_url, provider):
+            fail("endpoint     (refused)", problem)
+        return
     try:
         make_provider(cfg)
     except ValueError as exc:
@@ -742,9 +752,9 @@ def check(
                     api_key = os.environ.get(own_var, "")
             if api_key:
                 _ok(f"API key      (set — model: {cfg.openai.model})")
-                _check_provider_endpoint(cfg, _ok, _fail)
             else:
                 _fail(f"API key      ({env_key} not set)", f"export {env_key}=...")
+            _check_provider_endpoint(cfg, _ok, _fail, key_present=bool(api_key))
 
         elif provider == "hf":
             try:
@@ -758,9 +768,9 @@ def check(
             )
             if api_key:
                 _ok(f"HF_TOKEN     (set — model: {cfg.openai.model})")
-                _check_provider_endpoint(cfg, _ok, _fail)
             else:
                 _fail("HF_TOKEN     (not set)", "export HF_TOKEN=hf_...")
+            _check_provider_endpoint(cfg, _ok, _fail, key_present=bool(api_key))
 
         else:
             _warn(f"Unknown provider: {provider!r}")
