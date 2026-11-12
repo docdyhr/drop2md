@@ -206,7 +206,7 @@ Four providers are supported (the API-key-only `claude` provider was removed):
 | `gemini` | `gemini-2.5-flash` | `GEMINI_API_KEY` | Free tier available |
 | `hf` | set `[openai] model` | `HF_TOKEN` | Hugging Face models through the OpenAI-compatible client |
 
-`openai`, `gemini` and `hf` all use the OpenAI-compatible client and read their model and endpoint from `[openai]`. `[openai] base_url` defaults to OpenAI's API, so for `gemini` and `hf` set it to that provider's OpenAI-compatible endpoint (Gemini: `https://generativelanguage.googleapis.com/v1beta/openai/`).
+`openai`, `gemini` and `hf` all use the OpenAI-compatible client and read their model and endpoint from `[openai]`. `[openai] base_url` defaults to OpenAI's API, so for `gemini` and `hf` set it to that provider's OpenAI-compatible endpoint (Gemini: `https://generativelanguage.googleapis.com/v1beta/openai/`; Hugging Face: `https://router.huggingface.co/v1`).
 
 ```toml
 [ollama]

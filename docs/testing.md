@@ -374,7 +374,7 @@ Set `[openai] model = "gemini-2.5-flash"` and
 
 ### HuggingFace Inference Router
 
-Set `[openai] model` and `[openai] base_url` to the Hugging Face router's OpenAI-compatible endpoint first. The default `base_url` is OpenAI's API.
+First set `[openai] model` to a model the router serves, and `[openai] base_url = "https://router.huggingface.co/v1"` (the Hugging Face router's OpenAI-compatible endpoint). The default `base_url` is OpenAI's API.
 
 ```bash
 DROP2MD_ENHANCE_PROVIDER=hf \
