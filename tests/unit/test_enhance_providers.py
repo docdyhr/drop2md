@@ -198,8 +198,95 @@ def test_make_provider_returns_openai():
 def test_make_provider_returns_openai_for_hf():
     from drop2md.enhance_providers import OpenAICompatProvider
 
-    provider = make_provider(_cfg(provider="hf"))
+    cfg = _cfg(provider="hf", api_key="hf-key")
+    cfg.openai.base_url = _HF_URL
+    provider = make_provider(cfg)
     assert isinstance(provider, OpenAICompatProvider)
+
+
+# ─── A provider key only goes to that provider's endpoint ────────────────────
+
+_GOOGLE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+_HF_URL = "https://hf-router.example/v1"
+
+
+@pytest.fixture
+def no_key_env(monkeypatch):
+    for var in ("OPENAI_API_KEY", "GEMINI_API_KEY", "HF_TOKEN"):
+        monkeypatch.delenv(var, raising=False)
+    return monkeypatch
+
+
+@pytest.mark.unit
+@pytest.mark.usefixtures("no_key_env")
+@pytest.mark.parametrize("provider_name", ["gemini", "hf"])
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "https://api.openai.com/v1",  # the [openai] base_url default
+        "https://api.openai.com/v1/",
+        "https://API.OpenAI.com/v1",
+    ],
+)
+def test_gemini_and_hf_refuse_the_openai_endpoint(provider_name, base_url):
+    cfg = _cfg(provider=provider_name, api_key="provider-secret")
+    cfg.openai.base_url = base_url
+    with pytest.raises(ValueError, match="base_url") as exc:
+        make_provider(cfg)
+    assert "provider-secret" not in str(exc.value)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("provider_name", "key_var", "base_url"),
+    [("gemini", "GEMINI_API_KEY", _GOOGLE_URL), ("hf", "HF_TOKEN", _HF_URL)],
+)
+def test_gemini_and_hf_send_their_own_key_to_their_endpoint(
+    no_key_env, provider_name, key_var, base_url
+):
+    no_key_env.setenv(key_var, "own-key")
+    no_key_env.setenv("OPENAI_API_KEY", "openai-key")
+    cfg = _cfg(provider=provider_name)
+    cfg.openai.base_url = base_url
+    provider = make_provider(cfg)
+    assert isinstance(provider, OpenAICompatProvider)
+    assert provider._api_key == "own-key"
+    assert provider._base_url == base_url
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("provider_name", "key_var", "base_url"),
+    [("gemini", "GEMINI_API_KEY", _GOOGLE_URL), ("hf", "HF_TOKEN", _HF_URL)],
+)
+def test_gemini_and_hf_without_their_key_refuse_rather_than_use_openai_key(
+    no_key_env, provider_name, key_var, base_url
+):
+    # An empty key reaches openai.OpenAI(api_key=None), and the SDK then reads
+    # OPENAI_API_KEY and sends it to Google or Hugging Face.
+    no_key_env.setenv("OPENAI_API_KEY", "openai-key")
+    cfg = _cfg(provider=provider_name)
+    cfg.openai.base_url = base_url
+    with pytest.raises(ValueError, match=key_var):
+        make_provider(cfg)
+
+
+@pytest.mark.unit
+def test_openai_provider_does_not_send_gemini_key_to_openai(no_key_env):
+    no_key_env.setenv("GEMINI_API_KEY", "gemini-key")
+    provider = make_provider(_cfg(provider="openai"))  # default base_url: OpenAI
+    assert isinstance(provider, OpenAICompatProvider)
+    assert provider._api_key == ""
+
+
+@pytest.mark.unit
+def test_openai_provider_keeps_gemini_fallback_for_google_endpoint(no_key_env):
+    no_key_env.setenv("GEMINI_API_KEY", "gemini-key")
+    cfg = _cfg(provider="openai")
+    cfg.openai.base_url = _GOOGLE_URL
+    provider = make_provider(cfg)
+    assert isinstance(provider, OpenAICompatProvider)
+    assert provider._api_key == "gemini-key"
 
 
 @pytest.mark.unit

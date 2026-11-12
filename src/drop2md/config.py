@@ -49,7 +49,7 @@ class OllamaConfig:
     model: str = "llava-llama3:8b"
     timeout_seconds: int = 60
     provider: str = "ollama"  # "ollama" | "openai" | "gemini" | "hf"
-    api_key: str = ""  # blank → SDK reads env var (OPENAI_API_KEY etc.)
+    api_key: str = ""  # blank → the provider's own env var (OPENAI_API_KEY, GEMINI_API_KEY or HF_TOKEN)
     validate_tables: bool = (
         True  # set False with slow local models to skip table repair
     )

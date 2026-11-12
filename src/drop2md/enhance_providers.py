@@ -10,11 +10,16 @@ import base64
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, NoReturn, Protocol
+from urllib.parse import urlparse
 
 if TYPE_CHECKING:
     from drop2md.config import Config
 
 log = logging.getLogger(__name__)
+
+# The host of the `[openai] base_url` default. A Gemini or Hugging Face key
+# must never be sent there.
+_OPENAI_API_HOST = "api.openai.com"
 
 
 class AIProvider(Protocol):
@@ -149,12 +154,11 @@ def make_provider(config: Config) -> AIProvider:
         )
 
     if provider_name == "openai":
-        # Fall back to OPENAI_API_KEY, then GEMINI_API_KEY (for Google endpoints)
-        resolved_key = (
-            api_key
-            or os.environ.get("OPENAI_API_KEY", "")
-            or os.environ.get("GEMINI_API_KEY", "")
-        )
+        # Fall back to OPENAI_API_KEY, then GEMINI_API_KEY (for Google endpoints).
+        # The Gemini key is used only when base_url is not OpenAI's own API.
+        resolved_key = api_key or os.environ.get("OPENAI_API_KEY", "")
+        if not resolved_key and not _is_openai_endpoint(config.openai.base_url):
+            resolved_key = os.environ.get("GEMINI_API_KEY", "")
         return OpenAICompatProvider(
             model=config.openai.model,
             base_url=config.openai.base_url,
@@ -165,7 +169,9 @@ def make_provider(config: Config) -> AIProvider:
 
     if provider_name == "gemini":
         # Dedicated Gemini provider — reads GEMINI_API_KEY automatically
-        resolved_key = api_key or os.environ.get("GEMINI_API_KEY", "")
+        resolved_key = _own_endpoint_key(
+            config, provider_name, "GEMINI_API_KEY", api_key
+        )
         return OpenAICompatProvider(
             model=config.openai.model,
             base_url=config.openai.base_url,
@@ -175,7 +181,7 @@ def make_provider(config: Config) -> AIProvider:
 
     if provider_name == "hf":
         # HuggingFace uses HF_TOKEN; the openai SDK won't read it automatically
-        resolved_key = api_key or os.environ.get("HF_TOKEN", "")
+        resolved_key = _own_endpoint_key(config, provider_name, "HF_TOKEN", api_key)
         return OpenAICompatProvider(
             model=config.openai.model,
             base_url=config.openai.base_url,
@@ -187,6 +193,39 @@ def make_provider(config: Config) -> AIProvider:
         f"Unknown enhance provider: {provider_name!r}. "
         "Valid values: 'ollama', 'openai', 'gemini', 'hf'."
     )
+
+
+def _is_openai_endpoint(base_url: str) -> bool:
+    """Return True when *base_url* points at OpenAI's own API host."""
+    return (urlparse(str(base_url)).hostname or "") == _OPENAI_API_HOST
+
+
+def _own_endpoint_key(
+    config: Config, provider_name: str, key_var: str, api_key: str
+) -> str:
+    """Resolve the gemini or hf key, refusing any setup that would send a key elsewhere.
+
+    Both providers read ``[openai] base_url``, whose default is OpenAI's API, so
+    without an override their key would go to OpenAI. And with no key at all,
+    ``OpenAICompatProvider`` passes ``api_key=None``, which makes the openai SDK
+    read ``OPENAI_API_KEY`` and send that to Google or Hugging Face.
+    """
+    import os
+
+    if _is_openai_endpoint(config.openai.base_url):
+        _raise_provider_error(
+            f"provider {provider_name!r} needs [openai] base_url set to its own "
+            f"OpenAI-compatible endpoint; it points at {_OPENAI_API_HOST}, so the "
+            f"{key_var} key would be sent to OpenAI."
+        )
+    resolved_key = api_key or os.environ.get(key_var, "")
+    if not resolved_key:
+        _raise_provider_error(
+            f"provider {provider_name!r} has no API key: set {key_var} (or [ollama] "
+            "api_key / DROP2MD_ENHANCE_API_KEY). Without one the openai client "
+            "would send OPENAI_API_KEY instead."
+        )
+    return resolved_key
 
 
 _warned_provider_errors: set[str] = set()

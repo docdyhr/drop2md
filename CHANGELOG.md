@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Vendored agent skills**: `.claude/skills/` carries 4 skills from github/awesome-copilot at commit `cb64ad1` (`dependabot`, `docs-sync-audit`, `github-actions-hardening`, `test-gap-audit`), byte-identical to upstream with its MIT license, for Claude Code and GitHub Copilot. Repo rules take precedence over them (no PR merges or auto-merge, no installs, report-only audits).
 
+### Security
+
+- **Enhancement API keys only go to their own provider's endpoint.** `gemini` and `hf` read `[openai] base_url`, whose default is OpenAI's API. Without an override, `GEMINI_API_KEY` or `HF_TOKEN` was sent to `api.openai.com`, and the `openai` provider's `GEMINI_API_KEY` fallback was sent there too. With no `gemini`/`hf` key at all, the openai client fell back to `OPENAI_API_KEY` and sent it to Google or Hugging Face. Now `gemini` and `hf` refuse an `api.openai.com` endpoint and a missing key, and the Gemini fallback is used only for a non-OpenAI endpoint. A refused setup disables enhancement with a one-time warning; conversion still runs. A key-less local OpenAI-compatible server used through `hf` now needs any non-empty `HF_TOKEN`.
+
 ### Removed
 
 - **BREAKING: the `claude` enhance provider** (`ClaudeProvider`, the `[claude]` config section and the `drop2md[claude]` extra). It could only authenticate with an Anthropic API key (`ANTHROPIC_API_KEY`). A config with `provider = "claude"` now disables enhancement with a one-time warning naming the remaining providers (`ollama`, `openai`, `gemini`, `hf`); conversion itself still runs, and a leftover `[claude]` section is ignored. `drop2md setup` and `drop2md doctor` no longer offer it.
