@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- **BREAKING: the `claude` enhance provider** (`ClaudeProvider`, the `[claude]` config section and the `drop2md[claude]` extra; `drop2md[all]` no longer installs `anthropic`). It could only authenticate with an Anthropic API key (`ANTHROPIC_API_KEY`). A config with `provider = "claude"` now disables enhancement with a one-time warning naming the remaining providers (`ollama`, `openai`, `gemini`, `hf`); conversion itself still runs, and a leftover `[claude]` section is ignored. `drop2md setup` and `drop2md doctor` no longer offer it.
+- **BREAKING: the `claude` enhance provider** (`ClaudeProvider`, the `[claude]` config section and the `drop2md[claude]` extra; `drop2md[all]` no longer installs `anthropic`). It could only authenticate with an Anthropic API key (`ANTHROPIC_API_KEY`). A config with `provider = "claude"` now disables enhancement with a one-time warning naming the remaining providers (`ollama`, `openai`, `gemini`, `hf`); conversion itself still runs, and a leftover `[claude]` section is ignored. `drop2md setup` no longer offers it, and `drop2md check` reports it as removed.
 
 ### Changed
 
