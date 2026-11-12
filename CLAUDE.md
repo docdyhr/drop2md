@@ -113,9 +113,11 @@ src/drop2md/
 | `DROP2MD_OUTPUT_DIR` | from config | Override output directory |
 | `DROP2MD_OLLAMA_ENABLED` | `false` | Enable AI enhancement (any provider) |
 | `DROP2MD_ENHANCE_PROVIDER` | `ollama` | Enhancement provider: `ollama`, `openai`, `gemini` or `hf` |
-| `DROP2MD_ENHANCE_API_KEY` | unset | Overrides `[ollama] api_key`. If both are empty: `OPENAI_API_KEY` (then `GEMINI_API_KEY`) for `openai`, `GEMINI_API_KEY` for `gemini`, `HF_TOKEN` for `hf`; `ollama` uses no key |
+| `DROP2MD_ENHANCE_API_KEY` | unset | A non-empty value overrides `[ollama] api_key`. If both are empty: `OPENAI_API_KEY` (then `GEMINI_API_KEY`) for `openai`, `GEMINI_API_KEY` for `gemini`, `HF_TOKEN` for `hf`; `ollama` uses no key |
 | `DROP2MD_VAULT_DIR` | unset | Override `[output] vault_dir` |
 | `DROP2MD_LOG_LEVEL` | `INFO` | Log verbosity |
+
+An override applies only when its variable is set to a non-empty value (`config.py`, `_apply_env_overrides`); an empty one leaves the config value in place.
 
 ## Dependency Extras
 
@@ -124,7 +126,7 @@ src/drop2md/
 | (base, no extra) | watchdog, typer, html2text, python-magic, httpx, pdfplumber, mcp[cli], psutil | Always installed |
 | `[pdf-ml]` | marker-pdf, docling | Best PDF quality, needs ~2GB download |
 | `[pdf-light]` | pymupdf4llm | Lightweight PDF alternative |
-| `[office]` | markitdown[docx] | DOCX/PPTX/XLSX support |
+| `[office]` | markitdown[docx] | DOCX. PPTX also needs python-pptx (`[office-images]`); XLSX needs openpyxl and pandas, which no extra declares |
 | `[office-images]` | python-docx, python-pptx | Extract embedded images from DOCX/PPTX |
 | `[ocr]` | pytesseract, Pillow | Image/scanned PDF OCR |
 | `[openai]` | openai | SDK for the `openai`, `gemini` and `hf` enhancement providers |
