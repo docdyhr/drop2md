@@ -374,6 +374,8 @@ Set `[openai] model = "gemini-2.5-flash"` and
 
 ### HuggingFace Inference Router
 
+First set `[openai] model` to a model the router serves, and `[openai] base_url = "https://router.huggingface.co/v1"` (the Hugging Face router's OpenAI-compatible endpoint). The default `base_url` is OpenAI's API.
+
 ```bash
 DROP2MD_ENHANCE_PROVIDER=hf \
 DROP2MD_OLLAMA_ENABLED=true \
@@ -412,9 +414,9 @@ block CI.
 ### API key resolution order
 
 For each provider, keys are resolved in this order:
-1. `api_key` field in `[ollama]` section of `config.toml`
-2. `DROP2MD_ENHANCE_API_KEY` environment variable
-3. Provider native env var: `OPENAI_API_KEY` / `GEMINI_API_KEY` / `HF_TOKEN`
+1. `DROP2MD_ENHANCE_API_KEY` environment variable, when set to a non-empty value (it overrides the config field; an empty value is ignored)
+2. `api_key` field in `[ollama]` section of `config.toml`
+3. Provider native env var: `OPENAI_API_KEY`, then `GEMINI_API_KEY` (`openai`); `GEMINI_API_KEY` (`gemini`); `HF_TOKEN` (`hf`)
 
 ---
 
@@ -469,8 +471,8 @@ pytest
 # 2. Lint
 ruff check src/ tests/
 
-# 3. Type check
-mypy src/
+# 3. Type check (the command CI runs)
+mypy --package drop2md --ignore-missing-imports
 
 # 4. Security audit
 bandit -r src/

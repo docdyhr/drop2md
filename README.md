@@ -204,6 +204,9 @@ Four providers are supported (the API-key-only `claude` provider was removed):
 | `ollama` | `llava-llama3:8b` (default) | — | Free, local, private |
 | `openai` | `gpt-4o-mini` | `OPENAI_API_KEY` | Best speed and cost |
 | `gemini` | `gemini-2.5-flash` | `GEMINI_API_KEY` | Free tier available |
+| `hf` | set `[openai] model` | `HF_TOKEN` | Hugging Face models through the OpenAI-compatible client |
+
+`openai`, `gemini` and `hf` all use the OpenAI-compatible client and read their model and endpoint from `[openai]`. `[openai] base_url` defaults to OpenAI's API, so for `gemini` and `hf` set it to that provider's OpenAI-compatible endpoint (Gemini: `https://generativelanguage.googleapis.com/v1beta/openai/`; Hugging Face: `https://router.huggingface.co/v1`).
 
 ```toml
 [ollama]
@@ -215,7 +218,7 @@ model    = "llava-llama3:8b" # ollama pull llava-llama3:8b
 enabled = true               # enable the Visual Enhancement Pipeline
 ```
 
-API keys are resolved in order: `api_key` field in config → `DROP2MD_ENHANCE_API_KEY` env var → provider-native env var.
+API keys are resolved in order: `DROP2MD_ENHANCE_API_KEY` (when set to a non-empty value) → `api_key` in `[ollama]` → the provider's own variable (`OPENAI_API_KEY`, then `GEMINI_API_KEY`, for `openai`; `GEMINI_API_KEY` for `gemini`; `HF_TOKEN` for `hf`).
 
 All providers fall back gracefully — a missing key or offline service never blocks conversion.
 

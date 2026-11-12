@@ -13,21 +13,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- **BREAKING: the `claude` enhance provider** (`ClaudeProvider`, the `[claude]` config section and the `drop2md[claude]` extra). It could only authenticate with an Anthropic API key (`ANTHROPIC_API_KEY`). A config with `provider = "claude"` now disables enhancement with a one-time warning naming the remaining providers (`ollama`, `openai`, `gemini`, `hf`); conversion itself still runs, and a leftover `[claude]` section is ignored. `drop2md setup` and `drop2md doctor` no longer offer it.
+- **BREAKING: the `claude` enhance provider** (`ClaudeProvider`, the `[claude]` config section and the `drop2md[claude]` extra; `drop2md[all]` no longer installs `anthropic`). It could only authenticate with an Anthropic API key (`ANTHROPIC_API_KEY`). A config with `provider = "claude"` now disables enhancement with a one-time warning naming the remaining providers (`ollama`, `openai`, `gemini`, `hf`); conversion itself still runs, and a leftover `[claude]` section is ignored. `drop2md setup` no longer offers it, and `drop2md check` reports it as removed.
 
 ### Changed
 
 - **Migrated MCP server to `mcp` 2.0.0** — `mcp.server.fastmcp.FastMCP` was removed and replaced with `mcp.server.mcpserver.MCPServer` in `mcp` 2.0.0. `src/drop2md/mcp_server.py` now imports `MCPServer`; tool/resource registration and `.run(transport="stdio")` are unchanged since the new class is API-compatible for the subset drop2md uses. Removes the temporary `mcp<2.0.0` pin.
 
+### Fixed
+
+- **mypy targets Python 3.12** (`python_version = "3.12"`, was `3.11`). numpy's stubs use the PEP 695 `type` statement, which mypy refuses to parse when targeting 3.11, so type-checking failed. CI still runs the test suite on Python 3.11, 3.12 and 3.13.
+- The OCR test now skips instead of failing when tesseract cannot run (for example from a sandboxed temp directory), and the Ollama integration tests skip when the model cannot generate a response.
+
 ### CI
 
 - **PyPI publishing** — `publish.yml` builds the package and publishes it to PyPI with trusted publishing (OIDC, GitHub environment `pypi`) on every `vX.Y.Z` tag. It was added after 1.0.1, so the next release tag is its first run.
+- **Pin-parity test** — `tests/unit/test_pin_parity.py` fails the `test` job when ruff's or mypy's version in `pyproject.toml` disagrees with the tool's pre-commit hook `rev`, with a `ruff==`/`mypy==` pin in a workflow, or between extras (exact pins by equality, ranges such as `mypy>=1.20.0` by specifier). A Dependabot bump that moves only `pyproject.toml` now fails CI, as Dependabot's ruff 0.17.4 PR did (#62, replaced by #63).
 
 ### Dependencies
 
-- `mcp[cli]` ≥ 1.27.0,<2.0.0 → ≥ 2.0.0
-- `ruff` 0.15.12 → 0.17.2; the `ruff-pre-commit` hook `rev` updated to match (it had stayed at v0.15.12, so local commits were linted and formatted by an older ruff than CI). At this `rev` the `ruff-format` hook also formats Python code blocks in Markdown files (a ruff ≥ 0.16 default), and the lint hook uses its current id, `ruff-check`.
-- GitHub Actions: `actions/checkout` 6 → 7, `actions/setup-python` 6 → 7, `codecov/codecov-action` 6 → 7, `github/codeql-action` v4 → v4.39.1
+- `mcp[cli]` ≥ 1.27.0 → ≥ 2.0.0
+- `ruff` 0.15.12 → 0.17.4; the `ruff-pre-commit` hook `rev` updated to match (it had stayed at v0.15.12, so local commits were linted and formatted by an older ruff than CI; the 0.17.3 bump left it behind once more until it was realigned by hand; the pin-parity test above now turns that drift into a CI failure). At this `rev` the `ruff-format` hook also formats Python code blocks in Markdown files, and the lint hook uses its current id, `ruff-check`.
+- GitHub Actions: `actions/checkout` 6 → 7, `actions/setup-python` 6 → 7, `codecov/codecov-action` 6 → 7, `github/codeql-action` v4 → v4.39.3
 
 ## [1.0.1] — 2026-05-04
 
