@@ -471,8 +471,8 @@ pytest
 # 2. Lint
 ruff check src/ tests/
 
-# 3. Type check
-mypy src/
+# 3. Type check (the command CI runs)
+mypy --package drop2md --ignore-missing-imports
 
 # 4. Security audit
 bandit -r src/

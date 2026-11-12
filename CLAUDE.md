@@ -57,7 +57,7 @@ pytest -k test_pdf      # run tests matching pattern
 # Lint and type-check
 ruff check src/ tests/
 ruff format src/ tests/
-mypy src/
+mypy --package drop2md --ignore-missing-imports   # as CI runs it; a bare `mypy src/` errors here
 
 # Security audit
 bandit -r src/
