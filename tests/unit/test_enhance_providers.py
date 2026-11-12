@@ -229,6 +229,7 @@ def no_key_env(monkeypatch):
         "https://eu.api.openai.com/v1",  # OpenAI's EU data-residency host
         "https://api．openai．com/v1",  # fullwidth dots, folded by IDNA
         "https://api.openai.com./v1",  # trailing dot
+        "https://api.openai.com。/v1",  # ideographic full stop as trailing dot
     ],
 )
 def test_gemini_and_hf_refuse_the_openai_endpoint(provider_name, base_url):
@@ -320,7 +321,6 @@ def test_gemini_and_hf_refuse_the_other_vendors_endpoint(
         ("hf", "HF_TOKEN", "http://localhost:8080/v1"),  # self-hosted server
         ("hf", "HF_TOKEN", "https://router.huggingface.co/v1"),
         ("gemini", "GEMINI_API_KEY", "https://llm-gateway.internal.example/v1"),
-        ("gemini", "GEMINI_API_KEY", "https://[bad/v1"),  # no parseable host
     ],
 )
 def test_gemini_and_hf_allow_own_and_self_hosted_endpoints(
@@ -335,6 +335,26 @@ def test_gemini_and_hf_allow_own_and_self_hosted_endpoints(
 
 
 @pytest.mark.unit
+@pytest.mark.usefixtures("no_key_env")
+@pytest.mark.parametrize("provider_name", ["gemini", "hf"])
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "https://[bad/v1",  # unparseable
+        "generativelanguage.googleapis.com/v1beta/openai/",  # no scheme
+        "",
+    ],
+)
+def test_gemini_and_hf_refuse_a_base_url_without_a_host(provider_name, base_url):
+    # Every call would fail with only a debug log; refuse it with a warning instead.
+    cfg = _cfg(provider=provider_name, api_key="provider-secret")
+    cfg.openai.base_url = base_url
+    with pytest.raises(ValueError, match="full URL") as exc:
+        make_provider(cfg)
+    assert "provider-secret" not in str(exc.value)
+
+
+@pytest.mark.unit
 def test_openai_provider_prefers_gemini_key_at_google_endpoint(no_key_env):
     no_key_env.setenv("OPENAI_API_KEY", "openai-key")
     no_key_env.setenv("GEMINI_API_KEY", "gemini-key")
@@ -343,6 +363,17 @@ def test_openai_provider_prefers_gemini_key_at_google_endpoint(no_key_env):
     provider = make_provider(cfg)
     assert isinstance(provider, OpenAICompatProvider)
     assert provider._api_key == "gemini-key"
+
+
+@pytest.mark.unit
+def test_openai_provider_prefers_hf_token_at_hugging_face_endpoint(no_key_env):
+    no_key_env.setenv("OPENAI_API_KEY", "openai-key")
+    no_key_env.setenv("HF_TOKEN", "hf-token")
+    cfg = _cfg(provider="openai")
+    cfg.openai.base_url = "https://router.huggingface.co/v1"
+    provider = make_provider(cfg)
+    assert isinstance(provider, OpenAICompatProvider)
+    assert provider._api_key == "hf-token"
 
 
 @pytest.mark.unit

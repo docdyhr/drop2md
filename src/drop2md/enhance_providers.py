@@ -25,7 +25,12 @@ _VENDOR_DOMAINS: dict[str, tuple[str, ...]] = {
     "hf": ("huggingface.co", "huggingface.cloud"),
 }
 _VENDOR_NAMES = {"openai": "OpenAI", "gemini": "Google", "hf": "Hugging Face"}
-_GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+# Each vendor's own key variable, and the OpenAI-compatible endpoint to suggest.
+_VENDOR_KEY_VARS = {"gemini": "GEMINI_API_KEY", "hf": "HF_TOKEN"}
+_PROVIDER_BASE_URLS = {
+    "gemini": "https://generativelanguage.googleapis.com/v1beta/openai/",
+    "hf": "https://router.huggingface.co/v1",
+}
 
 
 class AIProvider(Protocol):
@@ -160,11 +165,13 @@ def make_provider(config: Config) -> AIProvider:
         )
 
     if provider_name == "openai":
-        # GEMINI_API_KEY is used only for Google's endpoint, where it comes before
-        # OPENAI_API_KEY; elsewhere only OPENAI_API_KEY is read.
+        # At Google's or Hugging Face's endpoint that vendor's own variable
+        # (GEMINI_API_KEY / HF_TOKEN) comes before OPENAI_API_KEY; elsewhere only
+        # OPENAI_API_KEY is read.
         resolved_key = api_key
-        if not resolved_key and _endpoint_vendor(config.openai.base_url) == "gemini":
-            resolved_key = os.environ.get("GEMINI_API_KEY", "")
+        own_var = _VENDOR_KEY_VARS.get(_endpoint_vendor(config.openai.base_url))
+        if not resolved_key and own_var:
+            resolved_key = os.environ.get(own_var, "")
         if not resolved_key:
             resolved_key = os.environ.get("OPENAI_API_KEY", "")
         return OpenAICompatProvider(
@@ -209,12 +216,13 @@ def _endpoint_host(base_url: str) -> str:
         host = urlparse(str(base_url).strip()).hostname or ""
     except ValueError:  # e.g. an unbalanced IPv6 bracket
         return ""
-    host = host.rstrip(".")
     try:
-        host = host.encode("idna").decode("ascii")  # folds e.g. fullwidth dots
+        # Folds fullwidth and ideographic dots to "." (a trailing one included),
+        # so the trailing dot is stripped afterwards.
+        host = host.encode("idna").decode("ascii")
     except UnicodeError:
         pass
-    return host.lower()
+    return host.rstrip(".").lower()
 
 
 def _endpoint_vendor(base_url: str) -> str:
@@ -234,22 +242,28 @@ def _own_endpoint_key(
     Both providers read ``[openai] base_url``, whose default is OpenAI's API, so
     without an override their key would go to OpenAI, and a base_url left over
     from the other provider would send it to that vendor. A self-hosted or proxy
-    endpoint (no known vendor domain) is allowed. With no key at all,
+    endpoint (no known vendor domain) is allowed; only these four domains are
+    recognised, so another hosted API counts as self-hosted. A base_url with no
+    host (no scheme, or unparseable) is refused. With no key at all,
     ``OpenAICompatProvider`` would pass ``api_key=None``, which makes the openai
     SDK read ``OPENAI_API_KEY`` and send that instead, so a missing key is refused.
     """
     import os
 
-    vendor = _endpoint_vendor(config.openai.base_url)
-    if vendor and vendor != provider_name:
-        hint = (
-            f" For Gemini, use {_GEMINI_BASE_URL}" if provider_name == "gemini" else ""
+    base_url = config.openai.base_url
+    own_url = _PROVIDER_BASE_URLS[provider_name]
+    if not _endpoint_host(base_url):
+        _raise_provider_error(
+            f"provider {provider_name!r} needs [openai] base_url set to the full URL "
+            f"(with https://) of its OpenAI-compatible endpoint, e.g. {own_url}"
         )
+    vendor = _endpoint_vendor(base_url)
+    if vendor and vendor != provider_name:
         _raise_provider_error(
             f"provider {provider_name!r} needs [openai] base_url set to its own "
             f"OpenAI-compatible endpoint, but its host belongs to "
             f"{_VENDOR_NAMES[vendor]}, so {key_var} would be sent to "
-            f"{_VENDOR_NAMES[vendor]}.{hint}"
+            f"{_VENDOR_NAMES[vendor]}. Use e.g. {own_url}"
         )
     resolved_key = api_key or os.environ.get(key_var, "")
     if not resolved_key:

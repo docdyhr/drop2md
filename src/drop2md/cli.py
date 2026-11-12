@@ -733,11 +733,13 @@ def check(
             env_key = "OPENAI_API_KEY" if provider == "openai" else "GEMINI_API_KEY"
             api_key = getattr(cfg.ollama, "api_key", "") or os.environ.get(env_key, "")
             if not api_key and provider == "openai":
-                # make_provider also reads GEMINI_API_KEY for Google's endpoint
-                from drop2md.enhance_providers import _endpoint_vendor
+                # make_provider also reads GEMINI_API_KEY / HF_TOKEN at Google's /
+                # Hugging Face's endpoint
+                from drop2md.enhance_providers import _VENDOR_KEY_VARS, _endpoint_vendor
 
-                if _endpoint_vendor(cfg.openai.base_url) == "gemini":
-                    api_key = os.environ.get("GEMINI_API_KEY", "")
+                own_var = _VENDOR_KEY_VARS.get(_endpoint_vendor(cfg.openai.base_url))
+                if own_var:
+                    api_key = os.environ.get(own_var, "")
             if api_key:
                 _ok(f"API key      (set — model: {cfg.openai.model})")
                 _check_provider_endpoint(cfg, _ok, _fail)

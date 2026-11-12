@@ -135,6 +135,17 @@ polish_text = false
 # [visual]
 # enabled = true
 
+# ── Hugging Face (Inference Providers router) ────────────────────────────────
+# [ollama]
+# enabled = true
+# provider = "hf"
+# api_key = ""                     # or set HF_TOKEN env var
+#
+# [openai]
+# model = "<a vision model id the router serves>"
+# base_url = "https://router.huggingface.co/v1"
+# timeout_seconds = 60
+
 # ── ChatGPT reasoning model example ──────────────────────────────────────────
 # [ollama]
 # enabled = true

@@ -14,10 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - **Enhancement keys are no longer sent to another vendor's API.**
-  - **What leaked:** `gemini` and `hf` read `[openai] base_url`, whose default is OpenAI's API. So `GEMINI_API_KEY` or `HF_TOKEN` went to OpenAI, or to the other vendor when `base_url` was left over from a provider switch. With no `gemini`/`hf` key, the openai client sent `OPENAI_API_KEY` to Google or Hugging Face. The `openai` provider sent its `GEMINI_API_KEY` fallback to any non-OpenAI endpoint.
-  - **The fix:** `gemini` and `hf` now refuse a `base_url` on another known vendor's domains (`openai.com`, `googleapis.com`, `huggingface.co`, `huggingface.cloud`, checked after case, trailing-dot and IDNA normalisation), and they refuse a missing key. Self-hosted and proxy endpoints are still accepted. The `openai` provider uses `GEMINI_API_KEY` only for Google's endpoint, where it comes before `OPENAI_API_KEY`.
-  - **When a setup is refused:** enhancement is disabled with a one-time warning, conversion still runs, and `drop2md check` now reports the refused endpoint. `drop2md setup` reminds gemini/hf users to set `[openai] base_url`.
-  - **Not covered:** a key in `[ollama] api_key` or `DROP2MD_ENHANCE_API_KEY` is sent to whatever endpoint is configured. The `openai` provider still sends `OPENAI_API_KEY` to a non-OpenAI endpoint when that is the only key set.
+  - **What leaked:** `gemini` and `hf` read `[openai] base_url`, whose default is OpenAI's API. So `GEMINI_API_KEY` or `HF_TOKEN` went to OpenAI, or to the other vendor when `base_url` was left over from a provider switch. With no `gemini`/`hf` key, the openai client sent `OPENAI_API_KEY` to Google or Hugging Face. When `OPENAI_API_KEY` was unset, the `openai` provider sent `GEMINI_API_KEY` to whatever endpoint was configured, OpenAI's default included.
+  - **The fix:** `gemini` and `hf` now refuse a `base_url` on another known vendor's domains (`openai.com`, `googleapis.com`, `huggingface.co`, `huggingface.cloud`, checked after case, trailing-dot and IDNA normalisation). They also refuse a `base_url` with no host and a missing key. Self-hosted and proxy endpoints are still accepted. At Google's or Hugging Face's endpoint, the `openai` provider reads that vendor's own variable (`GEMINI_API_KEY`, `HF_TOKEN`) before `OPENAI_API_KEY`. Anywhere else it reads only `OPENAI_API_KEY`.
+  - **When a setup is refused:** enhancement is disabled with a one-time warning, and conversion still runs. `drop2md check` now reports the refused endpoint, and `drop2md setup` reminds gemini/hf users to set `[openai] base_url`. `config.toml.example` gains a Hugging Face section with the router URL.
+  - **Not covered:**
+    - A key in `[ollama] api_key` or `DROP2MD_ENHANCE_API_KEY` is sent to whatever endpoint is configured.
+    - The `openai` provider sends `OPENAI_API_KEY` to any non-OpenAI endpoint where the vendor's own variable is unset.
+    - Only the four domains above are recognised. Another hosted API (Azure OpenAI, OpenRouter, a Hugging Face Space) counts as self-hosted, so a `gemini`/`hf` key can still reach one after a provider switch that leaves `base_url` pointing at it.
   - **Key-less local servers:** set `[ollama] api_key = "unused"` for one used through `gemini` or `hf`.
 
 ### Removed

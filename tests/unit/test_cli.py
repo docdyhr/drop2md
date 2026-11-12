@@ -384,6 +384,19 @@ def test_check_ollama_reachable(tmp_path):
             "https://generativelanguage.googleapis.com/v1beta/openai/",
             "endpoint     (refused)",
         ),
+        # openai provider: the vendor's own variable counts at its endpoint
+        (
+            "openai",
+            "GEMINI_API_KEY",
+            "https://generativelanguage.googleapis.com/v1beta/openai/",
+            "endpoint     (accepted)",
+        ),
+        (
+            "openai",
+            "HF_TOKEN",
+            "https://router.huggingface.co/v1",
+            "endpoint     (accepted)",
+        ),
     ],
 )
 def test_check_reports_the_endpoint_enhancement_would_refuse(
