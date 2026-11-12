@@ -5,13 +5,17 @@ from __future__ import annotations
 import shutil
 import sys
 import uuid
+from collections.abc import Callable
 from importlib.resources import files as _res_files
 from pathlib import Path
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 import typer
 
 from drop2md import __version__
+
+if TYPE_CHECKING:
+    from drop2md.config import Config
 
 app = typer.Typer(
     name="drop2md",
@@ -371,6 +375,12 @@ def setup(
         typer.echo(
             f"  Set {env_var} in your shell environment — keys are never stored in config."
         )
+        if provider in ("gemini", "hf"):
+            typer.echo(
+                "  Also add an [openai] section with model and base_url set to the "
+                "provider's OpenAI-compatible endpoint (see config.toml.example): "
+                "the default base_url is OpenAI's, which this provider refuses."
+            )
         enable_vep = typer.confirm(
             "Enable Visual Enhancement Pipeline (VEP)?", default=True
         )
@@ -448,6 +458,24 @@ file = "~/Library/Logs/drop2md/drop2md.log"
 
     typer.echo("")
     typer.echo("Setup complete. Run `drop2md check` to validate your configuration.")
+
+
+def _check_provider_endpoint(
+    cfg: Config, ok: Callable[..., None], fail: Callable[..., None]
+) -> None:
+    """Report whether make_provider accepts the configured endpoint and key.
+
+    Uses the same rules as conversion, so `check` cannot pass a setup that
+    enhancement then refuses. The refusal messages carry no key or base_url.
+    """
+    from drop2md.enhance_providers import make_provider
+
+    try:
+        make_provider(cfg)
+    except ValueError as exc:
+        fail("endpoint     (refused)", str(exc))
+    else:
+        ok("endpoint     (accepted)")
 
 
 @app.command()
@@ -704,8 +732,15 @@ def check(
                 _fail("openai       (not installed)", "pip install drop2md[openai]")
             env_key = "OPENAI_API_KEY" if provider == "openai" else "GEMINI_API_KEY"
             api_key = getattr(cfg.ollama, "api_key", "") or os.environ.get(env_key, "")
+            if not api_key and provider == "openai":
+                # make_provider also reads GEMINI_API_KEY for Google's endpoint
+                from drop2md.enhance_providers import _endpoint_vendor
+
+                if _endpoint_vendor(cfg.openai.base_url) == "gemini":
+                    api_key = os.environ.get("GEMINI_API_KEY", "")
             if api_key:
                 _ok(f"API key      (set — model: {cfg.openai.model})")
+                _check_provider_endpoint(cfg, _ok, _fail)
             else:
                 _fail(f"API key      ({env_key} not set)", f"export {env_key}=...")
 
@@ -721,6 +756,7 @@ def check(
             )
             if api_key:
                 _ok(f"HF_TOKEN     (set — model: {cfg.openai.model})")
+                _check_provider_endpoint(cfg, _ok, _fail)
             else:
                 _fail("HF_TOKEN     (not set)", "export HF_TOKEN=hf_...")
 

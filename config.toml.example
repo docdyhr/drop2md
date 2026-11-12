@@ -47,10 +47,12 @@ language = "eng"
 enabled = false
 # Provider: "ollama" | "openai" | "gemini" | "hf"
 provider = "ollama"
-# API key — blank means the SDK reads the env var automatically:
-#   openai  → OPENAI_API_KEY
-#   gemini  → GEMINI_API_KEY or GOOGLE_API_KEY
+# API key — blank means drop2md reads the provider's own env var:
+#   openai  → OPENAI_API_KEY (GEMINI_API_KEY first when base_url is Google's)
+#   gemini  → GEMINI_API_KEY
 #   hf      → HF_TOKEN
+# gemini and hf also need [openai] base_url set to their own endpoint (see below);
+# a base_url on another vendor's domain is refused, so a key never reaches it.
 api_key = ""
 base_url = "http://localhost:11434"
 # Default vision model for local Ollama. Pull with: ollama pull llava-llama3:8b

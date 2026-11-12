@@ -17,9 +17,15 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-# The host of the `[openai] base_url` default. A Gemini or Hugging Face key
-# must never be sent there.
-_OPENAI_API_HOST = "api.openai.com"
+# Domains each vendor serves its API from. A provider's key is never sent to
+# another vendor's domains; `[openai] base_url` defaults to OpenAI's.
+_VENDOR_DOMAINS: dict[str, tuple[str, ...]] = {
+    "openai": ("openai.com",),
+    "gemini": ("googleapis.com",),
+    "hf": ("huggingface.co", "huggingface.cloud"),
+}
+_VENDOR_NAMES = {"openai": "OpenAI", "gemini": "Google", "hf": "Hugging Face"}
+_GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 
 
 class AIProvider(Protocol):
@@ -154,11 +160,13 @@ def make_provider(config: Config) -> AIProvider:
         )
 
     if provider_name == "openai":
-        # Fall back to OPENAI_API_KEY, then GEMINI_API_KEY (for Google endpoints).
-        # The Gemini key is used only when base_url is not OpenAI's own API.
-        resolved_key = api_key or os.environ.get("OPENAI_API_KEY", "")
-        if not resolved_key and not _is_openai_endpoint(config.openai.base_url):
+        # GEMINI_API_KEY is used only for Google's endpoint, where it comes before
+        # OPENAI_API_KEY; elsewhere only OPENAI_API_KEY is read.
+        resolved_key = api_key
+        if not resolved_key and _endpoint_vendor(config.openai.base_url) == "gemini":
             resolved_key = os.environ.get("GEMINI_API_KEY", "")
+        if not resolved_key:
+            resolved_key = os.environ.get("OPENAI_API_KEY", "")
         return OpenAICompatProvider(
             model=config.openai.model,
             base_url=config.openai.base_url,
@@ -195,35 +203,59 @@ def make_provider(config: Config) -> AIProvider:
     )
 
 
-def _is_openai_endpoint(base_url: str) -> bool:
-    """Return True when *base_url* points at OpenAI's own API host."""
-    return (urlparse(str(base_url)).hostname or "") == _OPENAI_API_HOST
+def _endpoint_host(base_url: str) -> str:
+    """Return the normalised host of *base_url*, or '' when it has none."""
+    try:
+        host = urlparse(str(base_url).strip()).hostname or ""
+    except ValueError:  # e.g. an unbalanced IPv6 bracket
+        return ""
+    host = host.rstrip(".")
+    try:
+        host = host.encode("idna").decode("ascii")  # folds e.g. fullwidth dots
+    except UnicodeError:
+        pass
+    return host.lower()
+
+
+def _endpoint_vendor(base_url: str) -> str:
+    """Return the vendor whose domains serve *base_url* ('openai', 'gemini', 'hf'), else ''."""
+    host = _endpoint_host(base_url)
+    for vendor, domains in _VENDOR_DOMAINS.items():
+        if any(host == d or host.endswith("." + d) for d in domains):
+            return vendor
+    return ""
 
 
 def _own_endpoint_key(
     config: Config, provider_name: str, key_var: str, api_key: str
 ) -> str:
-    """Resolve the gemini or hf key, refusing any setup that would send a key elsewhere.
+    """Resolve the gemini or hf key, refusing a base_url on another vendor's domains.
 
     Both providers read ``[openai] base_url``, whose default is OpenAI's API, so
-    without an override their key would go to OpenAI. And with no key at all,
-    ``OpenAICompatProvider`` passes ``api_key=None``, which makes the openai SDK
-    read ``OPENAI_API_KEY`` and send that to Google or Hugging Face.
+    without an override their key would go to OpenAI, and a base_url left over
+    from the other provider would send it to that vendor. A self-hosted or proxy
+    endpoint (no known vendor domain) is allowed. With no key at all,
+    ``OpenAICompatProvider`` would pass ``api_key=None``, which makes the openai
+    SDK read ``OPENAI_API_KEY`` and send that instead, so a missing key is refused.
     """
     import os
 
-    if _is_openai_endpoint(config.openai.base_url):
+    vendor = _endpoint_vendor(config.openai.base_url)
+    if vendor and vendor != provider_name:
+        hint = (
+            f" For Gemini, use {_GEMINI_BASE_URL}" if provider_name == "gemini" else ""
+        )
         _raise_provider_error(
             f"provider {provider_name!r} needs [openai] base_url set to its own "
-            f"OpenAI-compatible endpoint; it points at {_OPENAI_API_HOST}, so the "
-            f"{key_var} key would be sent to OpenAI."
+            f"OpenAI-compatible endpoint, but its host belongs to "
+            f"{_VENDOR_NAMES[vendor]}, so {key_var} would be sent to "
+            f"{_VENDOR_NAMES[vendor]}.{hint}"
         )
     resolved_key = api_key or os.environ.get(key_var, "")
     if not resolved_key:
         _raise_provider_error(
             f"provider {provider_name!r} has no API key: set {key_var} (or [ollama] "
-            "api_key / DROP2MD_ENHANCE_API_KEY). Without one the openai client "
-            "would send OPENAI_API_KEY instead."
+            "api_key). Without one the openai client would send OPENAI_API_KEY instead."
         )
     return resolved_key
 

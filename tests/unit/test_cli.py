@@ -368,6 +368,53 @@ def test_check_ollama_reachable(tmp_path):
 
 
 @pytest.mark.unit
+@pytest.mark.parametrize(
+    ("provider", "key_var", "base_url", "expected"),
+    [
+        ("gemini", "GEMINI_API_KEY", None, "endpoint     (refused)"),  # OpenAI default
+        (
+            "gemini",
+            "GEMINI_API_KEY",
+            "https://generativelanguage.googleapis.com/v1beta/openai/",
+            "endpoint     (accepted)",
+        ),
+        (
+            "hf",
+            "HF_TOKEN",
+            "https://generativelanguage.googleapis.com/v1beta/openai/",
+            "endpoint     (refused)",
+        ),
+    ],
+)
+def test_check_reports_the_endpoint_enhancement_would_refuse(
+    tmp_path, monkeypatch, provider, key_var, base_url, expected
+):
+    """`check` applies make_provider's rules, so it cannot pass a refused setup."""
+    for var in (
+        "OPENAI_API_KEY",
+        "GEMINI_API_KEY",
+        "HF_TOKEN",
+        "DROP2MD_ENHANCE_API_KEY",
+        "DROP2MD_ENHANCE_PROVIDER",
+        "DROP2MD_OLLAMA_ENABLED",
+    ):
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setenv(key_var, "provider-secret")
+    cfg = _check_config(tmp_path, ollama_enabled=True)
+    extra = f'provider = "{provider}"\n'
+    if base_url:
+        extra += f'[openai]\nbase_url = "{base_url}"\n'
+    cfg.write_text(cfg.read_text() + extra)
+    with ExitStack() as stack:
+        for p in _converter_patches():
+            stack.enter_context(p)
+        stack.enter_context(patch("subprocess.run", return_value=_launchctl_result()))
+        result = runner.invoke(app, ["check", "--config", str(cfg)])
+    assert expected in result.output, result.output
+    assert "provider-secret" not in result.output
+
+
+@pytest.mark.unit
 def test_check_ollama_unreachable(tmp_path):
     """Ollama enabled but unreachable → _fail → exit 1."""
     cfg = _check_config(tmp_path, ollama_enabled=True)

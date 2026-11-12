@@ -226,6 +226,9 @@ def no_key_env(monkeypatch):
         "https://api.openai.com/v1",  # the [openai] base_url default
         "https://api.openai.com/v1/",
         "https://API.OpenAI.com/v1",
+        "https://eu.api.openai.com/v1",  # OpenAI's EU data-residency host
+        "https://api．openai．com/v1",  # fullwidth dots, folded by IDNA
+        "https://api.openai.com./v1",  # trailing dot
     ],
 )
 def test_gemini_and_hf_refuse_the_openai_endpoint(provider_name, base_url):
@@ -287,6 +290,112 @@ def test_openai_provider_keeps_gemini_fallback_for_google_endpoint(no_key_env):
     provider = make_provider(cfg)
     assert isinstance(provider, OpenAICompatProvider)
     assert provider._api_key == "gemini-key"
+
+
+@pytest.mark.unit
+@pytest.mark.usefixtures("no_key_env")
+@pytest.mark.parametrize(
+    ("provider_name", "base_url", "vendor"),
+    [
+        ("gemini", "https://router.huggingface.co/v1", "Hugging Face"),
+        ("gemini", "https://x.endpoints.huggingface.cloud/v1", "Hugging Face"),
+        ("hf", _GOOGLE_URL, "Google"),
+    ],
+)
+def test_gemini_and_hf_refuse_the_other_vendors_endpoint(
+    provider_name, base_url, vendor
+):
+    # A base_url left over from the other provider would send this key there.
+    cfg = _cfg(provider=provider_name, api_key="provider-secret")
+    cfg.openai.base_url = base_url
+    with pytest.raises(ValueError, match=f"sent to {vendor}") as exc:
+        make_provider(cfg)
+    assert "provider-secret" not in str(exc.value)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("provider_name", "key_var", "base_url"),
+    [
+        ("hf", "HF_TOKEN", "http://localhost:8080/v1"),  # self-hosted server
+        ("hf", "HF_TOKEN", "https://router.huggingface.co/v1"),
+        ("gemini", "GEMINI_API_KEY", "https://llm-gateway.internal.example/v1"),
+        ("gemini", "GEMINI_API_KEY", "https://[bad/v1"),  # no parseable host
+    ],
+)
+def test_gemini_and_hf_allow_own_and_self_hosted_endpoints(
+    no_key_env, provider_name, key_var, base_url
+):
+    no_key_env.setenv(key_var, "own-key")
+    cfg = _cfg(provider=provider_name)
+    cfg.openai.base_url = base_url
+    provider = make_provider(cfg)
+    assert isinstance(provider, OpenAICompatProvider)
+    assert provider._api_key == "own-key"
+
+
+@pytest.mark.unit
+def test_openai_provider_prefers_gemini_key_at_google_endpoint(no_key_env):
+    no_key_env.setenv("OPENAI_API_KEY", "openai-key")
+    no_key_env.setenv("GEMINI_API_KEY", "gemini-key")
+    cfg = _cfg(provider="openai")
+    cfg.openai.base_url = _GOOGLE_URL
+    provider = make_provider(cfg)
+    assert isinstance(provider, OpenAICompatProvider)
+    assert provider._api_key == "gemini-key"
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "https://router.huggingface.co/v1",
+        "http://localhost:4000/v1",
+        "https://openrouter.ai/api/v1",
+    ],
+)
+def test_openai_provider_sends_gemini_key_only_to_google(no_key_env, base_url):
+    no_key_env.setenv("GEMINI_API_KEY", "gemini-key")
+    cfg = _cfg(provider="openai")
+    cfg.openai.base_url = base_url
+    provider = make_provider(cfg)
+    assert isinstance(provider, OpenAICompatProvider)
+    assert provider._api_key == ""
+
+
+@pytest.mark.unit
+@pytest.mark.usefixtures("no_key_env")
+def test_endpoint_refusal_warns_once(caplog):
+    import drop2md.enhance_providers as ep
+
+    ep._warned_provider_errors.clear()
+    cfg = _cfg(provider="gemini", api_key="provider-secret")  # default: OpenAI
+    with caplog.at_level("WARNING", logger="drop2md.enhance_providers"):
+        for _ in range(3):
+            with pytest.raises(ValueError):
+                make_provider(cfg)
+    warnings = [
+        r for r in caplog.records if "AI enhancement disabled" in r.getMessage()
+    ]
+    assert len(warnings) == 1
+    assert "provider-secret" not in warnings[0].getMessage()
+
+
+@pytest.mark.unit
+def test_gemini_key_reaches_the_sdk_with_googles_base_url(no_key_env):
+    pytest.importorskip("openai", reason="openai package not installed")
+    no_key_env.setenv("GEMINI_API_KEY", "gemini-key")
+    no_key_env.setenv("OPENAI_API_KEY", "openai-key")
+    cfg = _cfg(provider="gemini")
+    cfg.openai.base_url = _GOOGLE_URL
+    provider = make_provider(cfg)
+    choice = MagicMock()
+    choice.message.content = "ok"
+    with patch("openai.OpenAI") as client:
+        client.return_value.chat.completions.create.return_value.choices = [choice]
+        assert provider.generate("hi") == "ok"
+    assert client.call_args.kwargs["api_key"] == "gemini-key"
+    assert client.call_args.kwargs["base_url"] == _GOOGLE_URL
 
 
 @pytest.mark.unit
