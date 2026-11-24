@@ -57,7 +57,7 @@ pytest -k test_pdf      # run tests matching pattern
 # Lint and type-check
 ruff check src/ tests/
 ruff format src/ tests/
-mypy src/
+mypy --package drop2md --ignore-missing-imports   # as CI runs it; a bare `mypy src/` errors here
 
 # Security audit
 bandit -r src/
@@ -68,13 +68,18 @@ pip-audit
 
 ```
 src/drop2md/
-├── __init__.py         # version, public API
+├── __init__.py         # __version__, author metadata
+├── py.typed            # PEP 561 marker
 ├── cli.py              # typer CLI entry point
 ├── config.py           # TOML config loader
 ├── watcher.py          # FSEvents folder watcher
 ├── dispatcher.py       # MIME-type routing
 ├── postprocess.py      # GFM cleanup + frontmatter
-├── ollama_enhance.py   # optional Ollama AI enhancement
+├── enhance.py          # optional AI enhancement: image captions or VEP, table repair, text polish
+├── enhance_providers.py # AI providers: Ollama, OpenAI-compatible (OpenAI, Gemini, HF)
+├── ollama_enhance.py   # backward-compat shim: re-exports enhance, describe_image, validate_table
+├── mcp_server.py       # MCP server (stdio) for Claude Desktop
+├── services/           # Finder Quick Action templates (Info.plist, document.wflow)
 ├── converters/
 │   ├── __init__.py     # ConverterResult, BaseConverter
 │   ├── pdf.py          # tiered PDF conversion
@@ -87,7 +92,8 @@ src/drop2md/
     ├── image_extractor.py
     ├── gfm.py
     ├── fs.py
-    └── logging.py
+    ├── logging.py
+    └── process_monitor.py
 ```
 
 ## Adding a New Converter
@@ -105,19 +111,26 @@ src/drop2md/
 | `DROP2MD_CONFIG` | `./config.toml` | Path to config file |
 | `DROP2MD_WATCH_DIR` | from config | Override watch directory |
 | `DROP2MD_OUTPUT_DIR` | from config | Override output directory |
-| `DROP2MD_OLLAMA_ENABLED` | `false` | Enable Ollama enhancement |
+| `DROP2MD_OLLAMA_ENABLED` | `false` | Enable AI enhancement (any provider) |
+| `DROP2MD_ENHANCE_PROVIDER` | `ollama` | Enhancement provider: `ollama`, `openai`, `gemini` or `hf` |
+| `DROP2MD_ENHANCE_API_KEY` | unset | A non-empty value overrides `[ollama] api_key`. If both are empty: `OPENAI_API_KEY` (then `GEMINI_API_KEY`) for `openai`, `GEMINI_API_KEY` for `gemini`, `HF_TOKEN` for `hf`; `ollama` uses no key |
+| `DROP2MD_VAULT_DIR` | unset | Override `[output] vault_dir` |
 | `DROP2MD_LOG_LEVEL` | `INFO` | Log verbosity |
+
+An override applies only when its variable is set to a non-empty value (`config.py`, `_apply_env_overrides`); an empty one leaves the config value in place.
 
 ## Dependency Extras
 
 | Extra | Contents | When to use |
 |---|---|---|
-| `[core]` | watchdog, typer, html2text, httpx | Always (default) |
+| (base, no extra) | watchdog, typer, html2text, python-magic, httpx, pdfplumber, mcp[cli], psutil | Always installed |
 | `[pdf-ml]` | marker-pdf, docling | Best PDF quality, needs ~2GB download |
 | `[pdf-light]` | pymupdf4llm | Lightweight PDF alternative |
-| `[office]` | markitdown | DOCX/PPTX/XLSX support |
+| `[office]` | markitdown[docx] | DOCX. PPTX also needs python-pptx (`[office-images]`); XLSX needs openpyxl and pandas, which no extra declares |
+| `[office-images]` | python-docx, python-pptx | Extract embedded images from DOCX/PPTX |
 | `[ocr]` | pytesseract, Pillow | Image/scanned PDF OCR |
-| `[dev]` | ruff, mypy, bandit, pre-commit | Development |
+| `[openai]` | openai | SDK for the `openai`, `gemini` and `hf` enhancement providers |
+| `[dev]` | ruff, mypy, pre-commit, bandit, pip-audit | Development |
 | `[test]` | pytest + plugins | Testing |
 | `[all]` | everything | Full install |
 
