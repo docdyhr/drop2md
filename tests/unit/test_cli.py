@@ -368,6 +368,95 @@ def test_check_ollama_reachable(tmp_path):
 
 
 @pytest.mark.unit
+@pytest.mark.parametrize(
+    ("provider", "key_var", "base_url", "expected"),
+    [
+        ("gemini", "GEMINI_API_KEY", None, "endpoint     (refused)"),  # OpenAI default
+        (
+            "gemini",
+            "GEMINI_API_KEY",
+            "https://generativelanguage.googleapis.com/v1beta/openai/",
+            "endpoint     (accepted)",
+        ),
+        (
+            "hf",
+            "HF_TOKEN",
+            "https://generativelanguage.googleapis.com/v1beta/openai/",
+            "endpoint     (refused)",
+        ),
+        # openai provider: the vendor's own variable counts at its endpoint
+        (
+            "openai",
+            "GEMINI_API_KEY",
+            "https://generativelanguage.googleapis.com/v1beta/openai/",
+            "endpoint     (accepted)",
+        ),
+        (
+            "openai",
+            "HF_TOKEN",
+            "https://router.huggingface.co/v1",
+            "endpoint     (accepted)",
+        ),
+    ],
+)
+def test_check_reports_the_endpoint_enhancement_would_refuse(
+    tmp_path, monkeypatch, provider, key_var, base_url, expected
+):
+    """`check` applies make_provider's rules, so it cannot pass a refused setup."""
+    for var in (
+        "OPENAI_API_KEY",
+        "GEMINI_API_KEY",
+        "HF_TOKEN",
+        "DROP2MD_ENHANCE_API_KEY",
+        "DROP2MD_ENHANCE_PROVIDER",
+        "DROP2MD_OLLAMA_ENABLED",
+    ):
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setenv(key_var, "provider-secret")
+    cfg = _check_config(tmp_path, ollama_enabled=True)
+    extra = f'provider = "{provider}"\n'
+    if base_url:
+        extra += f'[openai]\nbase_url = "{base_url}"\n'
+    cfg.write_text(cfg.read_text() + extra)
+    with ExitStack() as stack:
+        for p in _converter_patches():
+            stack.enter_context(p)
+        stack.enter_context(patch("subprocess.run", return_value=_launchctl_result()))
+        result = runner.invoke(app, ["check", "--config", str(cfg)])
+    assert expected in result.output, result.output
+    assert "provider-secret" not in result.output
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("provider", "missing"),
+    [("gemini", "GEMINI_API_KEY not set"), ("hf", "HF_TOKEN     (not set)")],
+)
+def test_check_reports_a_refused_endpoint_even_without_a_key(
+    tmp_path, monkeypatch, provider, missing
+):
+    """A missing key must not hide the endpoint the provider would also refuse."""
+    for var in (
+        "OPENAI_API_KEY",
+        "GEMINI_API_KEY",
+        "HF_TOKEN",
+        "DROP2MD_ENHANCE_API_KEY",
+        "DROP2MD_ENHANCE_PROVIDER",
+        "DROP2MD_OLLAMA_ENABLED",
+    ):
+        monkeypatch.delenv(var, raising=False)
+    cfg = _check_config(tmp_path, ollama_enabled=True)
+    cfg.write_text(cfg.read_text() + f'provider = "{provider}"\n')  # OpenAI default
+    with ExitStack() as stack:
+        for p in _converter_patches():
+            stack.enter_context(p)
+        stack.enter_context(patch("subprocess.run", return_value=_launchctl_result()))
+        result = runner.invoke(app, ["check", "--config", str(cfg)])
+    assert missing in result.output, result.output
+    assert "endpoint     (refused)" in result.output, result.output
+
+
+@pytest.mark.unit
 def test_check_ollama_unreachable(tmp_path):
     """Ollama enabled but unreachable → _fail → exit 1."""
     cfg = _check_config(tmp_path, ollama_enabled=True)

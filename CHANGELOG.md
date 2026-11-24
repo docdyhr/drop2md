@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Vendored agent skills**: `.claude/skills/` carries 4 skills from github/awesome-copilot at commit `cb64ad1` (`dependabot`, `docs-sync-audit`, `github-actions-hardening`, `test-gap-audit`), byte-identical to upstream with its MIT license, for Claude Code and GitHub Copilot. Repo rules take precedence over them (no PR merges or auto-merge, no installs, report-only audits).
 
+### Security
+
+- **Enhancement keys are no longer sent to another vendor's API.**
+  - **What leaked:** `gemini` and `hf` read `[openai] base_url`, whose default is OpenAI's API. So `GEMINI_API_KEY` or `HF_TOKEN` went to OpenAI, or to the other vendor when `base_url` was left over from a provider switch. With no `gemini`/`hf` key, the openai client sent `OPENAI_API_KEY` to Google or Hugging Face. When `OPENAI_API_KEY` was unset, the `openai` provider sent `GEMINI_API_KEY` to whatever endpoint was configured, OpenAI's default included.
+  - **The fix:** `gemini` and `hf` now refuse a `base_url` on another known vendor's domains (`openai.com`, `googleapis.com`, `huggingface.co`, `huggingface.cloud`, checked after case, trailing-dot and IDNA normalisation). They also refuse a missing key. Every provider now refuses a `base_url` that is not an `http(s)://` URL with a host, and refuses plain `http://` to a known vendor's domain, where the key would travel unencrypted. Self-hosted and proxy endpoints, plain `http://` included, are still accepted. At Google's or Hugging Face's endpoint, the `openai` provider reads that vendor's own variable (`GEMINI_API_KEY`, `HF_TOKEN`) before `OPENAI_API_KEY`. Anywhere else it reads only `OPENAI_API_KEY`.
+  - **When a setup is refused:** enhancement is disabled with a one-time warning, and conversion still runs. `drop2md check` now reports the refused endpoint, and `drop2md setup` reminds gemini/hf users to set `[openai] base_url`. `config.toml.example` gains a Hugging Face section with the router URL.
+  - **Not covered:**
+    - A key in `[ollama] api_key` or `DROP2MD_ENHANCE_API_KEY` is sent to whatever endpoint is configured.
+    - The `openai` provider sends `OPENAI_API_KEY` to any non-OpenAI endpoint where the vendor's own variable is unset.
+    - Only the four domains above are recognised. Another hosted API (Azure OpenAI, OpenRouter, a Hugging Face Space) counts as self-hosted, so a `gemini`/`hf` key can still reach one after a provider switch that leaves `base_url` pointing at it.
+  - **Key-less local servers:** set `[ollama] api_key = "unused"` for one used through `gemini` or `hf`.
+
 ### Removed
 
 - **BREAKING: the `claude` enhance provider** (`ClaudeProvider`, the `[claude]` config section and the `drop2md[claude]` extra). It could only authenticate with an Anthropic API key (`ANTHROPIC_API_KEY`). A config with `provider = "claude"` now disables enhancement with a one-time warning naming the remaining providers (`ollama`, `openai`, `gemini`, `hf`); conversion itself still runs, and a leftover `[claude]` section is ignored. `drop2md setup` and `drop2md doctor` no longer offer it.
