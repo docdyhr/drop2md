@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] — 2026-11-24
+
 ### Added
 
 - **Vendored agent skills**: `.claude/skills/` carries 4 skills from github/awesome-copilot at commit `cb64ad1` (`dependabot`, `docs-sync-audit`, `github-actions-hardening`, `test-gap-audit`), byte-identical to upstream with its MIT license, for Claude Code and GitHub Copilot. Repo rules take precedence over them (no PR merges or auto-merge, no installs, report-only audits).
@@ -38,14 +40,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### CI
 
-- **PyPI publishing** — `publish.yml` builds the package and publishes it to PyPI with trusted publishing (OIDC, GitHub environment `pypi`) on every `vX.Y.Z` tag. It was added after 1.0.1, so the next release tag is its first run.
+- **PyPI publishing** — `publish.yml` builds the package and publishes it to PyPI with trusted publishing (OIDC, GitHub environment `pypi`) on every `vX.Y.Z` tag. It was added after 1.0.1, so 2.0.0 is the first release published to PyPI.
 - **Pin-parity test** — `tests/unit/test_pin_parity.py` fails the `test` job when ruff's or mypy's version in `pyproject.toml` disagrees with the tool's pre-commit hook `rev`, with a `ruff==`/`mypy==` pin in a workflow, or between extras (exact pins by equality, ranges such as `mypy>=1.20.0` by specifier). A Dependabot bump that moves only `pyproject.toml` now fails CI, as Dependabot's ruff 0.17.4 PR did (#62, replaced by #63).
 
 ### Dependencies
 
 - `mcp[cli]` ≥ 1.27.0 → ≥ 2.0.0
-- `ruff` 0.15.12 → 0.17.4; the `ruff-pre-commit` hook `rev` updated to match (it had stayed at v0.15.12, so local commits were linted and formatted by an older ruff than CI; the 0.17.3 bump left it behind once more until it was realigned by hand; the pin-parity test above now turns that drift into a CI failure). At this `rev` the `ruff-format` hook also formats Python code blocks in Markdown files, and the lint hook uses its current id, `ruff-check`.
-- GitHub Actions: `actions/checkout` 6 → 7, `actions/setup-python` 6 → 7, `codecov/codecov-action` 6 → 7, `github/codeql-action` v4 → v4.39.3
+- `ruff` 0.15.12 → 0.17.6; the `ruff-pre-commit` hook `rev` updated to match (it had stayed at v0.15.12, so local commits were linted and formatted by an older ruff than CI; the 0.17.3 bump left it behind once more until it was realigned by hand; the pin-parity test above now turns that drift into a CI failure, as it did for Dependabot's 0.17.6 PR, #68, replaced by #69). At this `rev` the `ruff-format` hook also formats Python code blocks in Markdown files, and the lint hook uses its current id, `ruff-check`.
+- GitHub Actions: `actions/checkout` 6 → 7, `actions/setup-python` 6 → 7, `codecov/codecov-action` 6 → 7, `github/codeql-action` v4 → v4.39.4
 
 ## [1.0.1] — 2026-05-04
 
@@ -208,7 +210,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Enhancement pipeline routes through `make_provider()` based on `ollama.provider` config field (default: `"ollama"`, backward compatible)
 
-[Unreleased]: https://github.com/docdyhr/drop2md/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/docdyhr/drop2md/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/docdyhr/drop2md/compare/v1.0.1...v2.0.0
 [1.0.1]: https://github.com/docdyhr/drop2md/compare/v1.0.0...v1.0.1
 [0.2.0]: https://github.com/docdyhr/drop2md/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/docdyhr/drop2md/releases/tag/v0.1.0
