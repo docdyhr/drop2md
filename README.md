@@ -37,7 +37,7 @@ frontmatter in seconds.
 
 ## Quick Start
 
-### Homebrew (recommended — Apple Silicon, macOS 14+)
+### Homebrew (recommended — Apple Silicon, macOS 15+)
 
 ```bash
 brew tap docdyhr/tap

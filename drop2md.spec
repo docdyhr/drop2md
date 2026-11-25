@@ -163,7 +163,7 @@ exe = EXE(
     strip=False,
     upx=False,       # UPX corrupts Apple Silicon binaries — never enable
     console=True,
-    target_arch=None,        # inherits from the running Python (arm64 on macos-14)
+    target_arch=None,        # inherits from the running Python (arm64 on macos-15)
     codesign_identity=None,  # signed externally after collecting
     entitlements_file=None,
 )
