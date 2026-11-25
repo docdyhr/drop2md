@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### CI
+
+- **Release workflow runs on `macos-15`.** GitHub retired the `macos-14` runner, so the v2.0.0 tag-push run was cancelled before its first step ("The configuration 'macos-14-arm64-us-default' is not supported"). `release.yml` also gains a `workflow_dispatch` with a `tag` input that rebuilds the binary for an existing tag (checked out from `refs/tags/<tag>`, validated as `vX.Y.Z`) without moving the tag. The build now measures the bundle's minimum macOS from its Mach-O deployment targets and states that in the release notes and job summary instead of a fixed "macOS 14+", and the Homebrew `sha256` key follows it (`arm64_sequoia` for 15). A concurrency group stops a dispatch and a tag-push run for the same tag from racing, and only a tag push marks its release Latest.
+
 ## [2.0.0] — 2026-11-24
 
 ### Added
